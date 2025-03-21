@@ -2,24 +2,24 @@ input:
     input.go: |
         package example
 
-        // goverter:struct:comment // MyConverterImpl
-        // goverter:struct:comment //
-        // goverter:struct:comment // More detailed
-        // goverter:converter
+        //goverter:struct:comment // MyConverterImpl
+        //goverter:struct:comment //
+        //goverter:struct:comment // More detailed
+        //goverter:converter
         type MultipleSingleLine interface {
             Convert(Input) Output
         }
 
-        // goverter:converter
-        // goverter:struct:comment single comment
+        //goverter:converter
+        //goverter:struct:comment single comment
         type SingleComment interface {
             Convert(Input) Output
         }
 
-        // goverter:converter
-        // goverter:struct:comment MyConverterImpl
-        // goverter:struct:comment
-        // goverter:struct:comment More detailed
+        //goverter:converter
+        //goverter:struct:comment MyConverterImpl
+        //goverter:struct:comment
+        //goverter:struct:comment More detailed
         type MultiLine interface {
             Convert(Input) Output
         }

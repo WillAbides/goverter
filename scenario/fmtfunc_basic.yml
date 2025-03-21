@@ -4,14 +4,14 @@ input:
 
         import "database/sql"
 
-        // goverter:converter
-        // goverter:output:format function
-        // goverter:extend SQLStringToPString
+        //goverter:converter
+        //goverter:output:format function
+        //goverter:extend SQLStringToPString
         type Converter interface {
-            // goverter:map Owner.Name OwnerName
+            //goverter:map Owner.Name OwnerName
             ConvertApartment(source DBApartment) APIApartment
-            // goverter:map Name FirstName
-            // goverter:ignore Age
+            //goverter:map Name FirstName
+            //goverter:ignore Age
             ConvertPerson(source DBPerson) APIPerson
         }
 

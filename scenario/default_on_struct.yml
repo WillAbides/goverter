@@ -2,7 +2,7 @@ input:
     input.go: |
         package execution
 
-        // goverter:converter
+        //goverter:converter
         type Converter interface {
             // goverter:default NewOutput
             // goverter:ignore ID

@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+	"slices"
 	"sort"
+	"strings"
 
 	"github.com/jmattheis/goverter/config/parse"
 	"github.com/jmattheis/goverter/enum"
@@ -12,6 +14,20 @@ import (
 type RawLines struct {
 	Location string
 	Lines    []string
+}
+
+// HasSetting returns true if r.Lines contains a line for the given setting.
+func (r RawLines) HasSetting(setting string) bool {
+	return slices.ContainsFunc(r.Lines, func(line string) bool {
+		if !strings.HasPrefix(line, setting) {
+			return false
+		}
+		line = strings.TrimPrefix(line, setting)
+		if line == "" {
+			return true
+		}
+		return line[0] == ':' || line[0] == ' '
+	})
 }
 
 type RawConverter struct {

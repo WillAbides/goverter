@@ -2,27 +2,27 @@ input:
     input.go: |
         package execution
 
-        // goverter:converter
+        //goverter:converter
         type Converter interface {
-            // goverter:default NewOutputWithDefaults
-            // goverter:useZeroValueOnPointerInconsistency
+            //goverter:default NewOutputWithDefaults
+            //goverter:useZeroValueOnPointerInconsistency
             Convert(source *Input) (Output, error)
         }
 
-        // goverter:converter
+        //goverter:converter
         type Update interface {
-            // goverter:default NewOutputWithDefaults
-            // goverter:default:update
-            // goverter:useZeroValueOnPointerInconsistency
+            //goverter:default NewOutputWithDefaults
+            //goverter:default:update
+            //goverter:useZeroValueOnPointerInconsistency
             Update(source *Input) (Output, error)
         }
 
-        // goverter:converter
+        //goverter:converter
         type UpdateUpdate interface {
-            // goverter:default NewOutputWithDefaults
-            // goverter:default:update
-            // goverter:update:ignoreZeroValueField
-            // goverter:useZeroValueOnPointerInconsistency
+            //goverter:default NewOutputWithDefaults
+            //goverter:default:update
+            //goverter:update:ignoreZeroValueField
+            //goverter:useZeroValueOnPointerInconsistency
             Update(source *Input) (Output, error)
         }
         type Input struct { Name string }
