@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/builder"
 	"github.com/jmattheis/goverter/config"
+	builder2 "github.com/jmattheis/goverter/generator/internal/builder"
 	"github.com/jmattheis/goverter/method"
 	"github.com/jmattheis/goverter/xtype"
 )
@@ -26,7 +26,7 @@ type generatedMethod struct {
 }
 
 type generator struct {
-	namer  *builder.Namer
+	namer  *builder2.Namer
 	conf   *config.Converter
 	lookup *method.Index[generatedMethod]
 	extend *method.Index[method.Definition]
@@ -58,13 +58,13 @@ func (g *generator) buildDirtyMethods() error {
 		genMethod.Dirty = false
 		err := g.buildMethod(genMethod, genMethod.Context)
 		if err != nil {
-			err = err.Lift(&builder.Path{
+			err = err.Lift(&builder2.Path{
 				SourceID:   "source",
 				TargetID:   "target",
 				SourceType: genMethod.Source.String,
 				TargetType: genMethod.Target.String,
 			})
-			return fmt.Errorf("Error while creating converter method:\n    %s\n    %s%s\n\n%s", genMethod.Location, genMethod.ID, genMethod.Definition.ArgDebug("        "), builder.ToString(err))
+			return fmt.Errorf("Error while creating converter method:\n    %s\n    %s%s\n\n%s", genMethod.Location, genMethod.ID, genMethod.Definition.ArgDebug("        "), builder2.ToString(err))
 		}
 	}
 	return nil
@@ -119,7 +119,7 @@ func (g *generator) appendGenerated(f *jen.File) {
 	}
 }
 
-func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*xtype.Type) *builder.Error {
+func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*xtype.Type) *builder2.Error {
 	var sourceID *xtype.JenID
 	source := genMethod.Source
 	target := genMethod.Target
@@ -129,8 +129,8 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 		fieldsTarget = genMethod.Target.PointerInner.String
 	}
 
-	ctx := &builder.MethodContext{
-		Namer:             builder.NewNamer(),
+	ctx := &builder2.MethodContext{
+		Namer:             builder2.NewNamer(),
 		Conf:              genMethod.Method,
 		FieldsTarget:      fieldsTarget,
 		AvailableContext:  context,
@@ -178,8 +178,8 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 
 	var funcBlock []jen.Code
 	if targetAssign != nil {
-		var err *builder.Error
-		funcBlock, err = g.convertTo(ctx, builder.AssignOf(targetAssign), sourceID, source, target, nil)
+		var err *builder2.Error
+		funcBlock, err = g.convertTo(ctx, builder2.AssignOf(targetAssign), sourceID, source, target, nil)
 		if err != nil {
 			return err
 		}
@@ -194,7 +194,7 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 		}
 		funcBlock = []jen.Code{jenReturn}
 	} else if err != nil {
-		return builder.NewError(err.Error())
+		return builder2.NewError(err.Error())
 	} else {
 		stmt, newID, err := g.buildNoLookup(ctx, sourceID, source, target, nil)
 		if err != nil {
@@ -213,7 +213,7 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 	return nil
 }
 
-func (g *generator) buildNoLookup(ctx *builder.MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPath builder.ErrorPath) ([]jen.Code, *xtype.JenID, *builder.Error) {
+func (g *generator) buildNoLookup(ctx *builder2.MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPath builder2.ErrorPath) ([]jen.Code, *xtype.JenID, *builder2.Error) {
 	if err := g.getOverlappingStructDefinition(ctx, source, target); err != nil {
 		return nil, nil, err
 	}
@@ -227,7 +227,7 @@ func (g *generator) buildNoLookup(ctx *builder.MethodContext, sourceID *xtype.Je
 	return nil, nil, typeMismatch(source, target)
 }
 
-func (g *generator) assignNoLookup(ctx *builder.MethodContext, assignTo *builder.AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath builder.ErrorPath) ([]jen.Code, *builder.Error) {
+func (g *generator) assignNoLookup(ctx *builder2.MethodContext, assignTo *builder2.AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath builder2.ErrorPath) ([]jen.Code, *builder2.Error) {
 	if err := g.getOverlappingStructDefinition(ctx, source, target); err != nil {
 		return nil, err
 	}
@@ -241,9 +241,9 @@ func (g *generator) assignNoLookup(ctx *builder.MethodContext, assignTo *builder
 	return nil, typeMismatch(source, target)
 }
 
-func (g *generator) convertTo(ctx *builder.MethodContext, assignTo *builder.AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath builder.ErrorPath) ([]jen.Code, *builder.Error) {
+func (g *generator) convertTo(ctx *builder2.MethodContext, assignTo *builder2.AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath builder2.ErrorPath) ([]jen.Code, *builder2.Error) {
 	if !target.Pointer || !target.PointerInner.Struct {
-		return nil, builder.NewError("target type must be a pointer struct for goverter:update signatures.")
+		return nil, builder2.NewError("target type must be a pointer struct for goverter:update signatures.")
 	}
 	sourcePointer := false
 	if !source.Struct {
@@ -251,11 +251,11 @@ func (g *generator) convertTo(ctx *builder.MethodContext, assignTo *builder.Assi
 			sourcePointer = true
 			source = source.PointerInner
 		} else {
-			return nil, builder.NewError("source type must be a struct or pointer struct for goverter:update signatures.")
+			return nil, builder2.NewError("source type must be a struct or pointer struct for goverter:update signatures.")
 		}
 	}
 
-	var s builder.Struct
+	var s builder2.Struct
 	stmt, err := s.Assign(g, ctx, assignTo, sourceID, source, target.PointerInner, errPath)
 	if sourcePointer {
 		stmt = []jen.Code{jen.If(sourceID.Code.Clone().Op("!=").Nil()).Block(stmt...)}
@@ -264,15 +264,15 @@ func (g *generator) convertTo(ctx *builder.MethodContext, assignTo *builder.Assi
 }
 
 func (g *generator) CallMethod(
-	ctx *builder.MethodContext,
+	ctx *builder2.MethodContext,
 	definition *method.Definition,
 	sourceID *xtype.JenID,
 	source, target *xtype.Type,
-	errPath builder.ErrorPath,
-) ([]jen.Code, *xtype.JenID, *builder.Error) {
+	errPath builder2.ErrorPath,
+) ([]jen.Code, *xtype.JenID, *builder2.Error) {
 	params := []jen.Code{}
-	formatErr := func(s string) *builder.Error {
-		return builder.NewError(fmt.Sprintf("Error using method:\n    %s%s\n\n%s", definition.ID, definition.ArgDebug("        "), s))
+	formatErr := func(s string) *builder2.Error {
+		return builder2.NewError(fmt.Sprintf("Error using method:\n    %s%s\n\n%s", definition.ID, definition.ArgDebug("        "), s))
 	}
 
 	for _, arg := range definition.RawArgs {
@@ -324,7 +324,7 @@ func (g *generator) CallMethod(
 	return nil, id, nil
 }
 
-func (g *generator) ReturnError(ctx *builder.MethodContext, errPath builder.ErrorPath, id *jen.Statement) (jen.Code, bool) {
+func (g *generator) ReturnError(ctx *builder2.MethodContext, errPath builder2.ErrorPath, id *jen.Statement) (jen.Code, bool) {
 	current := g.lookup.ByID(ctx.IndexID)
 	if !ctx.Conf.ReturnError {
 		for _, path := range append([]method.IndexID{ctx.IndexID}, current.OriginPath...) {
@@ -347,7 +347,7 @@ func (g *generator) ReturnError(ctx *builder.MethodContext, errPath builder.Erro
 	return jen.Return(returns...), true
 }
 
-func (g *generator) requireContext(ctx *builder.MethodContext, need *xtype.Type) bool {
+func (g *generator) requireContext(ctx *builder2.MethodContext, need *xtype.Type) bool {
 	if _, ok := ctx.Context[need.String]; ok {
 		return true
 	}
@@ -376,10 +376,10 @@ func (g *generator) requireContext(ctx *builder.MethodContext, need *xtype.Type)
 }
 
 func (g *generator) delegateMethod(
-	ctx *builder.MethodContext,
+	ctx *builder2.MethodContext,
 	delegateTo *method.Definition,
 	sourceID *xtype.JenID,
-) (*jen.Statement, *builder.Error) {
+) (*jen.Statement, *builder2.Error) {
 	params := []jen.Code{}
 
 	for _, arg := range delegateTo.RawArgs {
@@ -403,7 +403,7 @@ func (g *generator) delegateMethod(
 
 	if delegateTo.ReturnError {
 		if !current.ReturnError {
-			return nil, builder.NewError(fmt.Sprintf("ReturnTypeMismatch: Cannot use\n\n    %s\n\nin\n\n    %s\n\nbecause no error is returned as second return parameter", delegateTo.OriginID, current.ID))
+			return nil, builder2.NewError(fmt.Sprintf("ReturnTypeMismatch: Cannot use\n\n    %s\n\nin\n\n    %s\n\nbecause no error is returned as second return parameter", delegateTo.OriginID, current.ID))
 		}
 	} else {
 		if current.ReturnError {
@@ -414,7 +414,7 @@ func (g *generator) delegateMethod(
 }
 
 // wrap invokes the error wrapper if feature is enabled.
-func (g *generator) wrap(ctx *builder.MethodContext, errPath builder.ErrorPath, errStmt *jen.Statement) *jen.Statement {
+func (g *generator) wrap(ctx *builder2.MethodContext, errPath builder2.ErrorPath, errStmt *jen.Statement) *jen.Statement {
 	switch {
 	case ctx.Conf.WrapErrorsUsing != "":
 		return errPath.WrapErrorsUsing(ctx.Conf.WrapErrorsUsing, errStmt)
@@ -427,11 +427,11 @@ func (g *generator) wrap(ctx *builder.MethodContext, errPath builder.ErrorPath, 
 
 // Build builds an implementation for the given source and target type, or uses an existing method for it.
 func (g *generator) Build(
-	ctx *builder.MethodContext,
+	ctx *builder2.MethodContext,
 	sourceID *xtype.JenID,
 	source, target *xtype.Type,
-	errPath builder.ErrorPath,
-) ([]jen.Code, *xtype.JenID, *builder.Error) {
+	errPath builder2.ErrorPath,
+) ([]jen.Code, *xtype.JenID, *builder2.Error) {
 	stmt, nextID, err := g.callExisting(ctx, sourceID, source, target, errPath)
 	if nextID != nil || err != nil {
 		return stmt, nextID, err
@@ -446,49 +446,49 @@ func (g *generator) Build(
 
 // Assign builds an implementation for the given source and target type, or uses an existing method for it.
 func (g *generator) Assign(
-	ctx *builder.MethodContext,
-	assignTo *builder.AssignTo,
+	ctx *builder2.MethodContext,
+	assignTo *builder2.AssignTo,
 	sourceID *xtype.JenID,
 	source, target *xtype.Type,
-	errPath builder.ErrorPath,
-) ([]jen.Code, *builder.Error) {
+	errPath builder2.ErrorPath,
+) ([]jen.Code, *builder2.Error) {
 	if assignTo.Must {
-		return builder.ToAssignable(assignTo)(g.Build(ctx, sourceID, source, target, errPath))
+		return builder2.ToAssignable(assignTo)(g.Build(ctx, sourceID, source, target, errPath))
 	}
 
 	stmt, nextID, err := g.callExisting(ctx, sourceID, source, target, errPath)
 	if nextID != nil || err != nil {
-		return builder.ToAssignable(assignTo)(stmt, nextID, err)
+		return builder2.ToAssignable(assignTo)(stmt, nextID, err)
 	}
 
 	if g.shouldCreateSubMethod(ctx, source, target) {
-		return builder.ToAssignable(assignTo)(g.createSubMethod(ctx, sourceID, source, target, errPath))
+		return builder2.ToAssignable(assignTo)(g.createSubMethod(ctx, sourceID, source, target, errPath))
 	}
 
 	return g.assignNoLookup(ctx, assignTo, sourceID, source, target, errPath)
 }
 
 func (g *generator) callExisting(
-	ctx *builder.MethodContext,
+	ctx *builder2.MethodContext,
 	sourceID *xtype.JenID,
 	source, target *xtype.Type,
-	errPath builder.ErrorPath,
-) ([]jen.Code, *xtype.JenID, *builder.Error) {
+	errPath builder2.ErrorPath,
+) ([]jen.Code, *xtype.JenID, *builder2.Error) {
 	signature := xtype.SignatureOf(source, target)
 	if def, err := g.extend.Get(signature, ctx.AvailableContext); def != nil {
 		return g.CallMethod(ctx, def, sourceID, source, target, errPath)
 	} else if err != nil {
-		return nil, nil, builder.NewError(err.Error())
+		return nil, nil, builder2.NewError(err.Error())
 	}
 	if genMethod, err := g.lookup.Get(signature, ctx.AvailableContext); genMethod != nil {
 		return g.CallMethod(ctx, genMethod.Definition, sourceID, source, target, errPath)
 	} else if err != nil {
-		return nil, nil, builder.NewError(err.Error())
+		return nil, nil, builder2.NewError(err.Error())
 	}
 	return nil, nil, nil
 }
 
-func (g *generator) shouldCreateSubMethod(ctx *builder.MethodContext, source, target *xtype.Type) bool {
+func (g *generator) shouldCreateSubMethod(ctx *builder2.MethodContext, source, target *xtype.Type) bool {
 	isCurrentPointerStructMethod := false
 	if source.Struct && target.Struct {
 		// This checks if we are currently inside the generation of one of the following combinations.
@@ -524,7 +524,7 @@ func (g *generator) shouldCreateSubMethod(ctx *builder.MethodContext, source, ta
 	return createSubMethod
 }
 
-func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPAth builder.ErrorPath) ([]jen.Code, *xtype.JenID, *builder.Error) {
+func (g *generator) createSubMethod(ctx *builder2.MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPAth builder2.ErrorPath) ([]jen.Code, *xtype.JenID, *builder2.Error) {
 	name := g.namer.Name(source.UnescapedID() + "To" + strings.Title(target.UnescapedID()))
 	orig := g.lookup.ByID(ctx.IndexID)
 
@@ -567,12 +567,12 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *xtype.
 	return g.CallMethod(ctx, genMethod.Definition, sourceID, source, target, errPAth)
 }
 
-func (g *generator) hasMethod(ctx *builder.MethodContext, source, target types.Type) bool {
+func (g *generator) hasMethod(ctx *builder2.MethodContext, source, target types.Type) bool {
 	signature := xtype.Signature{Source: source.String(), Target: target.String()}
 	return g.extend.Has(signature) || g.lookup.Has(signature)
 }
 
-func (g *generator) getOverlappingStructDefinition(ctx *builder.MethodContext, source, target *xtype.Type) *builder.Error {
+func (g *generator) getOverlappingStructDefinition(ctx *builder2.MethodContext, source, target *xtype.Type) *builder2.Error {
 	if !source.Struct || !target.Struct {
 		return nil
 	}
@@ -595,7 +595,7 @@ func (g *generator) getOverlappingStructDefinition(ctx *builder.MethodContext, s
 				toMethod = fmt.Sprintf("to a newly created method with this signature:\n    func(%s) %s", source.String, target.String)
 			}
 
-			return builder.NewError(fmt.Sprintf(`Overlapping struct settings found.
+			return builder2.NewError(fmt.Sprintf(`Overlapping struct settings found.
 
 Move these field related settings:
     goverter:%s
@@ -609,9 +609,9 @@ and therefore the defined field settings would be ignored.`, strings.Join(def.Ra
 	return nil
 }
 
-func typeMismatch(source, target *xtype.Type) *builder.Error {
+func typeMismatch(source, target *xtype.Type) *builder2.Error {
 	if source.Pointer && !target.Pointer {
-		return builder.NewError(fmt.Sprintf(`TypeMismatch: Cannot convert %s to %s
+		return builder2.NewError(fmt.Sprintf(`TypeMismatch: Cannot convert %s to %s
 It is unclear how nil should be handled in the pointer to non pointer conversion.
 
 You can enable useZeroValueOnPointerInconsistency to instruct goverter to use the zero value if source is nil
@@ -621,7 +621,7 @@ or you can define a custom conversion method with extend:
 https://goverter.jmattheis.de/reference/extend`, source.T, target.T))
 	}
 
-	return builder.NewError(fmt.Sprintf(`TypeMismatch: Cannot convert %s to %s
+	return builder2.NewError(fmt.Sprintf(`TypeMismatch: Cannot convert %s to %s
 
 You can define a custom conversion method with extend:
 https://goverter.jmattheis.de/reference/extend`, source.T, target.T))

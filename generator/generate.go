@@ -2,8 +2,8 @@ package generator
 
 import (
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/builder"
 	"github.com/jmattheis/goverter/config"
+	builder2 "github.com/jmattheis/goverter/generator/internal/builder"
 )
 
 // Config the generate config.
@@ -12,18 +12,18 @@ type Config struct {
 }
 
 // BuildSteps that'll used for generation.
-var BuildSteps = []builder.Builder{
-	&builder.UseUnderlyingTypeMethods{},
-	&builder.SkipCopy{},
-	&builder.Enum{},
-	&builder.BasicTargetPointerRule{},
-	&builder.Pointer{},
-	&builder.SourcePointer{},
-	&builder.TargetPointer{},
-	&builder.Basic{},
-	&builder.Struct{},
-	&builder.List{},
-	&builder.Map{},
+var BuildSteps = []builder2.Builder{
+	&builder2.UseUnderlyingTypeMethods{},
+	&builder2.SkipCopy{},
+	&builder2.Enum{},
+	&builder2.BasicTargetPointerRule{},
+	&builder2.Pointer{},
+	&builder2.SourcePointer{},
+	&builder2.TargetPointer{},
+	&builder2.Basic{},
+	&builder2.Struct{},
+	&builder2.List{},
+	&builder2.Map{},
 }
 
 // Generate generates a jen.File containing converters.
@@ -44,7 +44,7 @@ func Generate(converters []*config.Converter, c Config) (map[string][]byte, erro
 	return manager.renderFiles()
 }
 
-func generateConverter(converter *config.Converter, f *jen.File, n *builder.Namer) error {
+func generateConverter(converter *config.Converter, f *jen.File, n *builder2.Namer) error {
 	gen, err := setupGenerator(converter, n)
 	if err != nil {
 		return err

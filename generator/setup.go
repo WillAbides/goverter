@@ -1,8 +1,8 @@
 package generator
 
 import (
-	"github.com/jmattheis/goverter/builder"
 	"github.com/jmattheis/goverter/config"
+	"github.com/jmattheis/goverter/generator/internal/builder"
 	"github.com/jmattheis/goverter/method"
 )
 

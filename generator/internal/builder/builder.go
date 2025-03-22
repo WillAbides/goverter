@@ -19,7 +19,8 @@ type Builder interface {
 		ctx *MethodContext,
 		sourceID *xtype.JenID,
 		source, target *xtype.Type,
-		path ErrorPath) ([]jen.Code, *xtype.JenID, *Error)
+		path ErrorPath,
+	) ([]jen.Code, *xtype.JenID, *Error)
 
 	// Assign creates conversion source code for the given source and target type and assigns it.
 	Assign(gen Generator,
@@ -27,7 +28,8 @@ type Builder interface {
 		assignTo *AssignTo,
 		sourceID *xtype.JenID,
 		source, target *xtype.Type,
-		path ErrorPath) ([]jen.Code, *Error)
+		path ErrorPath,
+	) ([]jen.Code, *Error)
 }
 
 // Generator checks all existing builders if they can create a conversion implementations for the given source and target type
@@ -37,20 +39,23 @@ type Generator interface {
 		ctx *MethodContext,
 		sourceID *xtype.JenID,
 		source, target *xtype.Type,
-		path ErrorPath) ([]jen.Code, *xtype.JenID, *Error)
+		path ErrorPath,
+	) ([]jen.Code, *xtype.JenID, *Error)
 
 	Assign(ctx *MethodContext,
 		assignTo *AssignTo,
 		sourceID *xtype.JenID,
 		source, target *xtype.Type,
-		path ErrorPath) ([]jen.Code, *Error)
+		path ErrorPath,
+	) ([]jen.Code, *Error)
 
 	CallMethod(
 		ctx *MethodContext,
 		method *method.Definition,
 		sourceID *xtype.JenID,
 		source, target *xtype.Type,
-		path ErrorPath) ([]jen.Code, *xtype.JenID, *Error)
+		path ErrorPath,
+	) ([]jen.Code, *xtype.JenID, *Error)
 
 	ReturnError(ctx *MethodContext,
 		path ErrorPath,
@@ -137,6 +142,6 @@ func (ctx *MethodContext) DefinedEnumFields(target *xtype.Type) map[string]struc
 }
 
 var (
-	emptyMapping *config.FieldMapping = &config.FieldMapping{}
-	emptyFields                       = map[string]struct{}{}
+	emptyMapping = &config.FieldMapping{}
+	emptyFields  = map[string]struct{}{}
 )

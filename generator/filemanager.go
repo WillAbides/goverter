@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/builder"
 	"github.com/jmattheis/goverter/config"
+	"github.com/jmattheis/goverter/generator/internal/builder"
 )
 
 type fileManager struct {
