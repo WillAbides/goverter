@@ -58,7 +58,7 @@ requires the type information from the compiled sources.`, pkg.PkgPath, pkg.Erro
 		for _, file := range pkg.Syntax {
 			for _, decl := range file.Decls {
 				if genDecl, ok := decl.(*ast.GenDecl); ok {
-					converters, err := parseGenDecl(pkg.Fset, pkg.Types, genDecl)
+					converters, err := parseGenDecl(pkg, genDecl)
 					if err != nil {
 						location := pkg.Fset.Position(genDecl.Pos()).String()
 						return rawConverters, fmt.Errorf("%s: %s", location, err)
@@ -71,12 +71,12 @@ requires the type information from the compiled sources.`, pkg.PkgPath, pkg.Erro
 	return rawConverters, nil
 }
 
-func parseFunctions(fset *token.FileSet, pkg *types.Package, decl *ast.GenDecl, lines config.RawLines) ([]config.RawConverter, error) {
+func parseFunctions(pkg *packages.Package, decl *ast.GenDecl, lines config.RawLines) ([]config.RawConverter, error) {
 	if decl.Tok != token.VAR {
 		return nil, fmt.Errorf("%s must be defined on %q-block but was %q", converterMarker, token.VAR, decl.Tok.String())
 	}
 
-	location := fset.Position(decl.Pos())
+	location := pkg.Fset.Position(decl.Pos())
 
 	result := map[string]config.RawLines{}
 	for _, spec := range decl.Specs {
@@ -88,24 +88,24 @@ func parseFunctions(fset *token.FileSet, pkg *types.Package, decl *ast.GenDecl, 
 			return nil, fmt.Errorf("must have one name")
 		}
 		name := value.Names[0].Name
-		result[name] = rawLines(fset, value, value.Doc)
+		result[name] = rawLines(pkg, value)
 	}
 
 	converter := config.RawConverter{
 		FileName:    location.Filename,
 		Converter:   lines,
 		Methods:     result,
-		PackageName: pkg.Name(),
-		PackagePath: pkg.Path(),
+		PackageName: pkg.Name,
+		PackagePath: pkg.PkgPath,
 	}
 	return []config.RawConverter{converter}, nil
 }
 
-func parseGenDecl(fset *token.FileSet, pkg *types.Package, decl *ast.GenDecl) ([]config.RawConverter, error) {
-	lines := rawLines(fset, decl, decl.Doc)
+func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]config.RawConverter, error) {
+	lines := rawLines(pkg, decl)
 
 	if lines.HasSetting("variables") {
-		return parseFunctions(fset, pkg, decl, lines)
+		return parseFunctions(pkg, decl, lines)
 	}
 
 	if lines.HasSetting("converter") {
@@ -120,9 +120,9 @@ func parseGenDecl(fset *token.FileSet, pkg *types.Package, decl *ast.GenDecl) ([
 		if !ok {
 			return nil, fmt.Errorf("%s may only be applied to type declarations ", converterMarker)
 		}
-		c, err := parseInterface(fset, pkg, typeSpec, config.RawLines{
+		c, err := parseInterface(pkg, typeSpec, config.RawLines{
 			Lines:    lines.Lines,
-			Location: nodeLocation(fset, typeSpec),
+			Location: nodeLocation(pkg.Fset, typeSpec),
 		})
 		if err != nil {
 			return nil, err
@@ -137,9 +137,9 @@ func parseGenDecl(fset *token.FileSet, pkg *types.Package, decl *ast.GenDecl) ([
 		if !ok {
 			continue
 		}
-		tsLines := rawLines(fset, typeSpec, typeSpec.Doc)
+		tsLines := rawLines(pkg, typeSpec)
 		if tsLines.HasSetting("converter") {
-			c, err := parseInterface(fset, pkg, typeSpec, tsLines)
+			c, err := parseInterface(pkg, typeSpec, tsLines)
 			if err != nil {
 				return nil, err
 			}
@@ -150,15 +150,15 @@ func parseGenDecl(fset *token.FileSet, pkg *types.Package, decl *ast.GenDecl) ([
 	return converters, nil
 }
 
-func parseInterface(fset *token.FileSet, pkg *types.Package, typeSpec *ast.TypeSpec, lines config.RawLines) (config.RawConverter, error) {
+func parseInterface(pkg *packages.Package, typeSpec *ast.TypeSpec, lines config.RawLines) (config.RawConverter, error) {
 	astInterface, ok := typeSpec.Type.(*ast.InterfaceType)
 	if !ok {
 		return config.RawConverter{}, fmt.Errorf("%s may only be applied to type interface declarations ", converterMarker)
 	}
 	typeName := typeSpec.Name.String()
 
-	location := fset.Position(typeSpec.Pos())
-	methods, err := parseInterfaceMethods(fset, astInterface)
+	location := pkg.Fset.Position(typeSpec.Pos())
+	methods, err := parseInterfaceMethods(pkg, astInterface)
 	if err != nil {
 		return config.RawConverter{}, fmt.Errorf("type %s: %s", typeName, err)
 	}
@@ -167,28 +167,35 @@ func parseInterface(fset *token.FileSet, pkg *types.Package, typeSpec *ast.TypeS
 		FileName:      location.Filename,
 		Converter:     lines,
 		Methods:       methods,
-		PackageName:   pkg.Name(),
-		PackagePath:   pkg.Path(),
+		PackageName:   pkg.Name,
+		PackagePath:   pkg.PkgPath,
 	}
 	return converter, nil
 }
 
-func parseInterfaceMethods(location *token.FileSet, inter *ast.InterfaceType) (map[string]config.RawLines, error) {
+func parseInterfaceMethods(pkg *packages.Package, inter *ast.InterfaceType) (map[string]config.RawLines, error) {
 	result := map[string]config.RawLines{}
 	for _, method := range inter.Methods.List {
 		if len(method.Names) != 1 {
 			return result, fmt.Errorf("method must have one name")
 		}
 		name := method.Names[0].String()
-		result[name] = rawLines(location, method, method.Doc)
+		result[name] = rawLines(pkg, method)
 	}
 	return result, nil
 }
 
-func rawLines(fset *token.FileSet, node ast.Node, commentGroup *ast.CommentGroup) config.RawLines {
+func rawLines(pkg *packages.Package, node ast.Node) config.RawLines {
+	var comments []*ast.CommentGroup
+	for _, file := range pkg.Syntax {
+		if pkg.Fset.File(file.Pos()) == pkg.Fset.File(node.Pos()) {
+			comments = ast.NewCommentMap(pkg.Fset, file, file.Comments)[node]
+			break
+		}
+	}
 	return config.RawLines{
-		Location: nodeLocation(fset, node),
-		Lines:    parse.CommentGroupSettingLines(commentGroup),
+		Location: nodeLocation(pkg.Fset, node),
+		Lines:    parse.CommentGroupSettingLines(comments),
 	}
 }
 

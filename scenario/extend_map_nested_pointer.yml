@@ -3,11 +3,9 @@ input:
         package structs
 
         // goverter:converter
-        // goverter:extend StringPToString
         type Converter interface {
-            // goverter:map Address.Civic Civic
-            ConvertPerson(source Person) APIPerson
-        }
+            ConvertPerson(source Person) APIPerson //goverter:map Address.Civic Civic
+        }//goverter:extend StringPToString
 
         func StringPToString(value *string) string {
             if value == nil {

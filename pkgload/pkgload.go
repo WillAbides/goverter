@@ -106,9 +106,10 @@ func (g *PackageLoader) localConfig(pkg *packages.Package, name string) method.L
 	if !ok {
 		fns = map[string]method.LocalOpts{}
 		for _, file := range pkg.Syntax {
+			commentMap := ast.NewCommentMap(pkg.Fset, file, file.Comments)
 			for _, decl := range file.Decls {
 				if fn, ok := decl.(*ast.FuncDecl); ok {
-					lines := parse.CommentGroupSettingLines(fn.Doc)
+					lines := parse.CommentGroupSettingLines(commentMap[fn])
 					if len(lines) == 0 {
 						continue
 					}
