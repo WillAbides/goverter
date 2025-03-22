@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	converterMarker = config.Prefix + config.Delimiter + "converter"
+	converterMarker = config.DirectivePrefix + "converter"
 )
 
 // ParseDocsConfig provides input to the ParseDocs method below.
