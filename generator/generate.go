@@ -22,8 +22,8 @@ var BuildSteps = []goverter.Builder{
 	&builder.TargetPointer{},
 	&goverter.Basic{},
 	&builder.Struct{},
-	&builder.List{},
-	&builder.Map{},
+	&goverter.BuildList{},
+	&goverter.BuildMap{},
 }
 
 // Generate generates a jen.File containing converters.
