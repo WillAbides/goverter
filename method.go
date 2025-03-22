@@ -9,48 +9,46 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-type ParamType int
+type paramType int
 
 const (
-	ParamsRequired ParamType = iota
-	ParamsOptional
-	ParamsNone
+	paramsRequired paramType = iota
+	paramsOptional
+	paramsNone
 )
-
-type ArgUse string
 
 const (
-	ArgUseSource      ArgUse = "source"
-	ArgUseMultiSource ArgUse = "additional-source"
-	ArgUseInterface   ArgUse = "interface"
-	ArgUseContext     ArgUse = "context"
-	ArgUseTarget      ArgUse = "target"
+	argUseSource      = "source"
+	argUseMultiSource = "additional-source"
+	argUseInterface   = "interface"
+	argUseContext     = "context"
+	argUseTarget      = "target"
 )
 
-type Arg struct {
+type rawArg struct {
 	Name string
-	Use  ArgUse
-	Type *Type
+	Use  string
+	Type *xType
 }
 
-type Parameters struct {
+type parameters struct {
 	TypeParams bool
 
-	Source       *Type
-	MultiSources []*Type
-	Target       *Type
-	Context      map[string]*Type
+	Source       *xType
+	MultiSources []*xType
+	Target       *xType
+	Context      map[string]*xType
 
-	Signature Signature
+	Signature signature
 
-	RawArgs []Arg
+	RawArgs []rawArg
 
 	ReturnError  bool
 	UpdateTarget bool
 }
 
-type MethodDefinition struct {
-	Parameters
+type methodDefinition struct {
+	parameters
 	OriginID string
 	Call     *jen.Statement
 	ID       string
@@ -61,14 +59,14 @@ type MethodDefinition struct {
 	CustomCall *jen.Statement
 }
 
-func (def *MethodDefinition) ArgDebug(indent string) string {
+func (def *methodDefinition) ArgDebug(indent string) string {
 	var lines []string
 	for _, arg := range def.RawArgs {
 		argUse := arg.Use
-		if arg.Use == ArgUseMultiSource {
-			argUse = ArgUseSource
-		} else if arg.Use == ArgUseInterface {
-			argUse = ArgUseContext
+		if arg.Use == argUseMultiSource {
+			argUse = argUseSource
+		} else if arg.Use == argUseInterface {
+			argUse = argUseContext
 		}
 		lines = append(lines, fmt.Sprintf("[%s] %s", argUse, arg.Type.String))
 	}
@@ -84,13 +82,13 @@ func (def *MethodDefinition) ArgDebug(indent string) string {
 	return "\n" + indent + strings.Join(lines, "\n"+indent)
 }
 
-type ParseMethodOpts struct {
+type parseMethodOpts struct {
 	Location          string
 	Converter         types.Type
 	OutputPackagePath string
 
 	ErrorPrefix       string
-	Params            ParamType
+	Params            paramType
 	ParamsMultiSource bool
 	AllowTypeParams   bool
 
@@ -101,21 +99,21 @@ type ParseMethodOpts struct {
 	UpdateParam string
 }
 
-type LocalMethodOpts struct {
+type localMethodOpts struct {
 	Context map[string]bool
 }
 
-var EmptyLocalMethodOpts = LocalMethodOpts{Context: map[string]bool{}}
+var emptyLocalMethodOpts = localMethodOpts{Context: map[string]bool{}}
 
-// ParseMethod parses an function into a MethodDefinition.
-func ParseMethod(obj types.Object, opts *ParseMethodOpts, localOpts LocalMethodOpts) (*MethodDefinition, error) {
-	methodDef := &MethodDefinition{
+// parseMethod parses an function into a methodDefinition.
+func parseMethod(obj types.Object, opts *parseMethodOpts, localOpts localMethodOpts) (*methodDefinition, error) {
+	methodDef := &methodDefinition{
 		ID:         obj.String(),
 		OriginID:   obj.String(),
 		Generated:  opts.Generated,
 		CustomCall: opts.CustomCall,
-		Parameters: Parameters{
-			Context: make(map[string]*Type, 0),
+		parameters: parameters{
+			Context: make(map[string]*xType, 0),
 		},
 		Name: obj.Name(),
 	}
@@ -128,7 +126,7 @@ func ParseMethod(obj types.Object, opts *ParseMethodOpts, localOpts LocalMethodO
 		return fmt.Errorf("%s:\n    %s%s%s\n\n%s", opts.ErrorPrefix, loc, obj.String(), methodDef.ArgDebug("        "), s)
 	}
 
-	if !Accessible(obj, opts.OutputPackagePath) {
+	if !accessible(obj, opts.OutputPackagePath) {
 		return nil, formatErr("must be exported")
 	}
 
@@ -145,16 +143,16 @@ func ParseMethod(obj types.Object, opts *ParseMethodOpts, localOpts LocalMethodO
 	}
 
 	for i := 0; i < sig.Params().Len(); i++ {
-		arg := Arg{
+		arg := rawArg{
 			Name: sig.Params().At(i).Name(),
-			Type: TypeOf(sig.Params().At(i).Type()),
+			Type: typeOf(sig.Params().At(i).Type()),
 		}
 
 		switch {
 		case types.Identical(arg.Type.T, opts.Converter):
-			arg.Use = ArgUseInterface
+			arg.Use = argUseInterface
 		case opts.UpdateParam != "" && arg.Name == opts.UpdateParam:
-			arg.Use = ArgUseTarget
+			arg.Use = argUseTarget
 			methodDef.Target = arg.Type
 			methodDef.UpdateTarget = true
 
@@ -168,13 +166,13 @@ func ParseMethod(obj types.Object, opts *ParseMethodOpts, localOpts LocalMethodO
 			}
 		case (opts.ContextMatch != nil && opts.ContextMatch.MatchString(arg.Name)) || localOpts.Context[arg.Name]:
 			methodDef.Context[arg.Type.String] = arg.Type
-			arg.Use = ArgUseContext
+			arg.Use = argUseContext
 		case methodDef.Source == nil:
-			arg.Use = ArgUseSource
+			arg.Use = argUseSource
 			methodDef.Source = arg.Type
 			methodDef.Signature.Source = methodDef.Source.String
 		default:
-			arg.Use = ArgUseMultiSource
+			arg.Use = argUseMultiSource
 			methodDef.MultiSources = append(methodDef.MultiSources, arg.Type)
 		}
 
@@ -196,7 +194,7 @@ func ParseMethod(obj types.Object, opts *ParseMethodOpts, localOpts LocalMethodO
 			}
 		}
 
-		methodDef.Target = TypeOf(sig.Results().At(0).Type())
+		methodDef.Target = typeOf(sig.Results().At(0).Type())
 	}
 
 	if methodDef.TypeParams && !opts.AllowTypeParams {
@@ -204,9 +202,9 @@ func ParseMethod(obj types.Object, opts *ParseMethodOpts, localOpts LocalMethodO
 	}
 
 	switch {
-	case opts.Params == ParamsNone && methodDef.Source != nil:
+	case opts.Params == paramsNone && methodDef.Source != nil:
 		return nil, formatErr("must have no source params")
-	case opts.Params == ParamsRequired && methodDef.Source == nil:
+	case opts.Params == paramsRequired && methodDef.Source == nil:
 		return nil, formatErr("must have at least one source param")
 	case !opts.ParamsMultiSource && len(methodDef.MultiSources) > 0:
 		return nil, formatErr("must have only one source param")

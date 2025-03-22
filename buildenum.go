@@ -9,12 +9,12 @@ import (
 type BuildEnum struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildEnum) matches(ctx *MethodContext, source, target *Type) bool {
+func (*BuildEnum) matches(ctx *MethodContext, source, target *xType) bool {
 	return IsBuildEnum(ctx, source, target)
 }
 
-func IsBuildEnum(ctx *MethodContext, source, target *Type) bool {
-	return ctx.Conf.Enum.Enabled &&
+func IsBuildEnum(ctx *MethodContext, source, target *xType) bool {
+	return ctx.Conf.Enum.enabled &&
 		source.Enum(&ctx.Conf.Enum).OK &&
 		target.Enum(&ctx.Conf.Enum).OK
 }
@@ -24,7 +24,7 @@ func (*BuildEnum) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	stmt, nameVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
@@ -90,7 +90,7 @@ func (*BuildEnum) build(
 		}
 	}
 
-	enumUnknown := ctx.Conf.Common.Enum.Unknown
+	enumUnknown := ctx.Conf.commonCfg.Enum.unknown
 	if enumUnknown == "" {
 		return nil, nil, NewBuildError("Enum detected but enum:unknown is not configured.\nSee https://goverter.jmattheis.de/guide/enum")
 	}
@@ -116,7 +116,7 @@ func (*BuildEnum) build(
 	}
 
 	stmt = append(stmt, jen.Switch(sourceID.Code).Block(cases...))
-	return stmt, VariableID(nameVar), nil
+	return stmt, variableID(nameVar), nil
 }
 
 func (s *BuildEnum) assign(
@@ -124,7 +124,7 @@ func (s *BuildEnum) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	return assignByBuild(s, gen, ctx, assignTo, sourceID, source, target, path)
@@ -134,7 +134,7 @@ func caseAction(
 	gen *generator,
 	ctx *MethodContext,
 	nameVar *jen.Statement,
-	target *Type,
+	target *xType,
 	targetEnum *Enum,
 	targetName string,
 	sourceID *JenID,
@@ -168,7 +168,7 @@ func caseAction(
 
 func executeTransformers(
 	transformers []ConfiguredTransformer,
-	source, target *Type,
+	source, target *xType,
 	sourceEnum, targetEnum *Enum,
 ) (map[string]string, *BuildError) {
 	transformerMapping := map[string]string{}

@@ -8,7 +8,7 @@ import (
 type Pointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Pointer) matches(_ *MethodContext, source, target *Type) bool {
+func (*Pointer) matches(_ *MethodContext, source, target *xType) bool {
 	return source.Pointer && target.Pointer
 }
 
@@ -17,7 +17,7 @@ func (p *Pointer) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
@@ -39,7 +39,7 @@ func (p *Pointer) build(
 
 		buildStmt = append(buildStmt, jen.If(sourceID.Code.Clone().Op("!=").Nil()).Block(stmt...))
 
-		return buildStmt, VariableID(valueVar), nil
+		return buildStmt, variableID(valueVar), nil
 	}
 
 	return buildByAssign(p, gen, ctx, sourceID, source, target, errPath)
@@ -50,7 +50,7 @@ func (*Pointer) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
@@ -81,7 +81,7 @@ func (*Pointer) assign(
 type SourcePointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*SourcePointer) matches(ctx *MethodContext, source, target *Type) bool {
+func (*SourcePointer) matches(ctx *MethodContext, source, target *xType) bool {
 	return ctx.Conf.UseZeroValueOnPointerInconsistency && source.Pointer && !target.Pointer
 }
 
@@ -90,7 +90,7 @@ func (s *SourcePointer) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	if ctx.UseConstructor && ctx.Conf.DefaultUpdate {
@@ -109,7 +109,7 @@ func (s *SourcePointer) build(
 
 		buildStmt = append(buildStmt, jen.If(sourceID.Code.Clone().Op("!=").Nil()).Block(stmt...))
 
-		return buildStmt, VariableID(valueVar), nil
+		return buildStmt, variableID(valueVar), nil
 	}
 
 	return buildByAssign(s, gen, ctx, sourceID, source, target, path)
@@ -120,7 +120,7 @@ func (*SourcePointer) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	nextInner, nextID, err := gen.Build(ctx, sourceID.Deref(source), source.PointerInner, target, path)
@@ -144,7 +144,7 @@ func (*SourcePointer) assign(
 type TargetPointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*TargetPointer) matches(_ *MethodContext, source, target *Type) bool {
+func (*TargetPointer) matches(_ *MethodContext, source, target *xType) bool {
 	return !source.Pointer && target.Pointer
 }
 
@@ -153,7 +153,7 @@ func (*TargetPointer) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
@@ -174,7 +174,7 @@ func (*TargetPointer) build(
 
 		buildStmt = append(buildStmt, stmt...)
 
-		return buildStmt, VariableID(valueVar), nil
+		return buildStmt, variableID(valueVar), nil
 	}
 
 	stmt, id, err := gen.Build(ctx, sourceID, source, target.PointerInner, path)
@@ -196,7 +196,7 @@ func (tp *TargetPointer) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	return assignByBuild(tp, gen, ctx, assignTo, sourceID, source, target, path)

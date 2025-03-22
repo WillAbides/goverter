@@ -8,7 +8,7 @@ import (
 type SkipCopy struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*SkipCopy) matches(ctx *MethodContext, source, target *Type) bool {
+func (*SkipCopy) matches(ctx *MethodContext, source, target *xType) bool {
 	return ctx.Conf.SkipCopySameType && source.String == target.String
 }
 
@@ -17,7 +17,7 @@ func (*SkipCopy) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	return nil, sourceID, nil
@@ -28,7 +28,7 @@ func (*SkipCopy) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	return []jen.Code{assignTo.Stmt.Clone().Op("=").Add(sourceID.Code)}, nil

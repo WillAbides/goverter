@@ -12,24 +12,24 @@ const thisVar = "c"
 // MethodContext exposes information for the current method.
 type MethodContext struct {
 	*Namer
-	Conf              *Method
+	Conf              *method
 	FieldsTarget      string
 	OutputPackagePath string
 	UseConstructor    bool
-	Signature         Signature
-	TargetType        *Type
+	Signature         signature
+	TargetType        *xType
 	HasMethod         func(*MethodContext, types.Type, types.Type) bool
 	SeenNamed         map[string]struct{}
 
-	IndexID MethodIndexID
+	IndexID methodIndexID
 	Context map[string]*JenID
 
-	AvailableContext map[string]*Type
+	AvailableContext map[string]*xType
 
 	TargetVar *jen.Statement
 }
 
-func (ctx *MethodContext) HasSeen(source *Type) bool {
+func (ctx *MethodContext) HasSeen(source *xType) bool {
 	if !source.Named {
 		return false
 	}
@@ -38,7 +38,7 @@ func (ctx *MethodContext) HasSeen(source *Type) bool {
 	return ok
 }
 
-func (ctx *MethodContext) MarkSeen(source *Type) {
+func (ctx *MethodContext) MarkSeen(source *xType) {
 	if !source.Named {
 		return
 	}
@@ -52,7 +52,7 @@ func (ctx *MethodContext) SetErrorTargetVar(m *jen.Statement) {
 	}
 }
 
-func (ctx *MethodContext) Field(target *Type, name string) *FieldMapping {
+func (ctx *MethodContext) Field(target *xType, name string) *fieldMapping {
 	if ctx.FieldsTarget != target.String {
 		return emptyMapping
 	}
@@ -64,7 +64,7 @@ func (ctx *MethodContext) Field(target *Type, name string) *FieldMapping {
 	return prop
 }
 
-func (ctx *MethodContext) DefinedFields(target *Type) map[string]struct{} {
+func (ctx *MethodContext) DefinedFields(target *xType) map[string]struct{} {
 	if ctx.FieldsTarget != target.String {
 		return emptyFields
 	}
@@ -76,7 +76,7 @@ func (ctx *MethodContext) DefinedFields(target *Type) map[string]struct{} {
 	return f
 }
 
-func (ctx *MethodContext) DefinedEnumFields(target *Type) map[string]struct{} {
+func (ctx *MethodContext) DefinedEnumFields(target *xType) map[string]struct{} {
 	if ctx.FieldsTarget != target.String {
 		return emptyFields
 	}
@@ -89,21 +89,21 @@ func (ctx *MethodContext) DefinedEnumFields(target *Type) map[string]struct{} {
 }
 
 var (
-	emptyMapping = &FieldMapping{}
+	emptyMapping = &fieldMapping{}
 	emptyFields  = map[string]struct{}{}
 )
 
 // builder builds converter implementations, and can decide if it can handle the given type.
 type builder interface {
 	// matches returns true, if the builder can create handle the given types.
-	matches(ctx *MethodContext, source, target *Type) bool
+	matches(ctx *MethodContext, source, target *xType) bool
 
 	// build creates conversion source code for the given source and target type.
 	build(
 		gen *generator,
 		ctx *MethodContext,
 		sourceID *JenID,
-		source, target *Type,
+		source, target *xType,
 		path ErrorPath,
 	) ([]jen.Code, *JenID, *BuildError)
 
@@ -113,7 +113,7 @@ type builder interface {
 		ctx *MethodContext,
 		assignTo *AssignTo,
 		sourceID *JenID,
-		source, target *Type,
+		source, target *xType,
 		path ErrorPath,
 	) ([]jen.Code, *BuildError)
 }
@@ -122,7 +122,7 @@ func buildTargetVar(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *jen.Statement, *BuildError) {
 	if !ctx.UseConstructor ||
@@ -208,7 +208,7 @@ func assignByBuild(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	return ToAssignable(assignTo)(b.build(gen, ctx, sourceID, source, target, errPath))
@@ -219,7 +219,7 @@ func buildByAssign(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
@@ -233,5 +233,5 @@ func buildByAssign(
 	}
 
 	buildStmt = append(buildStmt, stmt...)
-	return buildStmt, VariableID(valueVar), nil
+	return buildStmt, variableID(valueVar), nil
 }

@@ -68,11 +68,11 @@ func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines
 	for _, line := range lines.Lines {
 		cmd, rest := ParseCommand(line)
 		switch cmd {
-		case ConfigMap:
-			if _, _, custom, err := ParseMethodMap(rest); err == nil && custom != "" {
+		case configMap:
+			if _, _, custom, err := parseMethodMap(rest); err == nil && custom != "" {
 				registerFullMethod(lookup, sourcePackage, custom)
 			}
-		case ConfigDefault:
+		case configDefault:
 			registerFullMethod(lookup, sourcePackage, rest)
 		}
 	}

@@ -5,8 +5,7 @@ import (
 	"regexp"
 )
 
-type Common struct {
-	FieldSettings                      []string
+type commonCfg struct {
 	WrapErrors                         bool
 	WrapErrorsUsing                    string
 	IgnoreUnexported                   bool
@@ -20,10 +19,10 @@ type Common struct {
 	UseUnderlyingTypeMethods           bool
 	DefaultUpdate                      bool
 	ArgContextRegex                    *regexp.Regexp
-	Enum                               EnumConfig
+	Enum                               enumConfig
 }
 
-func parseCommon(c *Common, cmd, rest string) (fieldSetting bool, err error) {
+func parseCommon(c *commonCfg, cmd, rest string) (fieldSetting bool, err error) {
 	switch cmd {
 	case "wrapErrors":
 		if c.WrapErrorsUsing != "" {
@@ -64,13 +63,13 @@ func parseCommon(c *Common, cmd, rest string) (fieldSetting bool, err error) {
 	case "useUnderlyingTypeMethods":
 		c.UseUnderlyingTypeMethods, err = ParseBool(rest)
 	case "enum":
-		c.Enum.Enabled, err = ParseBool(rest)
+		c.Enum.enabled, err = ParseBool(rest)
 	case "arg:context:regex":
 		c.ArgContextRegex, err = ParseRegex(rest)
 	case "enum:unknown":
-		c.Enum.Unknown, err = ParseString(rest)
-		if err == nil && IsEnumAction(c.Enum.Unknown) {
-			err = ValidateEnumAction(c.Enum.Unknown)
+		c.Enum.unknown, err = ParseString(rest)
+		if err == nil && IsEnumAction(c.Enum.unknown) {
+			err = ValidateEnumAction(c.Enum.unknown)
 		}
 	case "":
 		err = fmt.Errorf("missing setting key")

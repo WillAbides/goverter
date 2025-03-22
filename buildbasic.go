@@ -8,7 +8,7 @@ import (
 type basic struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*basic) matches(_ *MethodContext, source, target *Type) bool {
+func (*basic) matches(_ *MethodContext, source, target *xType) bool {
 	return source.Basic && target.Basic &&
 		source.BasicType.Kind() == target.BasicType.Kind()
 }
@@ -18,11 +18,11 @@ func (*basic) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	if target.Named || (!target.Named && source.Named) {
-		return nil, OtherID(target.TypeAsJen().Call(sourceID.Code)), nil
+		return nil, otherID(target.TypeAsJen().Call(sourceID.Code)), nil
 	}
 	return nil, sourceID, nil
 }
@@ -32,7 +32,7 @@ func (b *basic) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	return assignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)
@@ -42,7 +42,7 @@ func (b *basic) assign(
 type BasicTargetPointerRule struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BasicTargetPointerRule) matches(_ *MethodContext, source, target *Type) bool {
+func (*BasicTargetPointerRule) matches(_ *MethodContext, source, target *xType) bool {
 	return source.Basic && target.Pointer && target.PointerInner.Basic
 }
 
@@ -51,7 +51,7 @@ func (*BasicTargetPointerRule) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	name := ctx.Name(target.ID())
@@ -69,7 +69,7 @@ func (*BasicTargetPointerRule) build(
 	stmt = append(stmt, jen.Id(name).Op(":=").Add(id.Code))
 	newID := jen.Op("&").Id(name)
 
-	return stmt, OtherID(newID), err
+	return stmt, otherID(newID), err
 }
 
 func (b *BasicTargetPointerRule) assign(
@@ -77,7 +77,7 @@ func (b *BasicTargetPointerRule) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	return assignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)

@@ -17,28 +17,28 @@ const (
 
 var defaultConfigInterface = converterConfig{
 	OutputFile:   "./generated/generated.go",
-	Common:       defaultCommon,
+	commonCfg:    defaultCommon,
 	OutputFormat: OutputFormatStruct,
 }
 
 var defaultConfigVariables = converterConfig{
 	OutputFormat: OutputFormatVariable,
-	Common:       defaultCommon,
+	commonCfg:    defaultCommon,
 }
 
-var defaultCommon = Common{
-	Enum: EnumConfig{Enabled: true},
+var defaultCommon = commonCfg{
+	Enum: enumConfig{enabled: true},
 }
 
 type converterConfig struct {
-	Common
+	commonCfg
 	Name              string
 	OutputRaw         []string
 	OutputFile        string
 	OutputPackagePath string
 	OutputPackageName string
 	OutputFormat      outputFormat
-	Extend            []*MethodDefinition
+	Extend            []*methodDefinition
 	Comments          []string
 }
 
@@ -59,7 +59,7 @@ type Converter struct {
 	Package  string
 	FileName string
 	Type     types.Type
-	Methods  []*Method
+	Methods  []*method
 
 	Location string
 }
@@ -106,7 +106,7 @@ func parseConverter(ctx *CfgContext, rawConverter *RawConverter, global RawLines
 
 	ResolveOutputPackage(ctx, c)
 
-	err = ParseMethodsCfg(ctx, rawConverter, c)
+	err = parseMethodsCfg(ctx, rawConverter, c)
 	return c, err
 }
 
@@ -218,17 +218,17 @@ func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error)
 	case "enum:exclude":
 		var pattern EnumIDPattern
 		pattern, err = ParseIDPattern(c.Package, rest)
-		c.Enum.Excludes = append(c.Enum.Excludes, pattern)
+		c.Enum.excludes = append(c.Enum.excludes, pattern)
 	case configExtend:
 		for _, name := range strings.Fields(rest) {
-			opts := &ParseMethodOpts{
+			opts := &parseMethodOpts{
 				ErrorPrefix:       "error parsing type",
 				OutputPackagePath: c.OutputPackagePath,
 				Converter:         c.typeForMethod(),
-				Params:            ParamsRequired,
+				Params:            paramsRequired,
 				ContextMatch:      c.ArgContextRegex,
 			}
-			var defs []*MethodDefinition
+			var defs []*methodDefinition
 			defs, err = ctx.Loader.GetMatching(c.Package, name, opts)
 			if err != nil {
 				break
@@ -236,7 +236,7 @@ func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error)
 			c.Extend = append(c.Extend, defs...)
 		}
 	default:
-		_, err = parseCommon(&c.Common, cmd, rest)
+		_, err = parseCommon(&c.commonCfg, cmd, rest)
 	}
 	return err
 }

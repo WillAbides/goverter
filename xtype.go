@@ -9,8 +9,8 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-// Accessible checks if obj is accessible within outputPackagePath.
-func Accessible(obj types.Object, outputPackagePath string) bool {
+// accessible checks if obj is accessible within outputPackagePath.
+func accessible(obj types.Object, outputPackagePath string) bool {
 	if obj.Exported() {
 		return true
 	}
@@ -19,14 +19,14 @@ func Accessible(obj types.Object, outputPackagePath string) bool {
 	return pkg == nil || pkg.Path() == outputPackagePath
 }
 
-// Signature represents a signature for conversion.
-type Signature struct {
+// signature represents a signature for conversion.
+type signature struct {
 	Source string
 	Target string
 }
 
 // Type is a helper wrapper for types.Type.
-type Type struct {
+type xType struct {
 	String        string
 	T             types.Type
 	Interface     bool
@@ -37,14 +37,14 @@ type Type struct {
 	NamedType     *types.Named
 	Pointer       bool
 	PointerType   *types.Pointer
-	PointerInner  *Type
+	PointerInner  *xType
 	List          bool
 	ListFixed     bool
-	ListInner     *Type
+	ListInner     *xType
 	Map           bool
 	MapType       *types.Map
-	MapKey        *Type
-	MapValue      *Type
+	MapKey        *xType
+	MapValue      *xType
 	Basic         bool
 	BasicType     *types.Basic
 	Signature     bool
@@ -57,19 +57,19 @@ type Type struct {
 	enum *Enum
 }
 
-func (t *Type) AssignableTo(other *Type) bool {
+func (t *xType) AssignableTo(other *xType) bool {
 	return types.AssignableTo(t.T, other.T)
 }
 
-func (t *Type) AsPointer() *Type {
-	return TypeOf(t.AsPointerType())
+func (t *xType) AsPointer() *xType {
+	return typeOf(t.AsPointerType())
 }
 
-func (t *Type) AsPointerType() *types.Pointer {
+func (t *xType) AsPointerType() *types.Pointer {
 	return types.NewPointer(t.T)
 }
 
-func (t *Type) inStruct(source *Type, field string) *Type {
+func (t *xType) inStruct(source *xType, field string) *xType {
 	if t.Signature && source.Named {
 		t.FuncType = types.NewFunc(-1, source.NamedType.Obj().Pkg(), field, t.SignatureType)
 		t.Func = true
@@ -78,33 +78,30 @@ func (t *Type) inStruct(source *Type, field string) *Type {
 	return t
 }
 
-// StructField holds the type of a struct field and its name.
-type StructField struct {
+// structField holds the type of a struct field and its name.
+type structField struct {
 	Path []string
-	Type *Type
+	Type *xType
 }
 
-type SimpleStructField struct {
+type simpleStructField struct {
 	Name string
-	Type *Type
+	Type *xType
 }
 
-// StructField returns the type of a struct field and its name upon successful match or
-// an error if it is not found. This method will also return a detailed error if matchIgnoreCase
-// is enabled and there are multiple non-exact matches.
-func (t *Type) findAllFields(path []string, name string, ignoreCase bool) (*StructField, []*StructField) {
+func (t *xType) findAllFields(path []string, name string, ignoreCase bool) (*structField, []*structField) {
 	if !t.Struct {
 		panic("trying to get field of non struct")
 	}
 
-	var matches []*StructField
-	handle := func(obj types.Object) *StructField {
+	var matches []*structField
+	handle := func(obj types.Object) *structField {
 		exact := obj.Name() == name
 		if exact || (ignoreCase && strings.EqualFold(obj.Name(), name)) {
 			// exact match takes precedence over case-insensitive match
 			newPath := append([]string{}, path...)
 			newPath = append(newPath, obj.Name())
-			f := &StructField{Path: newPath, Type: TypeOf(obj.Type()).inStruct(t, obj.Name())}
+			f := &structField{Path: newPath, Type: typeOf(obj.Type()).inStruct(t, obj.Name())}
 			if exact {
 				return f
 			}
@@ -130,33 +127,33 @@ func (t *Type) findAllFields(path []string, name string, ignoreCase bool) (*Stru
 	return nil, matches
 }
 
-type FieldSources struct {
+type fieldSources struct {
 	Path []string
-	Type *Type
+	Type *xType
 }
 
-func FindExactField(source *Type, name string) (*SimpleStructField, error) {
+func findExactField(source *xType, name string) (*simpleStructField, error) {
 	exactMatch, _ := source.findAllFields(nil, name, false)
 	if exactMatch == nil {
 		return nil, fmt.Errorf("%q does not exist", name)
 	}
-	return &SimpleStructField{Name: exactMatch.Path[0], Type: exactMatch.Type}, nil
+	return &simpleStructField{Name: exactMatch.Path[0], Type: exactMatch.Type}, nil
 }
 
-type NoMatchError struct{ Field string }
+type noMatchError struct{ Field string }
 
-func (err *NoMatchError) Error() string {
+func (err *noMatchError) Error() string {
 	return fmt.Sprintf("\"%s\" does not exist", err.Field)
 }
 
-func FindField(
+func findField(
 	name string,
 	ignoreCase bool,
-	source *Type,
-	additionalFieldSources []FieldSources,
-) (*StructField, error) {
+	source *xType,
+	additionalFieldSources []fieldSources,
+) (*structField, error) {
 	exactMatch, ignoreCaseMatches := source.findAllFields(nil, name, ignoreCase)
-	var exactMatches []*StructField
+	var exactMatches []*structField
 	if exactMatch != nil {
 		exactMatches = append(exactMatches, exactMatch)
 	}
@@ -178,7 +175,7 @@ func FindField(
 	case 1:
 		return matches[0], nil
 	case 0:
-		return nil, &NoMatchError{Field: name}
+		return nil, &noMatchError{Field: name}
 	default:
 		names := make([]string, 0, len(matches))
 		for _, m := range matches {
@@ -195,67 +192,67 @@ type JenID struct {
 	Variable      bool
 }
 
-func (j *JenID) Pointer(t *Type, namer func(string) string) ([]jen.Code, *JenID) {
+func (j *JenID) Pointer(t *xType, namer func(string) string) ([]jen.Code, *JenID) {
 	if j.Variable {
-		return nil, OtherID(jen.Op("&").Add(j.Code.Clone()))
+		return nil, otherID(jen.Op("&").Add(j.Code.Clone()))
 	}
 
 	name := namer(t.ID())
 	stmt := []jen.Code{jen.Id(name).Op(":=").Add(j.Code.Clone())}
-	return stmt, OtherID(jen.Op("&").Id(name))
+	return stmt, otherID(jen.Op("&").Id(name))
 }
 
-func (j *JenID) Deref(source *Type) *JenID {
+func (j *JenID) Deref(source *xType) *JenID {
 	valueSourceID := jen.Op("*").Add(j.Code.Clone())
 	if !source.PointerInner.Basic {
 		valueSourceID = jen.Parens(valueSourceID)
 	}
-	innerID := OtherID(valueSourceID)
+	innerID := otherID(valueSourceID)
 	innerID.ParentPointer = j
 	return innerID
 }
 
-// VariableID is used, when the ID can be referenced. F.ex it is not a function call.
-func VariableID(code *jen.Statement) *JenID {
+// variableID is used, when the ID can be referenced. F.ex it is not a function call.
+func variableID(code *jen.Statement) *JenID {
 	return &JenID{Code: code, Variable: true}
 }
 
-// OtherID is used, when the ID isn't a variable id.
-func OtherID(code *jen.Statement) *JenID {
+// otherID is used, when the ID isn't a variable id.
+func otherID(code *jen.Statement) *JenID {
 	return &JenID{Code: code, Variable: false}
 }
 
-// TypeOf creates a Type.
-func TypeOf(t types.Type) *Type {
+// typeOf creates a Type.
+func typeOf(t types.Type) *xType {
 	t = types.Unalias(t)
-	rt := &Type{}
+	rt := &xType{}
 	rt.T = t
 	rt.String = t.String()
 	applyTo(rt, t)
 	return rt
 }
 
-func applyTo(rt *Type, t types.Type) {
+func applyTo(rt *xType, t types.Type) {
 	switch value := t.(type) {
 	case *types.Pointer:
 		rt.Pointer = true
 		rt.PointerType = value
-		rt.PointerInner = TypeOf(value.Elem())
+		rt.PointerInner = typeOf(value.Elem())
 	case *types.Basic:
 		rt.Basic = true
 		rt.BasicType = value
 	case *types.Map:
 		rt.Map = true
 		rt.MapType = value
-		rt.MapKey = TypeOf(value.Key())
-		rt.MapValue = TypeOf(value.Elem())
+		rt.MapKey = typeOf(value.Key())
+		rt.MapValue = typeOf(value.Elem())
 	case *types.Slice:
 		rt.List = true
-		rt.ListInner = TypeOf(value.Elem())
+		rt.ListInner = typeOf(value.Elem())
 	case *types.Array:
 		rt.List = true
 		rt.ListFixed = true
-		rt.ListInner = TypeOf(value.Elem())
+		rt.ListInner = typeOf(value.Elem())
 	case *types.Named:
 		rt.Named = true
 		rt.NamedType = value
@@ -280,17 +277,17 @@ func applyTo(rt *Type, t types.Type) {
 }
 
 // ID returns a deteministically generated id that may be used as variable.
-func (t *Type) ID() string {
+func (t *xType) ID() string {
 	return t.asID(true, true)
 }
 
 // UnescapedID returns a deteministically generated id that may be used as variable
 // reserved keywords aren't escaped.
-func (t *Type) UnescapedID() string {
+func (t *xType) UnescapedID() string {
 	return t.asID(true, false)
 }
 
-func (t *Type) asID(seeNamed, escapeReserved bool) string {
+func (t *xType) asID(seeNamed, escapeReserved bool) string {
 	if seeNamed && t.Named {
 		pkg := t.NamedType.Obj().Pkg()
 		name := t.NamedType.Obj().Name()
@@ -327,7 +324,7 @@ func (t *Type) asID(seeNamed, escapeReserved bool) string {
 }
 
 // TypeAsJen returns a jen representation of the type.
-func (t *Type) TypeAsJen() *jen.Statement {
+func (t *xType) TypeAsJen() *jen.Statement {
 	if t.Named {
 		return ToCode(t.NamedType)
 	}
@@ -344,7 +341,7 @@ Explicitly define the mapping via goverter:map. Example:
 See https://goverter.jmattheis.de/reference/map`, name, strings.Join(ambNames, ", "), ambNames[0], name)
 }
 
-func (t *Type) Enum(cfg *EnumConfig) *Enum {
+func (t *xType) Enum(cfg *enumConfig) *Enum {
 	if !t.Named {
 		return &Enum{}
 	}
@@ -355,11 +352,11 @@ func (t *Type) Enum(cfg *EnumConfig) *Enum {
 	return t.enum
 }
 
-func loadEnum(t *types.Named, cfg *EnumConfig) *Enum {
+func loadEnum(t *types.Named, cfg *enumConfig) *Enum {
 	path := t.Obj().Pkg().Path()
 	name := t.Obj().Name()
 
-	if !cfg.Enabled || cfg.Excludes.Matches(path, name) {
+	if !cfg.enabled || cfg.excludes.Matches(path, name) {
 		return &Enum{}
 	}
 

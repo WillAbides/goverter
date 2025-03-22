@@ -13,7 +13,7 @@ import (
 type BuildStruct struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildStruct) matches(_ *MethodContext, source, target *Type) bool {
+func (*BuildStruct) matches(_ *MethodContext, source, target *xType) bool {
 	return source.Struct && target.Struct
 }
 
@@ -22,7 +22,7 @@ func (s *BuildStruct) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	// Optimization for golang sets
@@ -37,7 +37,7 @@ func (s *BuildStruct) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	additionalFieldSources, err := parseAutoMap(ctx, source)
@@ -62,7 +62,7 @@ func (s *BuildStruct) assign(
 			continue
 		}
 
-		if !Accessible(targetField, ctx.OutputPackagePath) {
+		if !accessible(targetField, ctx.OutputPackagePath) {
 			cause := unexportedStructError(targetField.Name(), source.String, target.String)
 			return nil, NewBuildError(cause).Lift(&ErrorMessagePath{
 				Prefix:     ".",
@@ -72,7 +72,7 @@ func (s *BuildStruct) assign(
 			})
 		}
 
-		targetFieldType := TypeOf(targetField.Type())
+		targetFieldType := typeOf(targetField.Type())
 		targetFieldPath := errPath.Field(targetField.Name())
 
 		if fieldMapping.Function == nil {
@@ -100,7 +100,7 @@ func (s *BuildStruct) assign(
 
 			sourceLift := []*ErrorMessagePath{}
 			var functionCallSourceID *JenID
-			var functionCallSourceType *Type
+			var functionCallSourceType *xType
 			if def.Source != nil {
 				usedSourceID = true
 				nextID, nextSource, mapStmt, mapLift, _, err := mapField(gen, ctx, targetField, sourceID, source, target, additionalFieldSources, targetFieldPath)
@@ -154,7 +154,7 @@ func (s *BuildStruct) assign(
 	return stmt, nil
 }
 
-func shouldCheckAgainstZero(ctx *MethodContext, s, t *Type, isUpdate, call bool) bool {
+func shouldCheckAgainstZero(ctx *MethodContext, s, t *xType, isUpdate, call bool) bool {
 	switch {
 	case !ctx.Conf.UpdateTarget && !isUpdate:
 		return false
@@ -182,10 +182,10 @@ func mapField(
 	ctx *MethodContext,
 	targetField *types.Var,
 	sourceID *JenID,
-	source, target *Type,
-	additionalFieldSources []FieldSources,
+	source, target *xType,
+	additionalFieldSources []fieldSources,
 	errPath ErrorPath,
-) (*JenID, *Type, []jen.Code, []*ErrorMessagePath, bool, *BuildError) {
+) (*JenID, *xType, []jen.Code, []*ErrorMessagePath, bool, *BuildError) {
 	lift := []*ErrorMessagePath{}
 	def := ctx.Field(target, targetField.Name())
 	pathString := def.Source
@@ -202,12 +202,12 @@ func mapField(
 
 	var path []string
 	if pathString == "" {
-		sourceMatch, err := FindField(targetField.Name(), ctx.Conf.MatchIgnoreCase, source, additionalFieldSources)
+		sourceMatch, err := findField(targetField.Name(), ctx.Conf.MatchIgnoreCase, source, additionalFieldSources)
 		if err != nil {
 			cause := fmt.Sprintf("Cannot match the target field with the source entry: %s.", err.Error())
 			skip := false
 			if ctx.Conf.IgnoreMissing {
-				_, skip = err.(*NoMatchError)
+				_, skip = err.(*noMatchError)
 			}
 			return nil, nil, nil, nil, skip, NewBuildError(cause).Lift(&ErrorMessagePath{
 				Prefix:     ".",
@@ -245,7 +245,7 @@ func mapField(
 				SourceType: "???",
 			}).Lift(lift...)
 		}
-		sourceMatch, err := FindExactField(nextSource, path[i])
+		sourceMatch, err := findExactField(nextSource, path[i])
 		if err == nil {
 			nextSource = sourceMatch.Type
 			nextIDCode = nextIDCode.Clone().Dot(sourceMatch.Name)
@@ -271,17 +271,17 @@ func mapField(
 		}).Lift(lift...)
 	}
 
-	returnID := VariableID(nextIDCode)
+	returnID := variableID(nextIDCode)
 	var innerStmt []jen.Code
 	if nextSource.Func {
-		def, err := ParseMethod(nextSource.FuncType, &ParseMethodOpts{
+		def, err := parseMethod(nextSource.FuncType, &parseMethodOpts{
 			Converter:         nil,
 			OutputPackagePath: ctx.OutputPackagePath,
 			ErrorPrefix:       "Error parsing struct method",
-			Params:            ParamsNone,
+			Params:            paramsNone,
 			ContextMatch:      structMethodContextRegex,
 			CustomCall:        nextIDCode,
-		}, EmptyLocalMethodOpts)
+		}, emptyLocalMethodOpts)
 		if err != nil {
 			return nil, nil, nil, nil, false, NewBuildError(err.Error()).Lift(lift...)
 		}
@@ -324,7 +324,7 @@ func mapField(
 
 		stmt = append(stmt, jen.If(condition).Block(innerStmt...))
 		nextSource = pointerNext
-		returnID = VariableID(jen.Id(tempName))
+		returnID = variableID(jen.Id(tempName))
 	} else {
 		stmt = append(stmt, innerStmt...)
 	}
@@ -332,14 +332,14 @@ func mapField(
 	return returnID, nextSource, stmt, lift, false, nil
 }
 
-func parseAutoMap(ctx *MethodContext, source *Type) ([]FieldSources, *BuildError) {
-	fieldSources := []FieldSources{}
+func parseAutoMap(ctx *MethodContext, source *xType) ([]fieldSources, *BuildError) {
+	var sources []fieldSources
 	for _, field := range ctx.Conf.AutoMap {
 		innerSource := source
-		lift := []*ErrorMessagePath{}
+		var lift []*ErrorMessagePath
 		path := strings.Split(field, ".")
 		for _, part := range path {
-			field, err := FindExactField(innerSource, part)
+			field, err := findExactField(innerSource, part)
 			if err != nil {
 				return nil, NewBuildError(err.Error()).Lift(&ErrorMessagePath{
 					Prefix:     ".",
@@ -356,7 +356,7 @@ func parseAutoMap(ctx *MethodContext, source *Type) ([]FieldSources, *BuildError
 
 			switch {
 			case innerSource.Pointer && innerSource.PointerInner.Struct:
-				innerSource = TypeOf(innerSource.PointerInner.StructType)
+				innerSource = typeOf(innerSource.PointerInner.StructType)
 			case innerSource.Struct:
 				// ok
 			default:
@@ -364,9 +364,9 @@ func parseAutoMap(ctx *MethodContext, source *Type) ([]FieldSources, *BuildError
 			}
 		}
 
-		fieldSources = append(fieldSources, FieldSources{Path: path, Type: innerSource})
+		sources = append(sources, fieldSources{Path: path, Type: innerSource})
 	}
-	return fieldSources, nil
+	return sources, nil
 }
 
 func unexportedStructError(targetField, sourceType, targetType string) string {

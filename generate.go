@@ -9,19 +9,21 @@ type GenerateConfig struct {
 	BuildConstraint string
 }
 
-// BuildSteps that'll used for generation.
-var BuildSteps = []builder{
-	&UseUnderlyingTypeMethods{},
-	&SkipCopy{},
-	&BuildEnum{},
-	&BasicTargetPointerRule{},
-	&Pointer{},
-	&SourcePointer{},
-	&TargetPointer{},
-	&basic{},
-	&BuildStruct{},
-	&BuildList{},
-	&BuildMap{},
+// buildSteps that'll be used for generation.
+func buildSteps() []builder {
+	return []builder{
+		&UseUnderlyingTypeMethods{},
+		&SkipCopy{},
+		&BuildEnum{},
+		&BasicTargetPointerRule{},
+		&Pointer{},
+		&SourcePointer{},
+		&TargetPointer{},
+		&basic{},
+		&BuildStruct{},
+		&BuildList{},
+		&BuildMap{},
+	}
 }
 
 // Generate generates a jen.File containing converters.
@@ -59,23 +61,23 @@ func generateConverter(converter *Converter, f *jen.File, n *Namer) error {
 }
 
 func setupGenerator(converter *Converter, n *Namer) (*generator, error) {
-	extend := NewMethodIndex[MethodDefinition]()
+	extend := newMethodIndex[methodDefinition]()
 	for _, def := range converter.Extend {
 		extend.RegisterOverrideOverlapping(def, def)
 	}
 
 	var err error
-	lookup := NewMethodIndex[generatedMethod]()
+	lookup := newMethodIndex[generatedMethod]()
 	for _, cMethod := range converter.Methods {
 		gen := &generatedMethod{
-			Method:   cMethod,
+			method:   cMethod,
 			Dirty:    true,
 			Explicit: true,
 		}
 		if gen.UpdateTarget {
 			gen.IndexID, err = lookup.RegisterUpdate(gen)
 		} else {
-			gen.IndexID, err = lookup.Register(gen, gen.MethodDefinition)
+			gen.IndexID, err = lookup.Register(gen, gen.methodDefinition)
 		}
 		if err != nil {
 			return nil, err

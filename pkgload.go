@@ -13,7 +13,7 @@ import (
 func NewPackageLoader(workDir, buildTags string, paths []string) (*PackageLoader, error) {
 	loader := &PackageLoader{
 		lookup: map[string]*packages.Package{},
-		locals: map[string]map[string]LocalMethodOpts{},
+		locals: map[string]map[string]localMethodOpts{},
 	}
 	err := loader.Load(workDir, buildTags, paths)
 	return loader, err
@@ -21,10 +21,10 @@ func NewPackageLoader(workDir, buildTags string, paths []string) (*PackageLoader
 
 type PackageLoader struct {
 	lookup map[string]*packages.Package
-	locals map[string]map[string]LocalMethodOpts
+	locals map[string]map[string]localMethodOpts
 }
 
-func (g *PackageLoader) GetMatching(cwd, fullMethod string, opts *ParseMethodOpts) ([]*MethodDefinition, error) {
+func (g *PackageLoader) GetMatching(cwd, fullMethod string, opts *parseMethodOpts) ([]*methodDefinition, error) {
 	pkgName, name, err := ParseMethodString(cwd, fullMethod)
 	if err != nil {
 		return nil, err
@@ -41,11 +41,11 @@ func (g *PackageLoader) GetMatching(cwd, fullMethod string, opts *ParseMethodOpt
 		if err != nil {
 			return nil, err
 		}
-		return []*MethodDefinition{m}, nil
+		return []*methodDefinition{m}, nil
 	}
 
 	// this is regexp, scan thru the package methods to find funcs that match the pattern
-	var matches []*MethodDefinition
+	var matches []*methodDefinition
 
 	pkg, err := g.GetPkg(pkgName)
 	if err != nil {
@@ -64,7 +64,7 @@ func (g *PackageLoader) GetMatching(cwd, fullMethod string, opts *ParseMethodOpt
 		}
 
 		obj := scope.Lookup(name)
-		m, err := ParseMethod(obj, opts, g.LocalConfig(pkg, name))
+		m, err := parseMethod(obj, opts, g.LocalConfig(pkg, name))
 		if err == nil {
 			matches = append(matches, m)
 		}
@@ -99,10 +99,10 @@ func (g *PackageLoader) GetPkg(pkgName string) (*packages.Package, error) {
 	return pkg, nil
 }
 
-func (g *PackageLoader) LocalConfig(pkg *packages.Package, name string) LocalMethodOpts {
+func (g *PackageLoader) LocalConfig(pkg *packages.Package, name string) localMethodOpts {
 	fns, ok := g.locals[pkg.PkgPath]
 	if !ok {
-		fns = map[string]LocalMethodOpts{}
+		fns = map[string]localMethodOpts{}
 		for _, file := range pkg.Syntax {
 			commentMap := ast.NewCommentMap(pkg.Fset, file, file.Comments)
 			for _, decl := range file.Decls {
@@ -120,7 +120,7 @@ func (g *PackageLoader) LocalConfig(pkg *packages.Package, name string) LocalMet
 							}
 						}
 					}
-					fns[fn.Name.Name] = LocalMethodOpts{Context: contexts}
+					fns[fn.Name.Name] = localMethodOpts{Context: contexts}
 				}
 			}
 		}
@@ -128,7 +128,7 @@ func (g *PackageLoader) LocalConfig(pkg *packages.Package, name string) LocalMet
 	}
 	fn, ok := fns[name]
 	if !ok {
-		return EmptyLocalMethodOpts
+		return emptyLocalMethodOpts
 	}
 	return fn
 }
@@ -146,7 +146,7 @@ func (g *PackageLoader) GetOneRaw(pkgName, name string) (*packages.Package, type
 	return pkg, obj, nil
 }
 
-func (g *PackageLoader) GetOne(sourcePackage, fullMethod string, opts *ParseMethodOpts) (*MethodDefinition, error) {
+func (g *PackageLoader) GetOne(sourcePackage, fullMethod string, opts *parseMethodOpts) (*methodDefinition, error) {
 	pkgName, name, err := ParseMethodString(sourcePackage, fullMethod)
 	if err != nil {
 		return nil, err
@@ -154,13 +154,13 @@ func (g *PackageLoader) GetOne(sourcePackage, fullMethod string, opts *ParseMeth
 	return g.GetOneParsed(pkgName, name, opts)
 }
 
-func (g *PackageLoader) GetOneParsed(pkgName, name string, opts *ParseMethodOpts) (*MethodDefinition, error) {
+func (g *PackageLoader) GetOneParsed(pkgName, name string, opts *parseMethodOpts) (*methodDefinition, error) {
 	pkg, obj, err := g.GetOneRaw(pkgName, name)
 	if err != nil {
 		return nil, err
 	}
 
-	def, err := ParseMethod(obj, opts, g.LocalConfig(pkg, name))
+	def, err := parseMethod(obj, opts, g.LocalConfig(pkg, name))
 	if err != nil {
 		return nil, err
 	}

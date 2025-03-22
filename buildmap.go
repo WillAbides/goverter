@@ -8,7 +8,7 @@ import (
 type BuildMap struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildMap) matches(_ *MethodContext, source, target *Type) bool {
+func (*BuildMap) matches(_ *MethodContext, source, target *xType) bool {
 	return source.Map && target.Map
 }
 
@@ -17,7 +17,7 @@ func (m *BuildMap) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
@@ -29,7 +29,7 @@ func (*BuildMap) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
@@ -37,7 +37,7 @@ func (*BuildMap) assign(
 
 	errPath = errPath.Key(jen.Id(key))
 
-	block, keyID, err := gen.Build(ctx, VariableID(jen.Id(key)), source.MapKey, target.MapKey, errPath)
+	block, keyID, err := gen.Build(ctx, variableID(jen.Id(key)), source.MapKey, target.MapKey, errPath)
 	if err != nil {
 		return nil, err.Lift(&ErrorMessagePath{
 			SourceID:   "[]",
@@ -47,7 +47,7 @@ func (*BuildMap) assign(
 		})
 	}
 	valueStmt, err := gen.Assign(
-		ctx, assignTo.WithIndex(keyID.Code).MustAssign(), VariableID(jen.Id(value)), source.MapValue, target.MapValue, errPath)
+		ctx, assignTo.WithIndex(keyID.Code).MustAssign(), variableID(jen.Id(value)), source.MapValue, target.MapValue, errPath)
 	if err != nil {
 		return nil, err.Lift(&ErrorMessagePath{
 			SourceID:   "[]",

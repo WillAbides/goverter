@@ -10,7 +10,7 @@ import (
 type UseUnderlyingTypeMethods struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*UseUnderlyingTypeMethods) matches(ctx *MethodContext, source, target *Type) bool {
+func (*UseUnderlyingTypeMethods) matches(ctx *MethodContext, source, target *xType) bool {
 	if !ctx.Conf.UseUnderlyingTypeMethods {
 		return false
 	}
@@ -24,7 +24,7 @@ func (*UseUnderlyingTypeMethods) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	if IsBuildEnum(ctx, source, target) {
@@ -42,12 +42,12 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 	innerTarget := target
 
 	if sourceUnderlying {
-		innerSource = TypeOf(source.NamedType.Underlying())
-		sourceID = OtherID(innerSource.TypeAsJen().Call(sourceID.Code))
+		innerSource = typeOf(source.NamedType.Underlying())
+		sourceID = otherID(innerSource.TypeAsJen().Call(sourceID.Code))
 	}
 
 	if targetUnderlying {
-		innerTarget = TypeOf(target.NamedType.Underlying())
+		innerTarget = typeOf(target.NamedType.Underlying())
 	}
 
 	stmt, id, err := gen.Build(ctx, sourceID, innerSource, innerTarget, errPath)
@@ -61,7 +61,7 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 	}
 
 	if targetUnderlying {
-		id = OtherID(target.TypeAsJen().Call(id.Code))
+		id = otherID(target.TypeAsJen().Call(id.Code))
 	}
 
 	return stmt, id, err
@@ -72,13 +72,13 @@ func (u *UseUnderlyingTypeMethods) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	return assignByBuild(u, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
-func findUnderlyingExtendMapping(ctx *MethodContext, source, target *Type) (underlyingSource, underlyingTarget bool) {
+func findUnderlyingExtendMapping(ctx *MethodContext, source, target *xType) (underlyingSource, underlyingTarget bool) {
 	if source.Named {
 		if ctx.HasMethod(ctx, source.NamedType.Underlying(), target.NamedType) {
 			return true, false

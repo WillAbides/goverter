@@ -7,42 +7,42 @@ import (
 )
 
 const (
-	ConfigMap     = "map"
-	ConfigDefault = "default"
+	configMap     = "map"
+	configDefault = "default"
 )
 
-type FieldMapping struct {
+type fieldMapping struct {
 	Source   string
-	Function *MethodDefinition
+	Function *methodDefinition
 	Ignore   bool
 }
 
-type Method struct {
-	*MethodDefinition
-	Common
+type method struct {
+	*methodDefinition
+	commonCfg
 
-	Constructor *MethodDefinition
+	Constructor *methodDefinition
 	AutoMap     []string
-	Fields      map[string]*FieldMapping
+	Fields      map[string]*fieldMapping
 	EnumMapping *EnumMapping
 
 	RawFieldSettings []string
 
 	Location    string
 	UpdateParam string
-	LocalOpts   LocalMethodOpts
+	LocalOpts   localMethodOpts
 }
 
-func (m *Method) Field(targetName string) *FieldMapping {
+func (m *method) Field(targetName string) *fieldMapping {
 	target, ok := m.Fields[targetName]
 	if !ok {
-		target = &FieldMapping{}
+		target = &fieldMapping{}
 		m.Fields[targetName] = target
 	}
 	return target
 }
 
-func ParseMethodMap(remaining string) (source, target, custom string, err error) {
+func parseMethodMap(remaining string) (source, target, custom string, err error) {
 	parts := strings.SplitN(remaining, "|", 2)
 	if len(parts) == 2 {
 		custom = strings.TrimSpace(parts[1])
@@ -66,12 +66,12 @@ func ParseMethodMap(remaining string) (source, target, custom string, err error)
 	return source, target, custom, err
 }
 
-func ParseMethodsCfg(ctx *CfgContext, rawConverter *RawConverter, c *Converter) error {
+func parseMethodsCfg(ctx *CfgContext, rawConverter *RawConverter, c *Converter) error {
 	if c.Type != nil {
 		interf := c.Type.Underlying().(*types.Interface)
 		for i := 0; i < interf.NumMethods(); i++ {
 			fun := interf.Method(i)
-			def, err := ParseMethodCfg(ctx, c, fun, rawConverter.Methods[fun.Name()])
+			def, err := parseMethodCfg(ctx, c, fun, rawConverter.Methods[fun.Name()])
 			if err != nil {
 				return err
 			}
@@ -84,7 +84,7 @@ func ParseMethodsCfg(ctx *CfgContext, rawConverter *RawConverter, c *Converter) 
 		if err != nil {
 			return err
 		}
-		def, err := ParseMethodCfg(ctx, c, fn, lines)
+		def, err := parseMethodCfg(ctx, c, fn, lines)
 		if err != nil {
 			return err
 		}
@@ -93,45 +93,45 @@ func ParseMethodsCfg(ctx *CfgContext, rawConverter *RawConverter, c *Converter) 
 	return nil
 }
 
-func ParseMethodCfg(ctx *CfgContext, c *Converter, obj types.Object, rawMethod RawLines) (*Method, error) {
-	m := &Method{
-		Common:      c.Common,
-		Fields:      map[string]*FieldMapping{},
+func parseMethodCfg(ctx *CfgContext, c *Converter, obj types.Object, rawMethod RawLines) (*method, error) {
+	m := &method{
+		commonCfg:   c.commonCfg,
+		Fields:      map[string]*fieldMapping{},
 		Location:    rawMethod.Location,
 		EnumMapping: &EnumMapping{Map: map[string]string{}},
-		LocalOpts:   LocalMethodOpts{Context: map[string]bool{}},
+		LocalOpts:   localMethodOpts{Context: map[string]bool{}},
 	}
 
 	for _, value := range rawMethod.Lines {
-		if err := ParseMethodLine(ctx, c, m, value); err != nil {
+		if err := parseMethodLine(ctx, c, m, value); err != nil {
 			return m, FormatLineError(rawMethod, obj.String(), value, err)
 		}
 	}
 
-	def, err := ParseMethod(obj, &ParseMethodOpts{
+	def, err := parseMethod(obj, &parseMethodOpts{
 		ErrorPrefix:       "error parsing converter method",
 		Location:          rawMethod.Location,
 		Converter:         nil,
 		OutputPackagePath: c.OutputPackagePath,
-		Params:            ParamsRequired,
+		Params:            paramsRequired,
 		ContextMatch:      m.ArgContextRegex,
 		Generated:         true,
 		UpdateParam:       m.UpdateParam,
 	}, m.LocalOpts)
 
-	m.MethodDefinition = def
+	m.methodDefinition = def
 
 	return m, err
 }
 
-func ParseMethodLine(ctx *CfgContext, c *Converter, m *Method, value string) (err error) {
+func parseMethodLine(ctx *CfgContext, c *Converter, m *method, value string) (err error) {
 	cmd, rest := ParseCommand(value)
 	fieldSetting := false
 	switch cmd {
-	case ConfigMap:
+	case configMap:
 		fieldSetting = true
 		var source, target, custom string
-		source, target, custom, err = ParseMethodMap(rest)
+		source, target, custom, err = parseMethodMap(rest)
 		if err != nil {
 			return err
 		}
@@ -139,11 +139,11 @@ func ParseMethodLine(ctx *CfgContext, c *Converter, m *Method, value string) (er
 		f.Source = source
 
 		if custom != "" {
-			opts := &ParseMethodOpts{
+			opts := &parseMethodOpts{
 				ErrorPrefix:       "error parsing type",
 				OutputPackagePath: c.OutputPackagePath,
 				Converter:         c.typeForMethod(),
-				Params:            ParamsOptional,
+				Params:            paramsOptional,
 				AllowTypeParams:   true,
 				ContextMatch:      m.ArgContextRegex,
 			}
@@ -188,18 +188,18 @@ func ParseMethodLine(ctx *CfgContext, c *Converter, m *Method, value string) (er
 		var s string
 		s, err = ParseString(rest)
 		m.AutoMap = append(m.AutoMap, strings.TrimSpace(s))
-	case ConfigDefault:
-		opts := &ParseMethodOpts{
+	case configDefault:
+		opts := &parseMethodOpts{
 			ErrorPrefix:       "error parsing type",
 			OutputPackagePath: c.OutputPackagePath,
 			Converter:         c.typeForMethod(),
-			Params:            ParamsOptional,
+			Params:            paramsOptional,
 			AllowTypeParams:   true,
 			ContextMatch:      m.ArgContextRegex,
 		}
 		m.Constructor, err = ctx.Loader.GetOne(c.Package, rest, opts)
 	default:
-		fieldSetting, err = parseCommon(&m.Common, cmd, rest)
+		fieldSetting, err = parseCommon(&m.commonCfg, cmd, rest)
 	}
 	if fieldSetting {
 		m.RawFieldSettings = append(m.RawFieldSettings, value)

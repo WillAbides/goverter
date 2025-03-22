@@ -8,7 +8,7 @@ import (
 type BuildList struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildList) matches(_ *MethodContext, source, target *Type) bool {
+func (*BuildList) matches(_ *MethodContext, source, target *xType) bool {
 	return source.List && target.List && !target.ListFixed
 }
 
@@ -17,7 +17,7 @@ func (l *BuildList) build(
 	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
@@ -36,7 +36,7 @@ func (l *BuildList) build(
 	}
 	stmt = append([]jen.Code{id}, stmt...)
 
-	return stmt, VariableID(jen.Id(targetSlice)), nil
+	return stmt, variableID(jen.Id(targetSlice)), nil
 }
 
 func (*BuildList) assign(
@@ -44,13 +44,13 @@ func (*BuildList) assign(
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	source, target *Type,
+	source, target *xType,
 	path ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	index := ctx.Index()
 
-	indexedSource := VariableID(sourceID.Code.Clone().Index(jen.Id(index)))
+	indexedSource := variableID(sourceID.Code.Clone().Index(jen.Id(index)))
 
 	forBlock, err := gen.Assign(ctx, assignTo.WithIndex(jen.Id(index)), indexedSource, source.ListInner, target.ListInner, path.Index(jen.Id(index)))
 	if err != nil {
