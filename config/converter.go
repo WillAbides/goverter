@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/xtype"
 	"github.com/jmattheis/goverter/xtype/method"
 )
 
@@ -25,7 +24,7 @@ const (
 )
 
 var DefaultCommon = Common{
-	Enum: xtype.EnumConfig{Enabled: true},
+	Enum: goverter.EnumConfig{Enabled: true},
 }
 
 var DefaultConfigInterface = ConverterConfig{

@@ -6,6 +6,12 @@ import (
 	"sort"
 )
 
+type EnumConfig struct {
+	Unknown  string
+	Enabled  bool
+	Excludes EnumIDPatterns
+}
+
 type Enum struct {
 	Type    *types.Named
 	Members map[string]any
