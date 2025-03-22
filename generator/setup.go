@@ -21,7 +21,7 @@ func setupGenerator(converter *config.Converter, n *builder.Namer) (*generator, 
 			Explicit: true,
 		}
 		if gen.UpdateTarget {
-			gen.IndexID, err = lookup.RegisterUpdate(gen, gen.MethodDefinition)
+			gen.IndexID, err = lookup.RegisterUpdate(gen)
 		} else {
 			gen.IndexID, err = lookup.Register(gen, gen.MethodDefinition)
 		}

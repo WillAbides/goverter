@@ -52,7 +52,7 @@ func (l *Index[T]) RegisterOverrideOverlapping(t *T, def *MethodDefinition) {
 	l.Exact[def.Signature] = append(l.Exact[def.Signature], newEntry)
 }
 
-func (l *Index[T]) RegisterUpdate(t *T, def *MethodDefinition) (IndexID, error) {
+func (l *Index[T]) RegisterUpdate(t *T) (IndexID, error) {
 	l.Update = append(l.Update, t)
 	return IndexID{update: true, idx: len(l.Update) - 1}, nil
 }
