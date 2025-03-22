@@ -142,7 +142,7 @@ func ParseMethodLine(ctx *CfgContext, c *Converter, m *Method, value string) (er
 			opts := &ParseMethodOpts{
 				ErrorPrefix:       "error parsing type",
 				OutputPackagePath: c.OutputPackagePath,
-				Converter:         c.TypeForMethod(),
+				Converter:         c.typeForMethod(),
 				Params:            ParamsOptional,
 				AllowTypeParams:   true,
 				ContextMatch:      m.ArgContextRegex,
@@ -192,14 +192,14 @@ func ParseMethodLine(ctx *CfgContext, c *Converter, m *Method, value string) (er
 		opts := &ParseMethodOpts{
 			ErrorPrefix:       "error parsing type",
 			OutputPackagePath: c.OutputPackagePath,
-			Converter:         c.TypeForMethod(),
+			Converter:         c.typeForMethod(),
 			Params:            ParamsOptional,
 			AllowTypeParams:   true,
 			ContextMatch:      m.ArgContextRegex,
 		}
 		m.Constructor, err = ctx.Loader.GetOne(c.Package, rest, opts)
 	default:
-		fieldSetting, err = ParseCommon(&m.Common, cmd, rest)
+		fieldSetting, err = parseCommon(&m.Common, cmd, rest)
 	}
 	if fieldSetting {
 		m.RawFieldSettings = append(m.RawFieldSettings, value)

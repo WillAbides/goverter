@@ -7,42 +7,42 @@ import (
 	"strings"
 )
 
-type OutputFormat string
+type outputFormat string
 
 const (
-	OutputFormatStruct   OutputFormat = "struct"
-	OutputFormatVariable OutputFormat = "assign-variable"
-	OutputFormatFunction OutputFormat = "function"
+	OutputFormatStruct   outputFormat = "struct"
+	OutputFormatVariable outputFormat = "assign-variable"
+	OutputFormatFunction outputFormat = "function"
 )
 
-var DefaultConfigInterface = ConverterConfig{
+var defaultConfigInterface = converterConfig{
 	OutputFile:   "./generated/generated.go",
-	Common:       DefaultCommon,
+	Common:       defaultCommon,
 	OutputFormat: OutputFormatStruct,
 }
 
-var DefaultConfigVariables = ConverterConfig{
+var defaultConfigVariables = converterConfig{
 	OutputFormat: OutputFormatVariable,
-	Common:       DefaultCommon,
+	Common:       defaultCommon,
 }
 
-var DefaultCommon = Common{
+var defaultCommon = Common{
 	Enum: EnumConfig{Enabled: true},
 }
 
-type ConverterConfig struct {
+type converterConfig struct {
 	Common
 	Name              string
 	OutputRaw         []string
 	OutputFile        string
 	OutputPackagePath string
 	OutputPackageName string
-	OutputFormat      OutputFormat
+	OutputFormat      outputFormat
 	Extend            []*MethodDefinition
 	Comments          []string
 }
 
-func (conf *ConverterConfig) PackageID() string {
+func (conf *converterConfig) PackageID() string {
 	if conf.OutputPackageName == "" {
 		return conf.OutputPackagePath
 	}
@@ -50,12 +50,12 @@ func (conf *ConverterConfig) PackageID() string {
 }
 
 const (
-	ConfigExtend     = "extend"
-	ConfigOutputFile = "output:file"
+	configExtend     = "extend"
+	configOutputFile = "output:file"
 )
 
 type Converter struct {
-	ConverterConfig
+	converterConfig
 	Package  string
 	FileName string
 	Type     types.Type
@@ -64,14 +64,14 @@ type Converter struct {
 	Location string
 }
 
-func (c *Converter) TypeForMethod() types.Type {
+func (c *Converter) typeForMethod() types.Type {
 	if c.OutputFormat == OutputFormatFunction {
 		return nil
 	}
 	return c.Type
 }
 
-func (c *Converter) RequireStruct() error {
+func (c *Converter) requireStruct() error {
 	if c.OutputFormat == OutputFormatStruct {
 		return nil
 	}
@@ -85,26 +85,22 @@ func (c *Converter) IDString() string {
 	return c.Type.String()
 }
 
-func DefaultOutputFile(name string) string {
+func defaultOutputFile(name string) string {
 	f := filepath.Base(name)
 	ext := filepath.Ext(f)
 	return strings.TrimSuffix(f, ext) + ".gen" + ext
 }
 
-func ParseConverter(
-	ctx *CfgContext,
-	rawConverter *RawConverter,
-	global RawLines,
-) (*Converter, error) {
-	c, err := InitConverter(ctx.Loader, rawConverter)
+func parseConverter(ctx *CfgContext, rawConverter *RawConverter, global RawLines) (*Converter, error) {
+	c, err := initConverter(ctx.Loader, rawConverter)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := ParseConverterLines(ctx, c, "global", global); err != nil {
+	if err := parseConverterLines(ctx, c, "global", global); err != nil {
 		return nil, err
 	}
-	if err := ParseConverterLines(ctx, c, c.IDString(), rawConverter.Converter); err != nil {
+	if err := parseConverterLines(ctx, c, c.IDString(), rawConverter.Converter); err != nil {
 		return nil, err
 	}
 
@@ -135,7 +131,7 @@ func ResolveOutputPackage(ctx *CfgContext, c *Converter) {
 	}
 }
 
-func InitConverter(loader *PackageLoader, rawConverter *RawConverter) (*Converter, error) {
+func initConverter(loader *PackageLoader, rawConverter *RawConverter) (*Converter, error) {
 	c := &Converter{
 		FileName: rawConverter.FileName,
 		Package:  rawConverter.PackagePath,
@@ -143,7 +139,7 @@ func InitConverter(loader *PackageLoader, rawConverter *RawConverter) (*Converte
 	}
 
 	if rawConverter.InterfaceName != "" {
-		c.ConverterConfig = DefaultConfigInterface
+		c.converterConfig = defaultConfigInterface
 		_, interfaceObj, err := loader.GetOneRaw(c.Package, rawConverter.InterfaceName)
 		if err != nil {
 			return nil, err
@@ -154,16 +150,16 @@ func InitConverter(loader *PackageLoader, rawConverter *RawConverter) (*Converte
 		return c, nil
 	}
 
-	c.ConverterConfig = DefaultConfigVariables
-	c.OutputFile = DefaultOutputFile(rawConverter.FileName)
+	c.converterConfig = defaultConfigVariables
+	c.OutputFile = defaultOutputFile(rawConverter.FileName)
 	c.OutputPackageName = rawConverter.PackageName
 	c.OutputPackagePath = rawConverter.PackagePath
 	return c, nil
 }
 
-func ParseConverterLines(ctx *CfgContext, c *Converter, source string, raw RawLines) error {
+func parseConverterLines(ctx *CfgContext, c *Converter, source string, raw RawLines) error {
 	for _, value := range raw.Lines {
-		if err := ParseConverterLine(ctx, c, value); err != nil {
+		if err := parseConverterLine(ctx, c, value); err != nil {
 			return FormatLineError(raw, source, value, err)
 		}
 	}
@@ -171,19 +167,19 @@ func ParseConverterLines(ctx *CfgContext, c *Converter, source string, raw RawLi
 	return nil
 }
 
-func ParseConverterLine(ctx *CfgContext, c *Converter, value string) (err error) {
+func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error) {
 	cmd, rest := ParseCommand(value)
 	switch cmd {
 	case "converter", "variables":
 		// only a marker interface
 	case "name":
-		if err = c.RequireStruct(); err != nil {
+		if err = c.requireStruct(); err != nil {
 			return err
 		}
 		c.Name, err = ParseString(rest)
 	case "output:raw":
 		c.OutputRaw = append(c.OutputRaw, rest)
-	case ConfigOutputFile:
+	case configOutputFile:
 		c.OutputFile, err = ParseFile(ctx.WorkDir, rest)
 	case "output:format":
 		if len(c.Extend) != 0 {
@@ -215,7 +211,7 @@ func ParseConverterLine(ctx *CfgContext, c *Converter, value string) (err error)
 			c.OutputPackagePath = parts[0]
 		}
 	case "struct:comment":
-		if err = c.RequireStruct(); err != nil {
+		if err = c.requireStruct(); err != nil {
 			return err
 		}
 		c.Comments = append(c.Comments, rest)
@@ -223,12 +219,12 @@ func ParseConverterLine(ctx *CfgContext, c *Converter, value string) (err error)
 		var pattern EnumIDPattern
 		pattern, err = ParseIDPattern(c.Package, rest)
 		c.Enum.Excludes = append(c.Enum.Excludes, pattern)
-	case ConfigExtend:
+	case configExtend:
 		for _, name := range strings.Fields(rest) {
 			opts := &ParseMethodOpts{
 				ErrorPrefix:       "error parsing type",
 				OutputPackagePath: c.OutputPackagePath,
-				Converter:         c.TypeForMethod(),
+				Converter:         c.typeForMethod(),
 				Params:            ParamsRequired,
 				ContextMatch:      c.ArgContextRegex,
 			}
@@ -240,7 +236,7 @@ func ParseConverterLine(ctx *CfgContext, c *Converter, value string) (err error)
 			c.Extend = append(c.Extend, defs...)
 		}
 	default:
-		_, err = ParseCommon(&c.Common, cmd, rest)
+		_, err = parseCommon(&c.Common, cmd, rest)
 	}
 	return err
 }

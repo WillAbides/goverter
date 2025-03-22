@@ -88,7 +88,7 @@ func ParseRaw(raw *Raw) ([]*Converter, error) {
 
 	var converters []*Converter
 	for _, rawConverter := range raw.Converters {
-		converter, err := ParseConverter(ctx, &rawConverter, raw.Global)
+		converter, err := parseConverter(ctx, &rawConverter, raw.Global)
 		if err != nil {
 			return nil, err
 		}

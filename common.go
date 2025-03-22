@@ -23,7 +23,7 @@ type Common struct {
 	Enum                               EnumConfig
 }
 
-func ParseCommon(c *Common, cmd, rest string) (fieldSetting bool, err error) {
+func parseCommon(c *Common, cmd, rest string) (fieldSetting bool, err error) {
 	switch cmd {
 	case "wrapErrors":
 		if c.WrapErrorsUsing != "" {

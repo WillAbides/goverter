@@ -46,11 +46,11 @@ func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePac
 	for _, line := range lines.Lines {
 		cmd, rest := ParseCommand(line)
 		switch cmd {
-		case ConfigExtend:
+		case configExtend:
 			for _, fullMethod := range strings.Fields(rest) {
 				registerFullMethod(lookup, sourcePackage, fullMethod)
 			}
-		case ConfigOutputFile:
+		case configOutputFile:
 			file, err := ParseFile(cwd, rest)
 			if err != nil {
 				continue
