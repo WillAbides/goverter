@@ -3,12 +3,11 @@ package config
 import (
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/jmattheis/goverter"
 )
 
-func parseTransformer(ctx *CfgContext, name, config string) (goverter.ConfiguredTransformer, error) {
+func parseTransformer(ctx *goverter.CfgContext, name, config string) (goverter.ConfiguredTransformer, error) {
 	t, ok := ctx.EnumTransformers[name]
 	if !ok {
 		t, ok = goverter.DefaultEnumTransformers[name]
@@ -19,19 +18,6 @@ func parseTransformer(ctx *CfgContext, name, config string) (goverter.Configured
 	}
 
 	return goverter.ConfiguredTransformer{Name: name, Transformer: t, Config: config}, nil
-}
-
-func IsEnumAction(s string) bool {
-	return strings.HasPrefix(s, "@")
-}
-
-func validateEnumAction(s string) error {
-	switch s {
-	case goverter.EnumActionPanic, goverter.EnumActionError, goverter.EnumActionIgnore:
-		return nil
-	default:
-		return fmt.Errorf("invalid enum action %q, must be one of %q, %q, or %q", s, goverter.EnumActionPanic, goverter.EnumActionIgnore, goverter.EnumActionError)
-	}
 }
 
 func parseIDPattern(cwd, rest string) (pattern goverter.EnumIDPattern, err error) {

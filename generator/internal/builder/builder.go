@@ -5,7 +5,6 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/config"
 )
 
 // ThisVar is used as name for the reference to the converter interface.
@@ -67,7 +66,7 @@ type Generator interface {
 // MethodContext exposes information for the current method.
 type MethodContext struct {
 	*Namer
-	Conf              *config.Method
+	Conf              *goverter.Method
 	FieldsTarget      string
 	OutputPackagePath string
 	UseConstructor    bool
@@ -107,7 +106,7 @@ func (ctx *MethodContext) SetErrorTargetVar(m *jen.Statement) {
 	}
 }
 
-func (ctx *MethodContext) Field(target *goverter.Type, name string) *config.FieldMapping {
+func (ctx *MethodContext) Field(target *goverter.Type, name string) *goverter.FieldMapping {
 	if ctx.FieldsTarget != target.String {
 		return emptyMapping
 	}
@@ -144,6 +143,6 @@ func (ctx *MethodContext) DefinedEnumFields(target *goverter.Type) map[string]st
 }
 
 var (
-	emptyMapping = &config.FieldMapping{}
+	emptyMapping = &goverter.FieldMapping{}
 	emptyFields  = map[string]struct{}{}
 )

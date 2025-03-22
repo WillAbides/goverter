@@ -45,3 +45,16 @@ var DefaultEnumTransformers = map[string]EnumTransformer{
 		return m, nil
 	},
 }
+
+func IsEnumAction(s string) bool {
+	return strings.HasPrefix(s, "@")
+}
+
+func ValidateEnumAction(s string) error {
+	switch s {
+	case EnumActionPanic, EnumActionError, EnumActionIgnore:
+		return nil
+	default:
+		return fmt.Errorf("invalid enum action %q, must be one of %q, %q, or %q", s, EnumActionPanic, EnumActionIgnore, EnumActionError)
+	}
+}

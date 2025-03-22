@@ -8,38 +8,7 @@ import (
 	"github.com/jmattheis/goverter"
 )
 
-type Method struct {
-	*goverter.MethodDefinition
-	goverter.Common
-
-	Constructor *goverter.MethodDefinition
-	AutoMap     []string
-	Fields      map[string]*FieldMapping
-	EnumMapping *goverter.EnumMapping
-
-	RawFieldSettings []string
-
-	Location    string
-	updateParam string
-	localOpts   goverter.LocalMethodOpts
-}
-
-type FieldMapping struct {
-	Source   string
-	Function *goverter.MethodDefinition
-	Ignore   bool
-}
-
-func (m *Method) Field(targetName string) *FieldMapping {
-	target, ok := m.Fields[targetName]
-	if !ok {
-		target = &FieldMapping{}
-		m.Fields[targetName] = target
-	}
-	return target
-}
-
-func parseMethods(ctx *CfgContext, rawConverter *goverter.RawConverter, c *Converter) error {
+func parseMethods(ctx *goverter.CfgContext, rawConverter *goverter.RawConverter, c *Converter) error {
 	if c.typ != nil {
 		interf := c.typ.Underlying().(*types.Interface)
 		for i := 0; i < interf.NumMethods(); i++ {
@@ -66,18 +35,18 @@ func parseMethods(ctx *CfgContext, rawConverter *goverter.RawConverter, c *Conve
 	return nil
 }
 
-func parseMethod(ctx *CfgContext, c *Converter, obj types.Object, rawMethod goverter.RawLines) (*Method, error) {
-	m := &Method{
+func parseMethod(ctx *goverter.CfgContext, c *Converter, obj types.Object, rawMethod goverter.RawLines) (*goverter.Method, error) {
+	m := &goverter.Method{
 		Common:      c.Common,
-		Fields:      map[string]*FieldMapping{},
+		Fields:      map[string]*goverter.FieldMapping{},
 		Location:    rawMethod.Location,
 		EnumMapping: &goverter.EnumMapping{Map: map[string]string{}},
-		localOpts:   goverter.LocalMethodOpts{Context: map[string]bool{}},
+		LocalOpts:   goverter.LocalMethodOpts{Context: map[string]bool{}},
 	}
 
 	for _, value := range rawMethod.Lines {
 		if err := parseMethodLine(ctx, c, m, value); err != nil {
-			return m, formatLineError(rawMethod, obj.String(), value, err)
+			return m, goverter.FormatLineError(rawMethod, obj.String(), value, err)
 		}
 	}
 
@@ -89,15 +58,15 @@ func parseMethod(ctx *CfgContext, c *Converter, obj types.Object, rawMethod gove
 		Params:            goverter.ParamsRequired,
 		ContextMatch:      m.ArgContextRegex,
 		Generated:         true,
-		UpdateParam:       m.updateParam,
-	}, m.localOpts)
+		UpdateParam:       m.UpdateParam,
+	}, m.LocalOpts)
 
 	m.MethodDefinition = def
 
 	return m, err
 }
 
-func parseMethodLine(ctx *CfgContext, c *Converter, m *Method, value string) (err error) {
+func parseMethodLine(ctx *goverter.CfgContext, c *Converter, m *goverter.Method, value string) (err error) {
 	cmd, rest := goverter.ParseCommand(value)
 	fieldSetting := false
 	switch cmd {
@@ -115,7 +84,7 @@ func parseMethodLine(ctx *CfgContext, c *Converter, m *Method, value string) (er
 			opts := &goverter.ParseMethodOpts{
 				ErrorPrefix:       "error parsing type",
 				OutputPackagePath: c.OutputPackagePath,
-				Converter:         c.typeForMethod(),
+				Converter:         c.TypeForMethod(),
 				Params:            goverter.ParamsOptional,
 				AllowTypeParams:   true,
 				ContextMatch:      m.ArgContextRegex,
@@ -129,19 +98,19 @@ func parseMethodLine(ctx *CfgContext, c *Converter, m *Method, value string) (er
 			m.Field(f).Ignore = true
 		}
 	case "update":
-		m.updateParam, err = goverter.ParseString(rest)
+		m.UpdateParam, err = goverter.ParseString(rest)
 	case "context":
 		var key string
 		key, err = goverter.ParseString(rest)
-		m.localOpts.Context[key] = true
+		m.LocalOpts.Context[key] = true
 	case "enum:map":
 		fields := strings.Fields(rest)
 		if len(fields) != 2 {
 			return fmt.Errorf("invalid fields")
 		}
 
-		if IsEnumAction(fields[1]) {
-			err = validateEnumAction(fields[1])
+		if goverter.IsEnumAction(fields[1]) {
+			err = goverter.ValidateEnumAction(fields[1])
 		}
 
 		m.EnumMapping.Map[fields[0]] = fields[1]
@@ -165,14 +134,14 @@ func parseMethodLine(ctx *CfgContext, c *Converter, m *Method, value string) (er
 		opts := &goverter.ParseMethodOpts{
 			ErrorPrefix:       "error parsing type",
 			OutputPackagePath: c.OutputPackagePath,
-			Converter:         c.typeForMethod(),
+			Converter:         c.TypeForMethod(),
 			Params:            goverter.ParamsOptional,
 			AllowTypeParams:   true,
 			ContextMatch:      m.ArgContextRegex,
 		}
 		m.Constructor, err = ctx.Loader.GetOne(c.Package, rest, opts)
 	default:
-		fieldSetting, err = parseCommon(&m.Common, cmd, rest)
+		fieldSetting, err = goverter.ParseCommon(&m.Common, cmd, rest)
 	}
 	if fieldSetting {
 		m.RawFieldSettings = append(m.RawFieldSettings, value)

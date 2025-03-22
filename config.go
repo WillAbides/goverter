@@ -1,6 +1,7 @@
 package goverter
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 )
@@ -57,5 +58,21 @@ type Raw struct {
 	BuildTags            string
 	OuputBuildConstraint string
 
+	EnumTransformers map[string]EnumTransformer
+}
+
+func FormatLineError(lines RawLines, t, value string, err error) error {
+	cmd, _ := ParseCommand(value)
+	msg := `error parsing 'goverter:%s' at
+    %s
+    %s
+
+%s`
+	return fmt.Errorf(msg, cmd, lines.Location, t, err)
+}
+
+type CfgContext struct {
+	Loader           *PackageLoader
+	WorkDir          string
 	EnumTransformers map[string]EnumTransformer
 }

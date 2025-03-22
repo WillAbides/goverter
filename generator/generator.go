@@ -13,7 +13,7 @@ import (
 )
 
 type generatedMethod struct {
-	*config.Method
+	*goverter.Method
 
 	Explicit bool
 	Dirty    bool
@@ -537,9 +537,9 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *govert
 	path := append([]goverter.MethodIndexID{ctx.IndexID}, orig.OriginPath...)
 	genMethod := &generatedMethod{
 		OriginPath: path,
-		Method: &config.Method{
+		Method: &goverter.Method{
 			Common:      g.conf.Common,
-			Fields:      map[string]*config.FieldMapping{},
+			Fields:      map[string]*goverter.FieldMapping{},
 			EnumMapping: &goverter.EnumMapping{Map: map[string]string{}},
 			MethodDefinition: &goverter.MethodDefinition{
 				OriginID:  ctx.Conf.OriginID,

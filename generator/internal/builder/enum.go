@@ -5,7 +5,6 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/config"
 )
 
 type Enum struct{}
@@ -120,7 +119,7 @@ func (s *Enum) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sou
 }
 
 func caseAction(gen Generator, ctx *MethodContext, nameVar *jen.Statement, target *goverter.Type, targetEnum *goverter.Enum, targetName string, sourceID *goverter.JenID, errPath ErrorPath) (jen.Code, *Error) {
-	if config.IsEnumAction(targetName) {
+	if goverter.IsEnumAction(targetName) {
 		switch targetName {
 		case goverter.EnumActionIgnore:
 			return jen.Comment("ignored"), nil
@@ -168,7 +167,7 @@ func executeTransformers(transformers []goverter.ConfiguredTransformer, source, 
 }
 
 func enumTargetMismatches(previous enumMapping, targetEnum *goverter.Enum, targetName string) bool {
-	if !config.IsEnumAction(targetName) && !config.IsEnumAction(previous.Target) {
+	if !goverter.IsEnumAction(targetName) && !goverter.IsEnumAction(previous.Target) {
 		return targetEnum.Members[previous.Target] != targetEnum.Members[targetName]
 	}
 	return targetName != previous.Target
@@ -191,7 +190,7 @@ See https://goverter.jmattheis.de/guide/enum#mapping-enum-keys`,
 }
 
 func fmtEnumValue(targetEnum *goverter.Enum, targetName string) string {
-	if config.IsEnumAction(targetName) {
+	if goverter.IsEnumAction(targetName) {
 		return fmt.Sprintf("%s(action)", targetName)
 	}
 	return fmt.Sprintf("%s(%v)", targetName, targetEnum.Members[targetName])

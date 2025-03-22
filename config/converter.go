@@ -14,19 +14,19 @@ type Converter struct {
 	Package  string
 	FileName string
 	typ      types.Type
-	Methods  []*Method
+	Methods  []*goverter.Method
 
 	Location string
 }
 
-func (c *Converter) typeForMethod() types.Type {
+func (c *Converter) TypeForMethod() types.Type {
 	if c.OutputFormat == goverter.OutputFormatFunction {
 		return nil
 	}
 	return c.typ
 }
 
-func (c *Converter) requireStruct() error {
+func (c *Converter) RequireStruct() error {
 	if c.OutputFormat == goverter.OutputFormatStruct {
 		return nil
 	}
@@ -40,32 +40,32 @@ func (c *Converter) IDString() string {
 	return c.typ.String()
 }
 
-func defaultOutputFile(name string) string {
+func DefaultOutputFile(name string) string {
 	f := filepath.Base(name)
 	ext := filepath.Ext(f)
 	return strings.TrimSuffix(f, ext) + ".gen" + ext
 }
 
-func parseConverter(ctx *CfgContext, rawConverter *goverter.RawConverter, global goverter.RawLines) (*Converter, error) {
-	c, err := initConverter(ctx.Loader, rawConverter)
+func ParseConverter(ctx *goverter.CfgContext, rawConverter *goverter.RawConverter, global goverter.RawLines) (*Converter, error) {
+	c, err := InitConverter(ctx.Loader, rawConverter)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := parseConverterLines(ctx, c, "global", global); err != nil {
+	if err := ParseConverterLines(ctx, c, "global", global); err != nil {
 		return nil, err
 	}
-	if err := parseConverterLines(ctx, c, c.IDString(), rawConverter.Converter); err != nil {
+	if err := ParseConverterLines(ctx, c, c.IDString(), rawConverter.Converter); err != nil {
 		return nil, err
 	}
 
-	resolveOutputPackage(ctx, c)
+	ResolveOutputPackage(ctx, c)
 
 	err = parseMethods(ctx, rawConverter, c)
 	return c, err
 }
 
-func resolveOutputPackage(ctx *CfgContext, c *Converter) {
+func ResolveOutputPackage(ctx *goverter.CfgContext, c *Converter) {
 	targetPackage, err := resolvePackage(c.FileName, c.Package, c.OutputFile)
 	if err != nil {
 		return
@@ -86,7 +86,7 @@ func resolveOutputPackage(ctx *CfgContext, c *Converter) {
 	}
 }
 
-func initConverter(loader *goverter.PackageLoader, rawConverter *goverter.RawConverter) (*Converter, error) {
+func InitConverter(loader *goverter.PackageLoader, rawConverter *goverter.RawConverter) (*Converter, error) {
 	c := &Converter{
 		FileName: rawConverter.FileName,
 		Package:  rawConverter.PackagePath,
@@ -106,29 +106,29 @@ func initConverter(loader *goverter.PackageLoader, rawConverter *goverter.RawCon
 	}
 
 	c.ConverterConfig = goverter.DefaultConfigVariables
-	c.OutputFile = defaultOutputFile(rawConverter.FileName)
+	c.OutputFile = DefaultOutputFile(rawConverter.FileName)
 	c.OutputPackageName = rawConverter.PackageName
 	c.OutputPackagePath = rawConverter.PackagePath
 	return c, nil
 }
 
-func parseConverterLines(ctx *CfgContext, c *Converter, source string, raw goverter.RawLines) error {
+func ParseConverterLines(ctx *goverter.CfgContext, c *Converter, source string, raw goverter.RawLines) error {
 	for _, value := range raw.Lines {
-		if err := parseConverterLine(ctx, c, value); err != nil {
-			return formatLineError(raw, source, value, err)
+		if err := ParseConverterLine(ctx, c, value); err != nil {
+			return goverter.FormatLineError(raw, source, value, err)
 		}
 	}
 
 	return nil
 }
 
-func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error) {
+func ParseConverterLine(ctx *goverter.CfgContext, c *Converter, value string) (err error) {
 	cmd, rest := goverter.ParseCommand(value)
 	switch cmd {
 	case "converter", "variables":
 		// only a marker interface
 	case "name":
-		if err = c.requireStruct(); err != nil {
+		if err = c.RequireStruct(); err != nil {
 			return err
 		}
 		c.Name, err = goverter.ParseString(rest)
@@ -166,7 +166,7 @@ func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error)
 			c.OutputPackagePath = parts[0]
 		}
 	case "struct:comment":
-		if err = c.requireStruct(); err != nil {
+		if err = c.RequireStruct(); err != nil {
 			return err
 		}
 		c.Comments = append(c.Comments, rest)
@@ -179,7 +179,7 @@ func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error)
 			opts := &goverter.ParseMethodOpts{
 				ErrorPrefix:       "error parsing type",
 				OutputPackagePath: c.OutputPackagePath,
-				Converter:         c.typeForMethod(),
+				Converter:         c.TypeForMethod(),
 				Params:            goverter.ParamsRequired,
 				ContextMatch:      c.ArgContextRegex,
 			}
@@ -191,7 +191,7 @@ func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error)
 			c.Extend = append(c.Extend, defs...)
 		}
 	default:
-		_, err = parseCommon(&c.Common, cmd, rest)
+		_, err = goverter.ParseCommon(&c.Common, cmd, rest)
 	}
 	return err
 }
