@@ -9,36 +9,8 @@ import (
 	"github.com/jmattheis/goverter"
 )
 
-const (
-	configExtend     = "extend"
-	configOutputFile = "output:file"
-)
-
-type Format string
-
-const (
-	FormatStruct   Format = "struct"
-	FormatVariable Format = "assign-variable"
-	FormatFunction Format = "function"
-)
-
-var DefaultCommon = goverter.Common{
-	Enum: goverter.EnumConfig{Enabled: true},
-}
-
-var DefaultConfigInterface = ConverterConfig{
-	OutputFile:   "./generated/generated.go",
-	Common:       DefaultCommon,
-	OutputFormat: FormatStruct,
-}
-
-var DefaultConfigVariables = ConverterConfig{
-	OutputFormat: FormatVariable,
-	Common:       DefaultCommon,
-}
-
 type Converter struct {
-	ConverterConfig
+	goverter.ConverterConfig
 	Package  string
 	FileName string
 	typ      types.Type
@@ -48,14 +20,14 @@ type Converter struct {
 }
 
 func (c *Converter) typeForMethod() types.Type {
-	if c.OutputFormat == FormatFunction {
+	if c.OutputFormat == goverter.OutputFormatFunction {
 		return nil
 	}
 	return c.typ
 }
 
 func (c *Converter) requireStruct() error {
-	if c.OutputFormat == FormatStruct {
+	if c.OutputFormat == goverter.OutputFormatStruct {
 		return nil
 	}
 	return fmt.Errorf("not allowed when using goverter:variables")
@@ -68,32 +40,13 @@ func (c *Converter) IDString() string {
 	return c.typ.String()
 }
 
-type ConverterConfig struct {
-	goverter.Common
-	Name              string
-	OutputRaw         []string
-	OutputFile        string
-	OutputPackagePath string
-	OutputPackageName string
-	OutputFormat      Format
-	Extend            []*goverter.MethodDefinition
-	Comments          []string
-}
-
-func (conf *ConverterConfig) PackageID() string {
-	if conf.OutputPackageName == "" {
-		return conf.OutputPackagePath
-	}
-	return conf.OutputPackagePath + ":" + conf.OutputPackageName
-}
-
 func defaultOutputFile(name string) string {
 	f := filepath.Base(name)
 	ext := filepath.Ext(f)
 	return strings.TrimSuffix(f, ext) + ".gen" + ext
 }
 
-func parseConverter(ctx *context, rawConverter *goverter.RawConverter, global goverter.RawLines) (*Converter, error) {
+func parseConverter(ctx *CfgContext, rawConverter *goverter.RawConverter, global goverter.RawLines) (*Converter, error) {
 	c, err := initConverter(ctx.Loader, rawConverter)
 	if err != nil {
 		return nil, err
@@ -112,7 +65,7 @@ func parseConverter(ctx *context, rawConverter *goverter.RawConverter, global go
 	return c, err
 }
 
-func resolveOutputPackage(ctx *context, c *Converter) {
+func resolveOutputPackage(ctx *CfgContext, c *Converter) {
 	targetPackage, err := resolvePackage(c.FileName, c.Package, c.OutputFile)
 	if err != nil {
 		return
@@ -133,7 +86,7 @@ func resolveOutputPackage(ctx *context, c *Converter) {
 	}
 }
 
-func initConverter(loader *PackageLoader, rawConverter *goverter.RawConverter) (*Converter, error) {
+func initConverter(loader *goverter.PackageLoader, rawConverter *goverter.RawConverter) (*Converter, error) {
 	c := &Converter{
 		FileName: rawConverter.FileName,
 		Package:  rawConverter.PackagePath,
@@ -141,7 +94,7 @@ func initConverter(loader *PackageLoader, rawConverter *goverter.RawConverter) (
 	}
 
 	if rawConverter.InterfaceName != "" {
-		c.ConverterConfig = DefaultConfigInterface
+		c.ConverterConfig = goverter.DefaultConfigInterface
 		_, interfaceObj, err := loader.GetOneRaw(c.Package, rawConverter.InterfaceName)
 		if err != nil {
 			return nil, err
@@ -152,14 +105,14 @@ func initConverter(loader *PackageLoader, rawConverter *goverter.RawConverter) (
 		return c, nil
 	}
 
-	c.ConverterConfig = DefaultConfigVariables
+	c.ConverterConfig = goverter.DefaultConfigVariables
 	c.OutputFile = defaultOutputFile(rawConverter.FileName)
 	c.OutputPackageName = rawConverter.PackageName
 	c.OutputPackagePath = rawConverter.PackagePath
 	return c, nil
 }
 
-func parseConverterLines(ctx *context, c *Converter, source string, raw goverter.RawLines) error {
+func parseConverterLines(ctx *CfgContext, c *Converter, source string, raw goverter.RawLines) error {
 	for _, value := range raw.Lines {
 		if err := parseConverterLine(ctx, c, value); err != nil {
 			return formatLineError(raw, source, value, err)
@@ -169,7 +122,7 @@ func parseConverterLines(ctx *context, c *Converter, source string, raw goverter
 	return nil
 }
 
-func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
+func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error) {
 	cmd, rest := goverter.ParseCommand(value)
 	switch cmd {
 	case "converter", "variables":
@@ -181,22 +134,22 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 		c.Name, err = goverter.ParseString(rest)
 	case "output:raw":
 		c.OutputRaw = append(c.OutputRaw, rest)
-	case configOutputFile:
+	case goverter.ConfigOutputFile:
 		c.OutputFile, err = goverter.ParseFile(ctx.WorkDir, rest)
 	case "output:format":
 		if len(c.Extend) != 0 {
 			return fmt.Errorf("Cannot change output:format after extend functions have been added.\nMove the extend below the output:format setting.")
 		}
 
-		c.OutputFormat, err = goverter.ParseEnum(false, rest, FormatFunction, FormatStruct, FormatVariable)
+		c.OutputFormat, err = goverter.ParseEnum(false, rest, goverter.OutputFormatFunction, goverter.OutputFormatStruct, goverter.OutputFormatVariable)
 		if err != nil {
 			return err
 		}
 
-		if c.typ == nil && c.OutputFormat != FormatVariable {
+		if c.typ == nil && c.OutputFormat != goverter.OutputFormatVariable {
 			return fmt.Errorf("unsupported format for goverter:variables")
 		}
-		if c.typ != nil && c.OutputFormat == FormatVariable {
+		if c.typ != nil && c.OutputFormat == goverter.OutputFormatVariable {
 			return fmt.Errorf("unsupported format for goverter:converter")
 		}
 	case "output:package":
@@ -221,7 +174,7 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 		var pattern goverter.EnumIDPattern
 		pattern, err = parseIDPattern(c.Package, rest)
 		c.Enum.Excludes = append(c.Enum.Excludes, pattern)
-	case configExtend:
+	case goverter.ConfigExtend:
 		for _, name := range strings.Fields(rest) {
 			opts := &goverter.ParseMethodOpts{
 				ErrorPrefix:       "error parsing type",

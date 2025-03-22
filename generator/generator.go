@@ -84,7 +84,7 @@ func (g *generator) appendGenerated(f *jen.File) {
 		f.Id(raw)
 	}
 
-	if g.conf.OutputFormat == config.FormatStruct {
+	if g.conf.OutputFormat == goverter.OutputFormatStruct {
 		if len(g.conf.Comments) > 0 {
 			f.Comment(strings.Join(g.conf.Comments, "\n"))
 		}
@@ -96,15 +96,15 @@ func (g *generator) appendGenerated(f *jen.File) {
 
 	for _, def := range genMethods {
 		switch g.conf.OutputFormat {
-		case config.FormatStruct:
+		case goverter.OutputFormatStruct:
 			funcs = append(funcs, jen.Func().Params(jen.Id(builder.ThisVar).Op("*").Id(g.conf.Name)).Id(def.Name).Add(def.Jen))
-		case config.FormatVariable:
+		case goverter.OutputFormatVariable:
 			if def.Explicit {
 				init = append(init, jen.Qual(def.Package, def.Name).Op("=").Func().Add(def.Jen))
 			} else {
 				funcs = append(funcs, jen.Func().Id(def.Name).Add(def.Jen))
 			}
-		case config.FormatFunction:
+		case goverter.OutputFormatFunction:
 			funcs = append(funcs, jen.Func().Id(def.Name).Add(def.Jen))
 		}
 	}
@@ -540,7 +540,7 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *govert
 		Method: &config.Method{
 			Common:      g.conf.Common,
 			Fields:      map[string]*config.FieldMapping{},
-			EnumMapping: &config.EnumMapping{Map: map[string]string{}},
+			EnumMapping: &goverter.EnumMapping{Map: map[string]string{}},
 			MethodDefinition: &goverter.MethodDefinition{
 				OriginID:  ctx.Conf.OriginID,
 				ID:        name,
@@ -630,9 +630,9 @@ func (g *generator) qualMethod(m *goverter.MethodDefinition) *jen.Statement {
 	switch {
 	case m.CustomCall != nil:
 		return m.CustomCall.Clone()
-	case g.conf.OutputFormat == config.FormatStruct && m.Generated:
+	case g.conf.OutputFormat == goverter.OutputFormatStruct && m.Generated:
 		return jen.Id(builder.ThisVar).Dot(m.Name)
-	case g.conf.OutputFormat == config.FormatFunction && m.Generated:
+	case g.conf.OutputFormat == goverter.OutputFormatFunction && m.Generated:
 		return jen.Id(m.Name)
 	default:
 		return jen.Qual(m.Package, m.Name)

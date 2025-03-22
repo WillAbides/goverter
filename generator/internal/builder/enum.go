@@ -122,15 +122,15 @@ func (s *Enum) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sou
 func caseAction(gen Generator, ctx *MethodContext, nameVar *jen.Statement, target *goverter.Type, targetEnum *goverter.Enum, targetName string, sourceID *goverter.JenID, errPath ErrorPath) (jen.Code, *Error) {
 	if config.IsEnumAction(targetName) {
 		switch targetName {
-		case config.EnumActionIgnore:
+		case goverter.EnumActionIgnore:
 			return jen.Comment("ignored"), nil
-		case config.EnumActionPanic:
+		case goverter.EnumActionPanic:
 			return jen.Panic(jen.Qual("fmt", "Sprintf").Call(jen.Lit("unexpected enum element: %v"), sourceID.Code.Clone())), nil
-		case config.EnumActionError:
+		case goverter.EnumActionError:
 			errStmt := jen.Qual("fmt", "Errorf").Call(jen.Lit("unexpected enum element: %v"), sourceID.Code.Clone())
 			code, ok := gen.ReturnError(ctx, errPath, errStmt)
 			if !ok {
-				return nil, NewError(fmt.Sprintf("Cannot return %s because the explicitly defined conversion method doesn't return an error.", config.EnumActionError))
+				return nil, NewError(fmt.Sprintf("Cannot return %s because the explicitly defined conversion method doesn't return an error.", goverter.EnumActionError))
 			}
 			return code, nil
 		default:
@@ -146,7 +146,7 @@ func caseAction(gen Generator, ctx *MethodContext, nameVar *jen.Statement, targe
 	return nameVar.Clone().Op("=").Add(targetQual), nil
 }
 
-func executeTransformers(transformers []config.ConfiguredTransformer, source, target *goverter.Type, sourceEnum, targetEnum *goverter.Enum) (map[string]string, *Error) {
+func executeTransformers(transformers []goverter.ConfiguredTransformer, source, target *goverter.Type, sourceEnum, targetEnum *goverter.Enum) (map[string]string, *Error) {
 	transformerMapping := map[string]string{}
 	for _, t := range transformers {
 		m, err := t.Transformer(goverter.TransformEnumContext{

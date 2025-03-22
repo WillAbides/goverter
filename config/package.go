@@ -48,11 +48,11 @@ func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePac
 	for _, line := range lines.Lines {
 		cmd, rest := goverter.ParseCommand(line)
 		switch cmd {
-		case configExtend:
+		case goverter.ConfigExtend:
 			for _, fullMethod := range strings.Fields(rest) {
 				registerFullMethod(lookup, sourcePackage, fullMethod)
 			}
-		case configOutputFile:
+		case goverter.ConfigOutputFile:
 			file, err := goverter.ParseFile(cwd, rest)
 			if err != nil {
 				continue
@@ -70,11 +70,11 @@ func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines
 	for _, line := range lines.Lines {
 		cmd, rest := goverter.ParseCommand(line)
 		switch cmd {
-		case configMap:
+		case goverter.ConfigMap:
 			if _, _, custom, err := parseMethodMap(rest); err == nil && custom != "" {
 				registerFullMethod(lookup, sourcePackage, custom)
 			}
-		case configDefault:
+		case goverter.ConfigDefault:
 			registerFullMethod(lookup, sourcePackage, rest)
 		}
 	}

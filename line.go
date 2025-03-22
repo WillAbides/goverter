@@ -1,4 +1,4 @@
-package config
+package goverter
 
 import (
 	"go/ast"

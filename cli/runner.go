@@ -45,7 +45,7 @@ func generateConvertersRaw(c *GenerateConfig) (map[string][]byte, error) {
 		return nil, err
 	}
 
-	converters, err := config.Parse(&goverter.Raw{
+	converters, err := config.ParseRaw(&goverter.Raw{
 		BuildTags:  c.BuildTags,
 		WorkDir:    c.WorkingDir,
 		Converters: rawConverters,

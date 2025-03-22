@@ -3,18 +3,10 @@ package config
 import (
 	"fmt"
 	"go/types"
-	"regexp"
 	"strings"
 
 	"github.com/jmattheis/goverter"
 )
-
-const (
-	configMap     = "map"
-	configDefault = "default"
-)
-
-var StructMethodContextRegex = regexp.MustCompile(".*")
 
 type Method struct {
 	*goverter.MethodDefinition
@@ -23,7 +15,7 @@ type Method struct {
 	Constructor *goverter.MethodDefinition
 	AutoMap     []string
 	Fields      map[string]*FieldMapping
-	EnumMapping *EnumMapping
+	EnumMapping *goverter.EnumMapping
 
 	RawFieldSettings []string
 
@@ -47,7 +39,7 @@ func (m *Method) Field(targetName string) *FieldMapping {
 	return target
 }
 
-func parseMethods(ctx *context, rawConverter *goverter.RawConverter, c *Converter) error {
+func parseMethods(ctx *CfgContext, rawConverter *goverter.RawConverter, c *Converter) error {
 	if c.typ != nil {
 		interf := c.typ.Underlying().(*types.Interface)
 		for i := 0; i < interf.NumMethods(); i++ {
@@ -74,12 +66,12 @@ func parseMethods(ctx *context, rawConverter *goverter.RawConverter, c *Converte
 	return nil
 }
 
-func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod goverter.RawLines) (*Method, error) {
+func parseMethod(ctx *CfgContext, c *Converter, obj types.Object, rawMethod goverter.RawLines) (*Method, error) {
 	m := &Method{
 		Common:      c.Common,
 		Fields:      map[string]*FieldMapping{},
 		Location:    rawMethod.Location,
-		EnumMapping: &EnumMapping{Map: map[string]string{}},
+		EnumMapping: &goverter.EnumMapping{Map: map[string]string{}},
 		localOpts:   goverter.LocalMethodOpts{Context: map[string]bool{}},
 	}
 
@@ -105,11 +97,11 @@ func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod goverte
 	return m, err
 }
 
-func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err error) {
+func parseMethodLine(ctx *CfgContext, c *Converter, m *Method, value string) (err error) {
 	cmd, rest := goverter.ParseCommand(value)
 	fieldSetting := false
 	switch cmd {
-	case configMap:
+	case goverter.ConfigMap:
 		fieldSetting = true
 		var source, target, custom string
 		source, target, custom, err = parseMethodMap(rest)
@@ -161,7 +153,7 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 			config = fields[1]
 		}
 
-		var t ConfiguredTransformer
+		var t goverter.ConfiguredTransformer
 		t, err = parseTransformer(ctx, fields[0], config)
 		m.EnumMapping.Transformers = append(m.EnumMapping.Transformers, t)
 	case "autoMap":
@@ -169,7 +161,7 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 		var s string
 		s, err = goverter.ParseString(rest)
 		m.AutoMap = append(m.AutoMap, strings.TrimSpace(s))
-	case configDefault:
+	case goverter.ConfigDefault:
 		opts := &goverter.ParseMethodOpts{
 			ErrorPrefix:       "error parsing type",
 			OutputPackagePath: c.OutputPackagePath,

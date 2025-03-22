@@ -3,11 +3,11 @@ package builder
 import (
 	"fmt"
 	"go/types"
+	"regexp"
 	"strings"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/config"
 )
 
 // Struct handles struct types.
@@ -163,6 +163,8 @@ func shouldCheckAgainstZero(ctx *MethodContext, s, t *goverter.Type, isUpdate, c
 	}
 }
 
+var structMethodContextRegex = regexp.MustCompile(".*")
+
 func mapField(
 	gen Generator,
 	ctx *MethodContext,
@@ -265,7 +267,7 @@ func mapField(
 			OutputPackagePath: ctx.OutputPackagePath,
 			ErrorPrefix:       "Error parsing struct method",
 			Params:            goverter.ParamsNone,
-			ContextMatch:      config.StructMethodContextRegex,
+			ContextMatch:      structMethodContextRegex,
 			CustomCall:        nextIDCode,
 		}, goverter.EmptyLocalMethodOpts)
 		if err != nil {

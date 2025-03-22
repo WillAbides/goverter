@@ -7,21 +7,21 @@ import (
 	"github.com/jmattheis/goverter"
 )
 
-type context struct {
-	Loader           *PackageLoader
+type CfgContext struct {
+	Loader           *goverter.PackageLoader
 	WorkDir          string
 	EnumTransformers map[string]goverter.EnumTransformer
 }
 
-func Parse(raw *goverter.Raw) ([]*Converter, error) {
-	loader, err := NewPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
+func ParseRaw(raw *goverter.Raw) ([]*Converter, error) {
+	loader, err := goverter.NewPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
 	if err != nil {
 		return nil, err
 	}
 
-	ctx := &context{Loader: loader, EnumTransformers: raw.EnumTransformers, WorkDir: raw.WorkDir}
+	ctx := &CfgContext{Loader: loader, EnumTransformers: raw.EnumTransformers, WorkDir: raw.WorkDir}
 
-	converters := []*Converter{}
+	var converters []*Converter
 	for _, rawConverter := range raw.Converters {
 		converter, err := parseConverter(ctx, &rawConverter, raw.Global)
 		if err != nil {
