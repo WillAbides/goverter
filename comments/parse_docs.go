@@ -7,12 +7,11 @@ import (
 	"go/types"
 
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/config/parse"
 	"golang.org/x/tools/go/packages"
 )
 
 const (
-	converterMarker = parse.Prefix + parse.Delimiter + "converter"
+	converterMarker = config.Prefix + config.Delimiter + "converter"
 )
 
 // ParseDocsConfig provides input to the ParseDocs method below.
@@ -195,7 +194,7 @@ func rawLines(pkg *packages.Package, node ast.Node) config.RawLines {
 	}
 	return config.RawLines{
 		Location: nodeLocation(pkg.Fset, node),
-		Lines:    parse.CommentGroupSettingLines(comments),
+		Lines:    config.CommentGroupSettingLines(comments),
 	}
 }
 

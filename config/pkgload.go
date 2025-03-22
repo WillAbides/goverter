@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/jmattheis/goverter/config/parse"
 	"github.com/jmattheis/goverter/method"
 	"golang.org/x/tools/go/packages"
 )
@@ -109,7 +108,7 @@ func (g *packageLoader) localConfig(pkg *packages.Package, name string) method.L
 			commentMap := ast.NewCommentMap(pkg.Fset, file, file.Comments)
 			for _, decl := range file.Decls {
 				if fn, ok := decl.(*ast.FuncDecl); ok {
-					lines := parse.CommentGroupSettingLines(commentMap[fn])
+					lines := CommentGroupSettingLines(commentMap[fn])
 					if len(lines) == 0 {
 						continue
 					}
