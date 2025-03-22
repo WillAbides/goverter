@@ -151,7 +151,7 @@ func caseAction(gen Generator, ctx *MethodContext, nameVar *jen.Statement, targe
 func executeTransformers(transformers []config.ConfiguredTransformer, source, target *xtype.Type, sourceEnum, targetEnum *xtype.Enum) (map[string]string, *Error) {
 	transformerMapping := map[string]string{}
 	for _, t := range transformers {
-		m, err := t.Transformer(enum.TransformContext{
+		m, err := t.Transformer(enum.TransformEnumContext{
 			Source: enum.Enum{Type: source.NamedType, Members: sourceEnum.Members},
 			Target: enum.Enum{Type: target.NamedType, Members: targetEnum.Members},
 			Config: t.Config,

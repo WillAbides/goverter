@@ -86,7 +86,7 @@ func parseGen(cmd string, args []string) (Command, error) {
 		BuildTags:             *buildTags,
 		OutputBuildConstraint: *outputConstraint,
 		WorkingDir:            *cwd,
-		EnumTransformers:      map[string]enum.Transformer{},
+		EnumTransformers:      map[string]enum.EnumTransformer{},
 		Global: config.RawLines{
 			Lines:    global,
 			Location: "command line (-g, -global)",

@@ -9,7 +9,7 @@ import (
 )
 
 type RunOpts struct {
-	EnumTransformers map[string]enum.Transformer
+	EnumTransformers map[string]enum.EnumTransformer
 }
 
 // Run runs the goverter cli with the given args and customizations.

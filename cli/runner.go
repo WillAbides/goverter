@@ -22,7 +22,7 @@ type GenerateConfig struct {
 	// OutputBuildConstraint will be added as go:build constraints to all files.
 	OutputBuildConstraint string
 	// EnumTransformers describes additional enum transformers usable in the enum:transform setting.
-	EnumTransformers map[string]enum.Transformer
+	EnumTransformers map[string]enum.EnumTransformer
 }
 
 // GenerateConverters generates converters.

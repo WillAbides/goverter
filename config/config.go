@@ -45,13 +45,13 @@ type Raw struct {
 	BuildTags            string
 	OuputBuildConstraint string
 
-	EnumTransformers map[string]enum.Transformer
+	EnumTransformers map[string]enum.EnumTransformer
 }
 
 type context struct {
 	Loader           *packageLoader
 	WorkDir          string
-	EnumTransformers map[string]enum.Transformer
+	EnumTransformers map[string]enum.EnumTransformer
 }
 
 func Parse(raw *Raw) ([]*Converter, error) {

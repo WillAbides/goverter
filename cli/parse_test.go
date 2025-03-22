@@ -78,7 +78,7 @@ func TestSuccess(t *testing.T) {
 		WorkingDir:            "file/path",
 		OutputBuildConstraint: "",
 		BuildTags:             "",
-		EnumTransformers:      map[string]enum.Transformer{},
+		EnumTransformers:      map[string]enum.EnumTransformer{},
 		Global: config.RawLines{
 			Location: "command line (-g, -global)",
 			Lines:    []string{"g1", "g2", "g3 oops"},
@@ -96,7 +96,7 @@ func TestDefault(t *testing.T) {
 		WorkingDir:            "",
 		OutputBuildConstraint: "!goverter",
 		BuildTags:             "goverter",
-		EnumTransformers:      map[string]enum.Transformer{},
+		EnumTransformers:      map[string]enum.EnumTransformer{},
 		Global: config.RawLines{
 			Location: "command line (-g, -global)",
 			Lines:    nil,

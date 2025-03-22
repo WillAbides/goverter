@@ -21,7 +21,7 @@ type EnumMapping struct {
 
 type ConfiguredTransformer struct {
 	Name        string
-	Transformer enum.Transformer
+	Transformer enum.EnumTransformer
 	Config      string
 }
 
@@ -68,8 +68,8 @@ func parseIDPattern(cwd, rest string) (pattern enum.IDPattern, err error) {
 	return pattern, nil
 }
 
-var defaultEnumTransformers = map[string]enum.Transformer{
-	"regex": func(ctx enum.TransformContext) (map[string]string, error) {
+var defaultEnumTransformers = map[string]enum.EnumTransformer{
+	"regex": func(ctx enum.TransformEnumContext) (map[string]string, error) {
 		parts := strings.Split(ctx.Config, " ")
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("invalid config, expected two strings separated by space")

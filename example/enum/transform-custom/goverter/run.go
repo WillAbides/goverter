@@ -10,14 +10,14 @@ import (
 
 func main() {
 	opts := cli.RunOpts{
-		EnumTransformers: map[string]enum.Transformer{
+		EnumTransformers: map[string]enum.EnumTransformer{
 			"trim-prefix": trimPrefix,
 		},
 	}
 	cli.Run(os.Args, opts)
 }
 
-func trimPrefix(ctx enum.TransformContext) (map[string]string, error) {
+func trimPrefix(ctx enum.TransformEnumContext) (map[string]string, error) {
 	m := map[string]string{}
 	for key := range ctx.Source.Members {
 		targetKey := strings.TrimPrefix(key, ctx.Config)
