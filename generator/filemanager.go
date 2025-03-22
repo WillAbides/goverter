@@ -7,7 +7,6 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/generator/internal/builder"
 )
 
 type fileManager struct {
@@ -18,10 +17,10 @@ type managedFile struct {
 	PackageID string
 	Initial   *goverter.Converter
 	Content   *jen.File
-	Namer     *builder.Namer
+	Namer     *goverter.Namer
 }
 
-func (m *fileManager) Get(conv *goverter.Converter, cfg Config) (*jen.File, *builder.Namer, error) {
+func (m *fileManager) Get(conv *goverter.Converter, cfg Config) (*jen.File, *goverter.Namer, error) {
 	output := getOutputDir(conv)
 
 	f, ok := m.Files[output]
@@ -29,7 +28,7 @@ func (m *fileManager) Get(conv *goverter.Converter, cfg Config) (*jen.File, *bui
 		f = &managedFile{
 			PackageID: conv.PackageID(),
 			Initial:   conv,
-			Namer:     builder.NewNamer(),
+			Namer:     goverter.NewNamer(),
 		}
 
 		if conv.OutputPackageName == "" {

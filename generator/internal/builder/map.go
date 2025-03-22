@@ -9,17 +9,17 @@ import (
 type Map struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Map) Matches(_ *MethodContext, source, target *goverter.Type) bool {
+func (*Map) Matches(_ *goverter.MethodContext, source, target *goverter.Type) bool {
 	return source.Map && target.Map
 }
 
 // Build creates conversion source code for the given source and target type.
-func (m *Map) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
+func (m *Map) Build(gen goverter.Generator, ctx *goverter.MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
-	return BuildByAssign(m, gen, ctx, sourceID, source, target, errPath)
+	return goverter.BuildByAssign(m, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (*Map) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
+func (*Map) Assign(gen goverter.Generator, ctx *goverter.MethodContext, assignTo *goverter.AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	key, value := ctx.Map()
 

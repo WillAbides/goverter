@@ -11,7 +11,7 @@ import (
 type UseUnderlyingTypeMethods struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*UseUnderlyingTypeMethods) Matches(ctx *MethodContext, source, target *goverter.Type) bool {
+func (*UseUnderlyingTypeMethods) Matches(ctx *goverter.MethodContext, source, target *goverter.Type) bool {
 	if !ctx.Conf.UseUnderlyingTypeMethods {
 		return false
 	}
@@ -21,8 +21,8 @@ func (*UseUnderlyingTypeMethods) Matches(ctx *MethodContext, source, target *gov
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*UseUnderlyingTypeMethods) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
-	if isEnum(ctx, source, target) {
+func (*UseUnderlyingTypeMethods) Build(gen goverter.Generator, ctx *goverter.MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
+	if goverter.IsBuildEnum(ctx, source, target) {
 		return nil, nil, goverter.NewBuildError(fmt.Sprintf(`The conversion between the types
     %s
     %s
@@ -62,11 +62,11 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 	return stmt, id, err
 }
 
-func (u *UseUnderlyingTypeMethods) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
-	return AssignByBuild(u, gen, ctx, assignTo, sourceID, source, target, errPath)
+func (u *UseUnderlyingTypeMethods) Assign(gen goverter.Generator, ctx *goverter.MethodContext, assignTo *goverter.AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
+	return goverter.AssignByBuild(u, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
-func findUnderlyingExtendMapping(ctx *MethodContext, source, target *goverter.Type) (underlyingSource, underlyingTarget bool) {
+func findUnderlyingExtendMapping(ctx *goverter.MethodContext, source, target *goverter.Type) (underlyingSource, underlyingTarget bool) {
 	if source.Named {
 		if ctx.HasMethod(ctx, source.NamedType.Underlying(), target.NamedType) {
 			return true, false

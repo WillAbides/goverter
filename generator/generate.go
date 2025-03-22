@@ -12,15 +12,15 @@ type Config struct {
 }
 
 // BuildSteps that'll used for generation.
-var BuildSteps = []builder.Builder{
+var BuildSteps = []goverter.Builder{
 	&builder.UseUnderlyingTypeMethods{},
 	&builder.SkipCopy{},
-	&builder.Enum{},
-	&builder.BasicTargetPointerRule{},
+	&goverter.BuildEnum{},
+	&goverter.BasicTargetPointerRule{},
 	&builder.Pointer{},
 	&builder.SourcePointer{},
 	&builder.TargetPointer{},
-	&builder.Basic{},
+	&goverter.Basic{},
 	&builder.Struct{},
 	&builder.List{},
 	&builder.Map{},
@@ -44,7 +44,7 @@ func Generate(converters []*goverter.Converter, c Config) (map[string][]byte, er
 	return manager.renderFiles()
 }
 
-func generateConverter(converter *goverter.Converter, f *jen.File, n *builder.Namer) error {
+func generateConverter(converter *goverter.Converter, f *jen.File, n *goverter.Namer) error {
 	gen, err := setupGenerator(converter, n)
 	if err != nil {
 		return err

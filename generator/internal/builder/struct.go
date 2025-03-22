@@ -14,20 +14,20 @@ import (
 type Struct struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Struct) Matches(_ *MethodContext, source, target *goverter.Type) bool {
+func (*Struct) Matches(_ *goverter.MethodContext, source, target *goverter.Type) bool {
 	return source.Struct && target.Struct
 }
 
 // Build creates conversion source code for the given source and target type.
-func (s *Struct) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
+func (s *Struct) Build(gen goverter.Generator, ctx *goverter.MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	// Optimization for golang sets
 	if !source.Named && !target.Named && source.StructType.NumFields() == 0 && target.StructType.NumFields() == 0 {
 		return nil, sourceID, nil
 	}
-	return BuildByAssign(s, gen, ctx, sourceID, source, target, errPath)
+	return goverter.BuildByAssign(s, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
+func (s *Struct) Assign(gen goverter.Generator, ctx *goverter.MethodContext, assignTo *goverter.AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	additionalFieldSources, err := parseAutoMap(ctx, source)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 			}
 			stmt = append(stmt, mapStmt...)
 
-			fieldStmt, err := gen.Assign(ctx, AssignOf(assignTo.Stmt.Clone().Dot(targetField.Name())), nextID, nextSource, targetFieldType, targetFieldPath)
+			fieldStmt, err := gen.Assign(ctx, goverter.AssignOf(assignTo.Stmt.Clone().Dot(targetField.Name())), nextID, nextSource, targetFieldType, targetFieldPath)
 			if err != nil {
 				return nil, err.Lift(lift...)
 			}
@@ -142,7 +142,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 	return stmt, nil
 }
 
-func shouldCheckAgainstZero(ctx *MethodContext, s, t *goverter.Type, isUpdate, call bool) bool {
+func shouldCheckAgainstZero(ctx *goverter.MethodContext, s, t *goverter.Type, isUpdate, call bool) bool {
 	switch {
 	case !ctx.Conf.UpdateTarget && !isUpdate:
 		return false
@@ -166,8 +166,8 @@ func shouldCheckAgainstZero(ctx *MethodContext, s, t *goverter.Type, isUpdate, c
 var structMethodContextRegex = regexp.MustCompile(".*")
 
 func mapField(
-	gen Generator,
-	ctx *MethodContext,
+	gen goverter.Generator,
+	ctx *goverter.MethodContext,
 	targetField *types.Var,
 	sourceID *goverter.JenID,
 	source, target *goverter.Type,
@@ -320,7 +320,7 @@ func mapField(
 	return returnID, nextSource, stmt, lift, false, nil
 }
 
-func parseAutoMap(ctx *MethodContext, source *goverter.Type) ([]goverter.FieldSources, *goverter.BuildError) {
+func parseAutoMap(ctx *goverter.MethodContext, source *goverter.Type) ([]goverter.FieldSources, *goverter.BuildError) {
 	fieldSources := []goverter.FieldSources{}
 	for _, field := range ctx.Conf.AutoMap {
 		innerSource := source

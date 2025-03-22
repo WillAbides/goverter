@@ -9,16 +9,16 @@ import (
 type List struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*List) Matches(_ *MethodContext, source, target *goverter.Type) bool {
+func (*List) Matches(_ *goverter.MethodContext, source, target *goverter.Type) bool {
 	return source.List && target.List && !target.ListFixed
 }
 
 // Build creates conversion source code for the given source and target type.
-func (l *List) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
+func (l *List) Build(gen goverter.Generator, ctx *goverter.MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	targetSlice := ctx.Name(target.ID())
 
-	stmt, err := l.Assign(gen, ctx, AssignOf(jen.Id(targetSlice)), sourceID, source, target, path)
+	stmt, err := l.Assign(gen, ctx, goverter.AssignOf(jen.Id(targetSlice)), sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -34,7 +34,7 @@ func (l *List) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID
 	return stmt, goverter.VariableID(jen.Id(targetSlice)), nil
 }
 
-func (*List) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
+func (*List) Assign(gen goverter.Generator, ctx *goverter.MethodContext, assignTo *goverter.AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	index := ctx.Index()
 
