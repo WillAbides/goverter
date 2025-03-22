@@ -27,7 +27,7 @@ func (*BuildEnum) Build(
 	source, target *Type,
 	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
-	stmt, nameVar, err := BuildTargetVar(gen, ctx, sourceID, source, target, path)
+	stmt, nameVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -127,7 +127,7 @@ func (s *BuildEnum) Assign(
 	source, target *Type,
 	path ErrorPath,
 ) ([]jen.Code, *BuildError) {
-	return AssignByBuild(s, gen, ctx, assignTo, sourceID, source, target, path)
+	return assignByBuild(s, gen, ctx, assignTo, sourceID, source, target, path)
 }
 
 func caseAction(

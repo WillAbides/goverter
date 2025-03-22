@@ -18,7 +18,7 @@ var BuildSteps = []Builder{
 	&Pointer{},
 	&SourcePointer{},
 	&TargetPointer{},
-	&Basic{},
+	&basic{},
 	&BuildStruct{},
 	&BuildList{},
 	&BuildMap{},

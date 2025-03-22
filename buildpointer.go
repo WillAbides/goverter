@@ -22,7 +22,7 @@ func (p *Pointer) Build(
 ) ([]jen.Code, *JenID, *BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	if ctx.UseConstructor && ctx.Conf.DefaultUpdate {
-		buildStmt, valueVar, err := BuildTargetVar(gen, ctx, sourceID, source, target, errPath)
+		buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, errPath)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -42,7 +42,7 @@ func (p *Pointer) Build(
 		return buildStmt, VariableID(valueVar), nil
 	}
 
-	return BuildByAssign(p, gen, ctx, sourceID, source, target, errPath)
+	return buildByAssign(p, gen, ctx, sourceID, source, target, errPath)
 }
 
 func (*Pointer) Assign(
@@ -94,7 +94,7 @@ func (s *SourcePointer) Build(
 	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	if ctx.UseConstructor && ctx.Conf.DefaultUpdate {
-		buildStmt, valueVar, err := BuildTargetVar(gen, ctx, sourceID, source, target, path)
+		buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -112,7 +112,7 @@ func (s *SourcePointer) Build(
 		return buildStmt, VariableID(valueVar), nil
 	}
 
-	return BuildByAssign(s, gen, ctx, sourceID, source, target, path)
+	return buildByAssign(s, gen, ctx, sourceID, source, target, path)
 }
 
 func (*SourcePointer) Assign(
@@ -159,7 +159,7 @@ func (*TargetPointer) Build(
 	ctx.SetErrorTargetVar(jen.Nil())
 
 	if ctx.UseConstructor {
-		buildStmt, valueVar, err := BuildTargetVar(gen, ctx, sourceID, source, target, path)
+		buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -199,5 +199,5 @@ func (tp *TargetPointer) Assign(
 	source, target *Type,
 	path ErrorPath,
 ) ([]jen.Code, *BuildError) {
-	return AssignByBuild(tp, gen, ctx, assignTo, sourceID, source, target, path)
+	return assignByBuild(tp, gen, ctx, assignTo, sourceID, source, target, path)
 }

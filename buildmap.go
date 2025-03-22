@@ -21,7 +21,7 @@ func (m *BuildMap) Build(
 	errPath ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
-	return BuildByAssign(m, gen, ctx, sourceID, source, target, errPath)
+	return buildByAssign(m, gen, ctx, sourceID, source, target, errPath)
 }
 
 func (*BuildMap) Assign(

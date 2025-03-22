@@ -29,7 +29,7 @@ func (s *BuildStruct) Build(
 	if !source.Named && !target.Named && source.StructType.NumFields() == 0 && target.StructType.NumFields() == 0 {
 		return nil, sourceID, nil
 	}
-	return BuildByAssign(s, gen, ctx, sourceID, source, target, errPath)
+	return buildByAssign(s, gen, ctx, sourceID, source, target, errPath)
 }
 
 func (s *BuildStruct) Assign(

@@ -151,7 +151,7 @@ type Generator interface {
 	) (jen.Code, bool)
 }
 
-func BuildTargetVar(
+func buildTargetVar(
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -235,7 +235,7 @@ func ToAssignable(assignTo *AssignTo) func(
 	}
 }
 
-func AssignByBuild(
+func assignByBuild(
 	b Builder,
 	gen Generator,
 	ctx *MethodContext,
@@ -247,7 +247,7 @@ func AssignByBuild(
 	return ToAssignable(assignTo)(b.Build(gen, ctx, sourceID, source, target, errPath))
 }
 
-func BuildByAssign(
+func buildByAssign(
 	b Builder,
 	gen Generator,
 	ctx *MethodContext,
@@ -255,7 +255,7 @@ func BuildByAssign(
 	source, target *Type,
 	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
-	buildStmt, valueVar, err := BuildTargetVar(gen, ctx, sourceID, source, target, path)
+	buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err
 	}

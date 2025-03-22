@@ -4,17 +4,17 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-// Basic handles basic data types.
-type Basic struct{}
+// basic handles basic data types.
+type basic struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Basic) Matches(_ *MethodContext, source, target *Type) bool {
+func (*basic) Matches(_ *MethodContext, source, target *Type) bool {
 	return source.Basic && target.Basic &&
 		source.BasicType.Kind() == target.BasicType.Kind()
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*Basic) Build(
+func (*basic) Build(
 	_ Generator,
 	_ *MethodContext,
 	sourceID *JenID,
@@ -27,7 +27,7 @@ func (*Basic) Build(
 	return nil, sourceID, nil
 }
 
-func (b *Basic) Assign(
+func (b *basic) Assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
@@ -35,7 +35,7 @@ func (b *Basic) Assign(
 	source, target *Type,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
-	return AssignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)
+	return assignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
 // BasicTargetPointerRule handles edge conditions if the target type is a pointer.
@@ -80,5 +80,5 @@ func (b *BasicTargetPointerRule) Assign(
 	source, target *Type,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
-	return AssignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)
+	return assignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)
 }

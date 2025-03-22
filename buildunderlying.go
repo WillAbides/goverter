@@ -75,7 +75,7 @@ func (u *UseUnderlyingTypeMethods) Assign(
 	source, target *Type,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
-	return AssignByBuild(u, gen, ctx, assignTo, sourceID, source, target, errPath)
+	return assignByBuild(u, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
 func findUnderlyingExtendMapping(ctx *MethodContext, source, target *Type) (underlyingSource, underlyingTarget bool) {
