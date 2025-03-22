@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jmattheis/goverter/comments"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/enum"
 	"github.com/jmattheis/goverter/generator"
@@ -37,7 +36,7 @@ func GenerateConverters(c *GenerateConfig) error {
 }
 
 func generateConvertersRaw(c *GenerateConfig) (map[string][]byte, error) {
-	rawConverters, err := comments.ParseDocs(comments.ParseDocsConfig{
+	rawConverters, err := config.ParseDocs(config.ParseDocsConfig{
 		BuildTags:      c.BuildTags,
 		PackagePattern: c.PackagePatterns,
 		WorkingDir:     c.WorkingDir,
