@@ -7,7 +7,7 @@ import (
 	"github.com/jmattheis/goverter"
 )
 
-func buildTargetVar(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *jen.Statement, *Error) {
+func buildTargetVar(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *jen.Statement, *goverter.BuildError) {
 	if !ctx.UseConstructor ||
 		!types.Identical(ctx.Conf.Source.T, source.T) ||
 		!types.Identical(ctx.Conf.Target.T, target.T) {

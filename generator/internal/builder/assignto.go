@@ -31,8 +31,8 @@ func (a *AssignTo) IsUpdate() *AssignTo {
 	return a
 }
 
-func ToAssignable(assignTo *AssignTo) func(stmt []jen.Code, nextID *goverter.JenID, err *Error) ([]jen.Code, *Error) {
-	return func(stmt []jen.Code, nextID *goverter.JenID, err *Error) ([]jen.Code, *Error) {
+func ToAssignable(assignTo *AssignTo) func(stmt []jen.Code, nextID *goverter.JenID, err *goverter.BuildError) ([]jen.Code, *goverter.BuildError) {
+	return func(stmt []jen.Code, nextID *goverter.JenID, err *goverter.BuildError) ([]jen.Code, *goverter.BuildError) {
 		if err != nil {
 			return nil, err
 		}
@@ -41,11 +41,11 @@ func ToAssignable(assignTo *AssignTo) func(stmt []jen.Code, nextID *goverter.Jen
 	}
 }
 
-func AssignByBuild(b Builder, gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func AssignByBuild(b Builder, gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	return ToAssignable(assignTo)(b.Build(gen, ctx, sourceID, source, target, errPath))
 }
 
-func BuildByAssign(b Builder, gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
+func BuildByAssign(b Builder, gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err

@@ -14,7 +14,7 @@ func (*Pointer) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 }
 
 // Build creates conversion source code for the given source and target type.
-func (p *Pointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
+func (p *Pointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	if ctx.UseConstructor && ctx.Conf.DefaultUpdate {
 		buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, errPath)
@@ -24,7 +24,7 @@ func (p *Pointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.Je
 
 		stmt, err := gen.Assign(ctx, AssignOf(jen.Parens(jen.Op("*").Add(valueVar))).IsUpdate(), sourceID.Deref(source), source.PointerInner, target.PointerInner, errPath)
 		if err != nil {
-			return nil, nil, err.Lift(&Path{
+			return nil, nil, err.Lift(&goverter.ErrorMessagePath{
 				SourceID:   "*",
 				SourceType: source.PointerInner.String,
 				TargetID:   "*",
@@ -40,12 +40,12 @@ func (p *Pointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.Je
 	return BuildByAssign(p, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (*Pointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func (*Pointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 
 	nextBlock, id, err := gen.Build(ctx, sourceID.Deref(source), source.PointerInner, target.PointerInner, errPath)
 	if err != nil {
-		return nil, err.Lift(&Path{
+		return nil, err.Lift(&goverter.ErrorMessagePath{
 			SourceID:   "*",
 			SourceType: source.PointerInner.String,
 			TargetID:   "*",
@@ -74,7 +74,7 @@ func (*SourcePointer) Matches(ctx *MethodContext, source, target *goverter.Type)
 }
 
 // Build creates conversion source code for the given source and target type.
-func (s *SourcePointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
+func (s *SourcePointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	if ctx.UseConstructor && ctx.Conf.DefaultUpdate {
 		buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 		if err != nil {
@@ -83,7 +83,7 @@ func (s *SourcePointer) Build(gen Generator, ctx *MethodContext, sourceID *gover
 
 		stmt, err := gen.Assign(ctx, AssignOf(valueVar).IsUpdate(), sourceID.Deref(source), source.PointerInner, target, path)
 		if err != nil {
-			return nil, nil, err.Lift(&Path{
+			return nil, nil, err.Lift(&goverter.ErrorMessagePath{
 				SourceID:   "*",
 				SourceType: source.PointerInner.String,
 			})
@@ -97,10 +97,10 @@ func (s *SourcePointer) Build(gen Generator, ctx *MethodContext, sourceID *gover
 	return BuildByAssign(s, gen, ctx, sourceID, source, target, path)
 }
 
-func (*SourcePointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *Error) {
+func (*SourcePointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	nextInner, nextID, err := gen.Build(ctx, sourceID.Deref(source), source.PointerInner, target, path)
 	if err != nil {
-		return nil, err.Lift(&Path{
+		return nil, err.Lift(&goverter.ErrorMessagePath{
 			SourceID:   "*",
 			SourceType: source.PointerInner.String,
 		})
@@ -124,7 +124,7 @@ func (*TargetPointer) Matches(_ *MethodContext, source, target *goverter.Type) b
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*TargetPointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
+func (*TargetPointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 
 	if ctx.UseConstructor {
@@ -135,7 +135,7 @@ func (*TargetPointer) Build(gen Generator, ctx *MethodContext, sourceID *goverte
 
 		stmt, err := gen.Assign(ctx, AssignOf(jen.Parens(jen.Op("*").Add(valueVar))).IsUpdate(), sourceID, source, target.PointerInner, path)
 		if err != nil {
-			return nil, nil, err.Lift(&Path{
+			return nil, nil, err.Lift(&goverter.ErrorMessagePath{
 				TargetID:   "*",
 				TargetType: target.PointerInner.String,
 			})
@@ -148,7 +148,7 @@ func (*TargetPointer) Build(gen Generator, ctx *MethodContext, sourceID *goverte
 
 	stmt, id, err := gen.Build(ctx, sourceID, source, target.PointerInner, path)
 	if err != nil {
-		return nil, nil, err.Lift(&Path{
+		return nil, nil, err.Lift(&goverter.ErrorMessagePath{
 			TargetID:   "*",
 			TargetType: target.PointerInner.String,
 		})
@@ -160,6 +160,6 @@ func (*TargetPointer) Build(gen Generator, ctx *MethodContext, sourceID *goverte
 	return stmt, nextID, nil
 }
 
-func (tp *TargetPointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *Error) {
+func (tp *TargetPointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	return AssignByBuild(tp, gen, ctx, assignTo, sourceID, source, target, path)
 }

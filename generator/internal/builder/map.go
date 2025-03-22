@@ -14,12 +14,12 @@ func (*Map) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 }
 
 // Build creates conversion source code for the given source and target type.
-func (m *Map) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
+func (m *Map) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	return BuildByAssign(m, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (*Map) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func (*Map) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	key, value := ctx.Map()
 
@@ -27,7 +27,7 @@ func (*Map) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, source
 
 	block, keyID, err := gen.Build(ctx, goverter.VariableID(jen.Id(key)), source.MapKey, target.MapKey, errPath)
 	if err != nil {
-		return nil, err.Lift(&Path{
+		return nil, err.Lift(&goverter.ErrorMessagePath{
 			SourceID:   "[]",
 			SourceType: "<mapkey> " + source.MapKey.String,
 			TargetID:   "[]",
@@ -37,7 +37,7 @@ func (*Map) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, source
 	valueStmt, err := gen.Assign(
 		ctx, assignTo.WithIndex(keyID.Code).MustAssign(), goverter.VariableID(jen.Id(value)), source.MapValue, target.MapValue, errPath)
 	if err != nil {
-		return nil, err.Lift(&Path{
+		return nil, err.Lift(&goverter.ErrorMessagePath{
 			SourceID:   "[]",
 			SourceType: "<mapvalue> " + source.MapValue.String,
 			TargetID:   "[]",

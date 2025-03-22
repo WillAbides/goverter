@@ -20,8 +20,8 @@ type Builder interface {
 		ctx *MethodContext,
 		sourceID *goverter.JenID,
 		source, target *goverter.Type,
-		path ErrorPath,
-	) ([]jen.Code, *goverter.JenID, *Error)
+		path goverter.ErrorPath,
+	) ([]jen.Code, *goverter.JenID, *goverter.BuildError)
 
 	// Assign creates conversion source code for the given source and target type and assigns it.
 	Assign(gen Generator,
@@ -29,8 +29,8 @@ type Builder interface {
 		assignTo *AssignTo,
 		sourceID *goverter.JenID,
 		source, target *goverter.Type,
-		path ErrorPath,
-	) ([]jen.Code, *Error)
+		path goverter.ErrorPath,
+	) ([]jen.Code, *goverter.BuildError)
 }
 
 // Generator checks all existing builders if they can create a conversion implementations for the given source and target type
@@ -40,26 +40,26 @@ type Generator interface {
 		ctx *MethodContext,
 		sourceID *goverter.JenID,
 		source, target *goverter.Type,
-		path ErrorPath,
-	) ([]jen.Code, *goverter.JenID, *Error)
+		path goverter.ErrorPath,
+	) ([]jen.Code, *goverter.JenID, *goverter.BuildError)
 
 	Assign(ctx *MethodContext,
 		assignTo *AssignTo,
 		sourceID *goverter.JenID,
 		source, target *goverter.Type,
-		path ErrorPath,
-	) ([]jen.Code, *Error)
+		path goverter.ErrorPath,
+	) ([]jen.Code, *goverter.BuildError)
 
 	CallMethod(
 		ctx *MethodContext,
 		method *goverter.MethodDefinition,
 		sourceID *goverter.JenID,
 		source, target *goverter.Type,
-		path ErrorPath,
-	) ([]jen.Code, *goverter.JenID, *Error)
+		path goverter.ErrorPath,
+	) ([]jen.Code, *goverter.JenID, *goverter.BuildError)
 
 	ReturnError(ctx *MethodContext,
-		path ErrorPath,
+		path goverter.ErrorPath,
 		id *jen.Statement) (jen.Code, bool)
 }
 

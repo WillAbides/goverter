@@ -14,10 +14,10 @@ func (*SkipCopy) Matches(ctx *MethodContext, source, target *goverter.Type) bool
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*SkipCopy) Build(_ Generator, _ *MethodContext, sourceID *goverter.JenID, _, _ *goverter.Type, _ ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
+func (*SkipCopy) Build(_ Generator, _ *MethodContext, sourceID *goverter.JenID, _, _ *goverter.Type, _ goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	return nil, sourceID, nil
 }
 
-func (*SkipCopy) Assign(_ Generator, _ *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, _, _ *goverter.Type, _ ErrorPath) ([]jen.Code, *Error) {
+func (*SkipCopy) Assign(_ Generator, _ *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, _, _ *goverter.Type, _ goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	return []jen.Code{assignTo.Stmt.Clone().Op("=").Add(sourceID.Code)}, nil
 }

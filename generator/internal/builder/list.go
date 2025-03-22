@@ -14,7 +14,7 @@ func (*List) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 }
 
 // Build creates conversion source code for the given source and target type.
-func (l *List) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
+func (l *List) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	targetSlice := ctx.Name(target.ID())
 
@@ -34,7 +34,7 @@ func (l *List) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID
 	return stmt, goverter.VariableID(jen.Id(targetSlice)), nil
 }
 
-func (*List) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *Error) {
+func (*List) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	index := ctx.Index()
 
@@ -42,7 +42,7 @@ func (*List) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourc
 
 	forBlock, err := gen.Assign(ctx, assignTo.WithIndex(jen.Id(index)), indexedSource, source.ListInner, target.ListInner, path.Index(jen.Id(index)))
 	if err != nil {
-		return nil, err.Lift(&Path{
+		return nil, err.Lift(&goverter.ErrorMessagePath{
 			SourceID:   "[]",
 			SourceType: source.ListInner.String,
 			TargetID:   "[]",

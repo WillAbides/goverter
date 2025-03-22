@@ -19,7 +19,7 @@ func (*Struct) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 }
 
 // Build creates conversion source code for the given source and target type.
-func (s *Struct) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
+func (s *Struct) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	// Optimization for golang sets
 	if !source.Named && !target.Named && source.StructType.NumFields() == 0 && target.StructType.NumFields() == 0 {
 		return nil, sourceID, nil
@@ -27,7 +27,7 @@ func (s *Struct) Build(gen Generator, ctx *MethodContext, sourceID *goverter.Jen
 	return BuildByAssign(s, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	additionalFieldSources, err := parseAutoMap(ctx, source)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 
 		if !goverter.Accessible(targetField, ctx.OutputPackagePath) {
 			cause := unexportedStructError(targetField.Name(), source.String, target.String)
-			return nil, NewError(cause).Lift(&Path{
+			return nil, goverter.NewBuildError(cause).Lift(&goverter.ErrorMessagePath{
 				Prefix:     ".",
 				SourceID:   "???",
 				TargetID:   targetField.Name(),
@@ -86,7 +86,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 		} else {
 			def := fieldMapping.Function
 
-			sourceLift := []*Path{}
+			sourceLift := []*goverter.ErrorMessagePath{}
 			var functionCallSourceID *goverter.JenID
 			var functionCallSourceType *goverter.Type
 			if def.Source != nil {
@@ -107,7 +107,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 					functionCallSourceType = nextSource
 				}
 			} else {
-				sourceLift = append(sourceLift, &Path{
+				sourceLift = append(sourceLift, &goverter.ErrorMessagePath{
 					Prefix:     ".",
 					TargetID:   targetField.Name(),
 					TargetType: targetFieldType.String,
@@ -132,7 +132,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 	}
 
 	for name := range definedFields {
-		return nil, NewError(fmt.Sprintf("Field %q does not exist.\nRemove or adjust field settings referencing this field.", name)).Lift(&Path{
+		return nil, goverter.NewBuildError(fmt.Sprintf("Field %q does not exist.\nRemove or adjust field settings referencing this field.", name)).Lift(&goverter.ErrorMessagePath{
 			Prefix:     ".",
 			TargetID:   name,
 			TargetType: "???",
@@ -172,13 +172,13 @@ func mapField(
 	sourceID *goverter.JenID,
 	source, target *goverter.Type,
 	additionalFieldSources []goverter.FieldSources,
-	errPath ErrorPath,
-) (*goverter.JenID, *goverter.Type, []jen.Code, []*Path, bool, *Error) {
-	lift := []*Path{}
+	errPath goverter.ErrorPath,
+) (*goverter.JenID, *goverter.Type, []jen.Code, []*goverter.ErrorMessagePath, bool, *goverter.BuildError) {
+	lift := []*goverter.ErrorMessagePath{}
 	def := ctx.Field(target, targetField.Name())
 	pathString := def.Source
 	if pathString == "." {
-		lift = append(lift, &Path{
+		lift = append(lift, &goverter.ErrorMessagePath{
 			Prefix:     ".",
 			SourceID:   " ",
 			SourceType: "goverter:map . " + targetField.Name(),
@@ -197,7 +197,7 @@ func mapField(
 			if ctx.Conf.IgnoreMissing {
 				_, skip = err.(*goverter.NoMatchError)
 			}
-			return nil, nil, nil, nil, skip, NewError(cause).Lift(&Path{
+			return nil, nil, nil, nil, skip, goverter.NewBuildError(cause).Lift(&goverter.ErrorMessagePath{
 				Prefix:     ".",
 				SourceID:   "???",
 				TargetID:   targetField.Name(),
@@ -227,7 +227,7 @@ func mapField(
 		}
 		if !nextSource.Struct {
 			cause := fmt.Sprintf("Cannot access '%s' on %s.", path[i], nextSource.T)
-			return nil, nil, nil, nil, false, NewError(cause).Lift(&Path{
+			return nil, nil, nil, nil, false, goverter.NewBuildError(cause).Lift(&goverter.ErrorMessagePath{
 				Prefix:     ".",
 				SourceID:   path[i],
 				SourceType: "???",
@@ -237,7 +237,7 @@ func mapField(
 		if err == nil {
 			nextSource = sourceMatch.Type
 			nextIDCode = nextIDCode.Clone().Dot(sourceMatch.Name)
-			liftPath := &Path{
+			liftPath := &goverter.ErrorMessagePath{
 				Prefix:     ".",
 				SourceID:   sourceMatch.Name,
 				SourceType: nextSource.String,
@@ -252,7 +252,7 @@ func mapField(
 		}
 
 		cause := fmt.Sprintf("Cannot find the mapped field on the source entry: %s.", err.Error())
-		return nil, nil, []jen.Code{}, nil, false, NewError(cause).Lift(&Path{
+		return nil, nil, []jen.Code{}, nil, false, goverter.NewBuildError(cause).Lift(&goverter.ErrorMessagePath{
 			Prefix:     ".",
 			SourceID:   path[i],
 			SourceType: "???",
@@ -260,7 +260,7 @@ func mapField(
 	}
 
 	returnID := goverter.VariableID(nextIDCode)
-	innerStmt := []jen.Code{}
+	var innerStmt []jen.Code
 	if nextSource.Func {
 		def, err := goverter.ParseMethod(nextSource.FuncType, &goverter.ParseMethodOpts{
 			Converter:         nil,
@@ -271,7 +271,7 @@ func mapField(
 			CustomCall:        nextIDCode,
 		}, goverter.EmptyLocalMethodOpts)
 		if err != nil {
-			return nil, nil, nil, nil, false, NewError(err.Error()).Lift(lift...)
+			return nil, nil, nil, nil, false, goverter.NewBuildError(err.Error()).Lift(lift...)
 		}
 
 		methodCallInner, callID, callErr := gen.CallMethod(ctx, def, nil, nil, def.Target, errPath)
@@ -281,7 +281,7 @@ func mapField(
 		innerStmt = methodCallInner
 		nextSource = def.Target
 		returnID = callID
-		lift = append(lift, &Path{
+		lift = append(lift, &goverter.ErrorMessagePath{
 			Prefix:     "(",
 			SourceID:   ")",
 			SourceType: def.Target.String,
@@ -320,22 +320,22 @@ func mapField(
 	return returnID, nextSource, stmt, lift, false, nil
 }
 
-func parseAutoMap(ctx *MethodContext, source *goverter.Type) ([]goverter.FieldSources, *Error) {
+func parseAutoMap(ctx *MethodContext, source *goverter.Type) ([]goverter.FieldSources, *goverter.BuildError) {
 	fieldSources := []goverter.FieldSources{}
 	for _, field := range ctx.Conf.AutoMap {
 		innerSource := source
-		lift := []*Path{}
+		lift := []*goverter.ErrorMessagePath{}
 		path := strings.Split(field, ".")
 		for _, part := range path {
 			field, err := goverter.FindExactField(innerSource, part)
 			if err != nil {
-				return nil, NewError(err.Error()).Lift(&Path{
+				return nil, goverter.NewBuildError(err.Error()).Lift(&goverter.ErrorMessagePath{
 					Prefix:     ".",
 					SourceID:   part,
 					SourceType: "goverter:autoMap",
 				}).Lift(lift...)
 			}
-			lift = append(lift, &Path{
+			lift = append(lift, &goverter.ErrorMessagePath{
 				Prefix:     ".",
 				SourceID:   field.Name,
 				SourceType: field.Type.String,
@@ -348,7 +348,7 @@ func parseAutoMap(ctx *MethodContext, source *goverter.Type) ([]goverter.FieldSo
 			case innerSource.Struct:
 				// ok
 			default:
-				return nil, NewError(fmt.Sprintf("%s is not a struct or struct pointer", part)).Lift(lift...)
+				return nil, goverter.NewBuildError(fmt.Sprintf("%s is not a struct or struct pointer", part)).Lift(lift...)
 			}
 		}
 

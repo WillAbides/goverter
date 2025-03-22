@@ -21,9 +21,9 @@ func (*UseUnderlyingTypeMethods) Matches(ctx *MethodContext, source, target *gov
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*UseUnderlyingTypeMethods) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
+func (*UseUnderlyingTypeMethods) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
 	if isEnum(ctx, source, target) {
-		return nil, nil, NewError(fmt.Sprintf(`The conversion between the types
+		return nil, nil, goverter.NewBuildError(fmt.Sprintf(`The conversion between the types
     %s
     %s
 
@@ -47,7 +47,7 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 
 	stmt, id, err := gen.Build(ctx, sourceID, innerSource, innerTarget, errPath)
 	if err != nil {
-		return nil, nil, err.Lift(&Path{
+		return nil, nil, err.Lift(&goverter.ErrorMessagePath{
 			SourceID:   "*",
 			SourceType: innerSource.String,
 			TargetID:   "*",
@@ -62,7 +62,7 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 	return stmt, id, err
 }
 
-func (u *UseUnderlyingTypeMethods) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func (u *UseUnderlyingTypeMethods) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
 	return AssignByBuild(u, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
