@@ -151,8 +151,8 @@ func executeTransformers(transformers []config.ConfiguredTransformer, source, ta
 	transformerMapping := map[string]string{}
 	for _, t := range transformers {
 		m, err := t.Transformer(config.TransformEnumContext{
-			Source: xtype.XEnum{Type: source.NamedType, Members: sourceEnum.Members},
-			Target: xtype.XEnum{Type: target.NamedType, Members: targetEnum.Members},
+			Source: xtype.Enum{OK: true, Type: source.NamedType, Members: sourceEnum.Members},
+			Target: xtype.Enum{OK: true, Type: target.NamedType, Members: targetEnum.Members},
 			Config: t.Config,
 		})
 		if err != nil {

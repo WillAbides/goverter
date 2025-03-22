@@ -7,14 +7,10 @@ import (
 	"sort"
 )
 
-type XEnum struct {
+type Enum struct {
 	Type    *types.Named
 	Members map[string]any
-}
-
-type Enum struct {
-	XEnum
-	OK bool
+	OK      bool
 }
 
 func (t *Type) Enum(cfg *EnumConfig) *Enum {
@@ -36,8 +32,8 @@ func loadEnum(t *types.Named, cfg *EnumConfig) *Enum {
 		return disabled
 	}
 
-	e, ok := detectEnum(t)
-	return &Enum{OK: ok, XEnum: e}
+	e := detectEnum(t)
+	return &e
 }
 
 func (e Enum) SortedMembers() []string {
@@ -51,14 +47,14 @@ func (e Enum) SortedMembers() []string {
 
 var disabled = &Enum{OK: false}
 
-func detectEnum(named *types.Named) (XEnum, bool) {
+func detectEnum(named *types.Named) Enum {
 	basic, ok := named.Underlying().(*types.Basic)
 	if !ok {
-		return XEnum{}, false
+		return Enum{}
 	}
 
 	if basic.Info()&(types.IsFloat|types.IsString|types.IsInteger) == 0 {
-		return XEnum{}, false
+		return Enum{}
 	}
 
 	scope := named.Obj().Pkg().Scope()
@@ -76,10 +72,14 @@ func detectEnum(named *types.Named) (XEnum, bool) {
 	}
 
 	if len(members) == 0 {
-		return XEnum{}, false
+		return Enum{}
 	}
 
-	return XEnum{Type: named, Members: members}, true
+	return Enum{
+		Type:    named,
+		Members: members,
+		OK:      true,
+	}
 }
 
 type EnumConfig struct {

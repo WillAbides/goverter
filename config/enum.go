@@ -101,8 +101,8 @@ var defaultEnumTransformers = map[string]EnumTransformer{
 type EnumTransformer func(context TransformEnumContext) (map[string]string, error)
 
 type TransformEnumContext struct {
-	Source xtype.XEnum
-	Target xtype.XEnum
+	Source xtype.Enum
+	Target xtype.Enum
 	// Config is user definable config
 	Config string
 }
