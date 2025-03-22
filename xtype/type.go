@@ -88,7 +88,7 @@ type SimpleStructField struct {
 // StructField returns the type of a struct field and its name upon successful match or
 // an error if it is not found. This method will also return a detailed error if matchIgnoreCase
 // is enabled and there are multiple non-exact matches.
-func (t Type) findAllFields(path []string, name string, ignoreCase bool) (*StructField, []*StructField) {
+func (t *Type) findAllFields(path []string, name string, ignoreCase bool) (*StructField, []*StructField) {
 	if !t.Struct {
 		panic("trying to get field of non struct")
 	}
@@ -100,7 +100,7 @@ func (t Type) findAllFields(path []string, name string, ignoreCase bool) (*Struc
 			// exact match takes precedence over case-insensitive match
 			newPath := append([]string{}, path...)
 			newPath = append(newPath, obj.Name())
-			f := &StructField{Path: newPath, Type: TypeOf(obj.Type()).inStruct(&t, obj.Name())}
+			f := &StructField{Path: newPath, Type: TypeOf(obj.Type()).inStruct(t, obj.Name())}
 			if exact {
 				return f
 			}
@@ -318,7 +318,7 @@ func (t *Type) asID(seeNamed, escapeReserved bool) string {
 }
 
 // TypeAsJen returns a jen representation of the type.
-func (t Type) TypeAsJen() *jen.Statement {
+func (t *Type) TypeAsJen() *jen.Statement {
 	if t.Named {
 		return toCode(t.NamedType)
 	}
