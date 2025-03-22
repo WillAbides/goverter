@@ -52,7 +52,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 			continue
 		}
 
-		if !xtype.Accessible(targetField, ctx.OutputPackagePath) {
+		if !goverter.Accessible(targetField, ctx.OutputPackagePath) {
 			cause := unexportedStructError(targetField.Name(), source.String, target.String)
 			return nil, NewError(cause).Lift(&Path{
 				Prefix:     ".",

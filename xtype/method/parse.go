@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/xtype"
 )
 
@@ -62,7 +63,7 @@ func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*Definition,
 		return fmt.Errorf("%s:\n    %s%s%s\n\n%s", opts.ErrorPrefix, loc, obj.String(), methodDef.ArgDebug("        "), s)
 	}
 
-	if !xtype.Accessible(obj, opts.OutputPackagePath) {
+	if !goverter.Accessible(obj, opts.OutputPackagePath) {
 		return nil, formatErr("must be exported")
 	}
 

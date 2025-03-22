@@ -1,6 +1,8 @@
-package xtype
+package goverter
 
-import "go/types"
+import (
+	"go/types"
+)
 
 // Accessible checks if obj is accessible within outputPackagePath.
 func Accessible(obj types.Object, outputPackagePath string) bool {
