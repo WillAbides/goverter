@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/jmattheis/goverter/enum"
+	"github.com/jmattheis/goverter/xtype"
 )
 
 const (
@@ -51,7 +51,7 @@ func validateEnumAction(s string) error {
 	}
 }
 
-func parseIDPattern(cwd, rest string) (pattern enum.EnumIDPattern, err error) {
+func parseIDPattern(cwd, rest string) (pattern xtype.EnumIDPattern, err error) {
 	path, name, err := parseMethodString(cwd, rest)
 	if err != nil {
 		return pattern, err
@@ -101,8 +101,8 @@ var defaultEnumTransformers = map[string]EnumTransformer{
 type EnumTransformer func(context TransformEnumContext) (map[string]string, error)
 
 type TransformEnumContext struct {
-	Source enum.Enum
-	Target enum.Enum
+	Source xtype.XEnum
+	Target xtype.XEnum
 	// Config is user definable config
 	Config string
 }

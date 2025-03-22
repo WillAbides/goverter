@@ -5,7 +5,6 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/enum"
 	"github.com/jmattheis/goverter/xtype"
 )
 
@@ -152,8 +151,8 @@ func executeTransformers(transformers []config.ConfiguredTransformer, source, ta
 	transformerMapping := map[string]string{}
 	for _, t := range transformers {
 		m, err := t.Transformer(config.TransformEnumContext{
-			Source: enum.Enum{Type: source.NamedType, Members: sourceEnum.Members},
-			Target: enum.Enum{Type: target.NamedType, Members: targetEnum.Members},
+			Source: xtype.XEnum{Type: source.NamedType, Members: sourceEnum.Members},
+			Target: xtype.XEnum{Type: target.NamedType, Members: targetEnum.Members},
 			Config: t.Config,
 		})
 		if err != nil {

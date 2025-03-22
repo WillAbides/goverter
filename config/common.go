@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/jmattheis/goverter/enum"
+	"github.com/jmattheis/goverter/xtype"
 )
 
 type Common struct {
@@ -22,7 +22,7 @@ type Common struct {
 	UseUnderlyingTypeMethods           bool
 	DefaultUpdate                      bool
 	ArgContextRegex                    *regexp.Regexp
-	Enum                               enum.EnumConfig
+	Enum                               xtype.EnumConfig
 }
 
 func parseCommon(c *Common, cmd, rest string) (fieldSetting bool, err error) {

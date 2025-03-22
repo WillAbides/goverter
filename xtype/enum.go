@@ -3,17 +3,21 @@ package xtype
 import (
 	"go/constant"
 	"go/types"
+	"regexp"
 	"sort"
-
-	"github.com/jmattheis/goverter/enum"
 )
 
+type XEnum struct {
+	Type    *types.Named
+	Members map[string]any
+}
+
 type Enum struct {
-	enum.Enum
+	XEnum
 	OK bool
 }
 
-func (t *Type) Enum(cfg *enum.EnumConfig) *Enum {
+func (t *Type) Enum(cfg *EnumConfig) *Enum {
 	if !t.Named {
 		return disabled
 	}
@@ -24,7 +28,7 @@ func (t *Type) Enum(cfg *enum.EnumConfig) *Enum {
 	return t.enum
 }
 
-func loadEnum(t *types.Named, cfg *enum.EnumConfig) *Enum {
+func loadEnum(t *types.Named, cfg *EnumConfig) *Enum {
 	path := t.Obj().Pkg().Path()
 	name := t.Obj().Name()
 
@@ -33,7 +37,7 @@ func loadEnum(t *types.Named, cfg *enum.EnumConfig) *Enum {
 	}
 
 	e, ok := detectEnum(t)
-	return &Enum{OK: ok, Enum: e}
+	return &Enum{OK: ok, XEnum: e}
 }
 
 func (e Enum) SortedMembers() []string {
@@ -47,14 +51,14 @@ func (e Enum) SortedMembers() []string {
 
 var disabled = &Enum{OK: false}
 
-func detectEnum(named *types.Named) (enum.Enum, bool) {
+func detectEnum(named *types.Named) (XEnum, bool) {
 	basic, ok := named.Underlying().(*types.Basic)
 	if !ok {
-		return enum.Enum{}, false
+		return XEnum{}, false
 	}
 
 	if basic.Info()&(types.IsFloat|types.IsString|types.IsInteger) == 0 {
-		return enum.Enum{}, false
+		return XEnum{}, false
 	}
 
 	scope := named.Obj().Pkg().Scope()
@@ -72,8 +76,30 @@ func detectEnum(named *types.Named) (enum.Enum, bool) {
 	}
 
 	if len(members) == 0 {
-		return enum.Enum{}, false
+		return XEnum{}, false
 	}
 
-	return enum.Enum{Type: named, Members: members}, true
+	return XEnum{Type: named, Members: members}, true
+}
+
+type EnumConfig struct {
+	Unknown  string
+	Enabled  bool
+	Excludes EnumIDPatterns
+}
+
+type EnumIDPattern struct {
+	Path *regexp.Regexp
+	Name *regexp.Regexp
+}
+
+type EnumIDPatterns []EnumIDPattern
+
+func (ids EnumIDPatterns) Matches(path, name string) bool {
+	for _, id := range ids {
+		if id.Path.MatchString(path) && id.Name.MatchString(name) {
+			return true
+		}
+	}
+	return false
 }
