@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/generator/internal/builder"
 	"github.com/jmattheis/goverter/xtype"
@@ -474,7 +475,7 @@ func (g *generator) callExisting(
 	source, target *xtype.Type,
 	errPath builder.ErrorPath,
 ) ([]jen.Code, *xtype.JenID, *builder.Error) {
-	signature := xtype.SignatureOf(source, target)
+	signature := signatureOf(source, target)
 	if def, err := g.extend.Get(signature, ctx.AvailableContext); def != nil {
 		return g.CallMethod(ctx, def, sourceID, source, target, errPath)
 	} else if err != nil {
@@ -552,7 +553,7 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *xtype.
 					Source:    source,
 					RawArgs:   args,
 					Context:   map[string]*xtype.Type{},
-					Signature: xtype.SignatureOf(source, target),
+					Signature: signatureOf(source, target),
 					Target:    target,
 				},
 			},
@@ -568,7 +569,7 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *xtype.
 }
 
 func (g *generator) hasMethod(ctx *builder.MethodContext, source, target types.Type) bool {
-	signature := xtype.Signature{Source: source.String(), Target: target.String()}
+	signature := goverter.Signature{Source: source.String(), Target: target.String()}
 	return g.extend.Has(signature) || g.lookup.Has(signature)
 }
 
@@ -577,7 +578,7 @@ func (g *generator) getOverlappingStructDefinition(ctx *builder.MethodContext, s
 		return nil
 	}
 
-	overlapping := []xtype.Signature{
+	overlapping := []goverter.Signature{
 		{Source: source.AsPointerType().String(), Target: target.String},
 		{Source: source.AsPointerType().String(), Target: target.AsPointerType().String()},
 		{Source: source.String, Target: target.AsPointerType().String()},
@@ -638,4 +639,8 @@ func (g *generator) qualMethod(m *method.Definition) *jen.Statement {
 	default:
 		return jen.Qual(m.Package, m.Name)
 	}
+}
+
+func signatureOf(source, target *xtype.Type) goverter.Signature {
+	return goverter.Signature{Source: source.String, Target: target.String}
 }

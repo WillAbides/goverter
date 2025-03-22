@@ -4,6 +4,7 @@ import (
 	"go/types"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/xtype"
 	"github.com/jmattheis/goverter/xtype/method"
@@ -72,7 +73,7 @@ type MethodContext struct {
 	FieldsTarget      string
 	OutputPackagePath string
 	UseConstructor    bool
-	Signature         xtype.Signature
+	Signature         goverter.Signature
 	TargetType        *xtype.Type
 	HasMethod         func(*MethodContext, types.Type, types.Type) bool
 	SeenNamed         map[string]struct{}

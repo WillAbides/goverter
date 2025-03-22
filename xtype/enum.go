@@ -9,7 +9,7 @@ import (
 
 func (t *Type) Enum(cfg *EnumConfig) *goverter.Enum {
 	if !t.Named {
-		return DisabledEnum
+		return &goverter.Enum{}
 	}
 
 	if t.enum == nil {
@@ -23,14 +23,12 @@ func loadEnum(t *types.Named, cfg *EnumConfig) *goverter.Enum {
 	name := t.Obj().Name()
 
 	if !cfg.Enabled || cfg.Excludes.Matches(path, name) {
-		return DisabledEnum
+		return &goverter.Enum{}
 	}
 
 	e := detectEnum(t)
 	return &e
 }
-
-var DisabledEnum = &goverter.Enum{OK: false}
 
 func detectEnum(named *types.Named) goverter.Enum {
 	basic, ok := named.Underlying().(*types.Basic)

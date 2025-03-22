@@ -9,16 +9,6 @@ import (
 	"github.com/jmattheis/goverter"
 )
 
-// Signature represents a signature for conversion.
-type Signature struct {
-	Source string
-	Target string
-}
-
-func SignatureOf(source, target *Type) Signature {
-	return Signature{Source: source.String, Target: target.String}
-}
-
 // Type is a helper wrapper for types.Type.
 type Type struct {
 	String        string

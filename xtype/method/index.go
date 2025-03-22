@@ -15,19 +15,19 @@ type IndexEntry[T any] struct {
 }
 
 type IndexID struct {
-	sig    xtype.Signature
+	sig    goverter.Signature
 	idx    int
 	update bool
 }
 
 func NewIndex[T any]() *Index[T] {
 	return &Index[T]{
-		Exact: map[xtype.Signature][]IndexEntry[T]{},
+		Exact: map[goverter.Signature][]IndexEntry[T]{},
 	}
 }
 
 type Index[T any] struct {
-	Exact  map[xtype.Signature][]IndexEntry[T]
+	Exact  map[goverter.Signature][]IndexEntry[T]
 	Update []*T
 }
 
@@ -87,12 +87,12 @@ func (l *Index[T]) ByID(id IndexID) *T {
 	return l.Exact[id.sig][id.idx].Item
 }
 
-func (l *Index[T]) Has(sig xtype.Signature) bool {
+func (l *Index[T]) Has(sig goverter.Signature) bool {
 	_, ok := l.Exact[sig]
 	return ok
 }
 
-func (l *Index[T]) Get(sig xtype.Signature, m map[string]*xtype.Type) (*T, error) {
+func (l *Index[T]) Get(sig goverter.Signature, m map[string]*xtype.Type) (*T, error) {
 	hits, ok := l.Exact[sig]
 	if !ok {
 		return nil, nil
@@ -107,7 +107,7 @@ func (l *Index[T]) Get(sig xtype.Signature, m map[string]*xtype.Type) (*T, error
 	return nil, satisfiedError(sig, m, hits)
 }
 
-func satisfiedError[T any](sig xtype.Signature, available map[string]*xtype.Type, hits []IndexEntry[T]) error {
+func satisfiedError[T any](sig goverter.Signature, available map[string]*xtype.Type, hits []IndexEntry[T]) error {
 	var hitStrings []string
 	for _, hit := range hits {
 		hitStrings = append(hitStrings, fmt.Sprintf("%s:\n    %s", hit.Def.ID, strings.Join(AvailableContextDebug(hit.Def.Context, available), "\n    ")))

@@ -13,3 +13,9 @@ func Accessible(obj types.Object, outputPackagePath string) bool {
 	pkg := obj.Pkg()
 	return pkg == nil || pkg.Path() == outputPackagePath
 }
+
+// Signature represents a signature for conversion.
+type Signature struct {
+	Source string
+	Target string
+}

@@ -2,6 +2,7 @@ package method
 
 import (
 	"github.com/dave/jennifer/jen"
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/xtype"
 )
 
@@ -25,7 +26,7 @@ type Parameters struct {
 	Target       *xtype.Type
 	Context      map[string]*xtype.Type
 
-	Signature xtype.Signature
+	Signature goverter.Signature
 
 	RawArgs []Arg
 
