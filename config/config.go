@@ -7,7 +7,7 @@ import (
 )
 
 func ParseRaw(raw *goverter.Raw) ([]*Converter, error) {
-	loader, err := goverter.NewPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
+	loader, err := goverter.NewPackageLoader(raw.WorkDir, raw.BuildTags, goverter.GetPackages(raw))
 	if err != nil {
 		return nil, err
 	}

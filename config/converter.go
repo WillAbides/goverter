@@ -13,7 +13,7 @@ type Converter struct {
 	goverter.ConverterConfig
 	Package  string
 	FileName string
-	typ      types.Type
+	Type     types.Type
 	Methods  []*goverter.Method
 
 	Location string
@@ -23,7 +23,7 @@ func (c *Converter) TypeForMethod() types.Type {
 	if c.OutputFormat == goverter.OutputFormatFunction {
 		return nil
 	}
-	return c.typ
+	return c.Type
 }
 
 func (c *Converter) RequireStruct() error {
@@ -34,10 +34,10 @@ func (c *Converter) RequireStruct() error {
 }
 
 func (c *Converter) IDString() string {
-	if c.typ == nil {
+	if c.Type == nil {
 		return "var definition"
 	}
-	return c.typ.String()
+	return c.Type.String()
 }
 
 func DefaultOutputFile(name string) string {
@@ -46,7 +46,11 @@ func DefaultOutputFile(name string) string {
 	return strings.TrimSuffix(f, ext) + ".gen" + ext
 }
 
-func ParseConverter(ctx *goverter.CfgContext, rawConverter *goverter.RawConverter, global goverter.RawLines) (*Converter, error) {
+func ParseConverter(
+	ctx *goverter.CfgContext,
+	rawConverter *goverter.RawConverter,
+	global goverter.RawLines,
+) (*Converter, error) {
 	c, err := InitConverter(ctx.Loader, rawConverter)
 	if err != nil {
 		return nil, err
@@ -61,12 +65,12 @@ func ParseConverter(ctx *goverter.CfgContext, rawConverter *goverter.RawConverte
 
 	ResolveOutputPackage(ctx, c)
 
-	err = parseMethods(ctx, rawConverter, c)
+	err = ParseMethods(ctx, rawConverter, c)
 	return c, err
 }
 
 func ResolveOutputPackage(ctx *goverter.CfgContext, c *Converter) {
-	targetPackage, err := resolvePackage(c.FileName, c.Package, c.OutputFile)
+	targetPackage, err := goverter.ResolvePackage(c.FileName, c.Package, c.OutputFile)
 	if err != nil {
 		return
 	}
@@ -100,7 +104,7 @@ func InitConverter(loader *goverter.PackageLoader, rawConverter *goverter.RawCon
 			return nil, err
 		}
 
-		c.typ = interfaceObj.Type()
+		c.Type = interfaceObj.Type()
 		c.Name = rawConverter.InterfaceName + "Impl"
 		return c, nil
 	}
@@ -146,10 +150,10 @@ func ParseConverterLine(ctx *goverter.CfgContext, c *Converter, value string) (e
 			return err
 		}
 
-		if c.typ == nil && c.OutputFormat != goverter.OutputFormatVariable {
+		if c.Type == nil && c.OutputFormat != goverter.OutputFormatVariable {
 			return fmt.Errorf("unsupported format for goverter:variables")
 		}
-		if c.typ != nil && c.OutputFormat == goverter.OutputFormatVariable {
+		if c.Type != nil && c.OutputFormat == goverter.OutputFormatVariable {
 			return fmt.Errorf("unsupported format for goverter:converter")
 		}
 	case "output:package":
@@ -172,7 +176,7 @@ func ParseConverterLine(ctx *goverter.CfgContext, c *Converter, value string) (e
 		c.Comments = append(c.Comments, rest)
 	case "enum:exclude":
 		var pattern goverter.EnumIDPattern
-		pattern, err = parseIDPattern(c.Package, rest)
+		pattern, err = goverter.ParseIDPattern(c.Package, rest)
 		c.Enum.Excludes = append(c.Enum.Excludes, pattern)
 	case goverter.ConfigExtend:
 		for _, name := range strings.Fields(rest) {

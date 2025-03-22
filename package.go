@@ -1,13 +1,11 @@
-package config
+package goverter
 
 import (
 	"path/filepath"
 	"strings"
-
-	"github.com/jmattheis/goverter"
 )
 
-func resolvePackage(sourceFileName, sourcePackage, targetFile string) (string, error) {
+func ResolvePackage(sourceFileName, sourcePackage, targetFile string) (string, error) {
 	relativeFile := targetFile
 	if filepath.IsAbs(targetFile) {
 		var err error
@@ -20,7 +18,7 @@ func resolvePackage(sourceFileName, sourcePackage, targetFile string) (string, e
 	return filepath.Dir(filepath.Join(sourcePackage, relativeFile)), nil
 }
 
-func getPackages(raw *goverter.Raw) []string {
+func GetPackages(raw *Raw) []string {
 	lookup := map[string]struct{}{}
 	for _, c := range raw.Converters {
 		lookup[c.PackagePath] = struct{}{}
@@ -44,20 +42,20 @@ func getPackages(raw *goverter.Raw) []string {
 	return pkgs
 }
 
-func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePackage string, lines goverter.RawLines) {
+func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePackage string, lines RawLines) {
 	for _, line := range lines.Lines {
-		cmd, rest := goverter.ParseCommand(line)
+		cmd, rest := ParseCommand(line)
 		switch cmd {
-		case goverter.ConfigExtend:
+		case ConfigExtend:
 			for _, fullMethod := range strings.Fields(rest) {
 				registerFullMethod(lookup, sourcePackage, fullMethod)
 			}
-		case goverter.ConfigOutputFile:
-			file, err := goverter.ParseFile(cwd, rest)
+		case ConfigOutputFile:
+			file, err := ParseFile(cwd, rest)
 			if err != nil {
 				continue
 			}
-			targetPackage, err := resolvePackage(filename, sourcePackage, file)
+			targetPackage, err := ResolvePackage(filename, sourcePackage, file)
 			if err != nil {
 				continue
 			}
@@ -66,22 +64,22 @@ func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePac
 	}
 }
 
-func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines goverter.RawLines) {
+func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines RawLines) {
 	for _, line := range lines.Lines {
-		cmd, rest := goverter.ParseCommand(line)
+		cmd, rest := ParseCommand(line)
 		switch cmd {
-		case goverter.ConfigMap:
-			if _, _, custom, err := parseMethodMap(rest); err == nil && custom != "" {
+		case ConfigMap:
+			if _, _, custom, err := ParseMethodMap(rest); err == nil && custom != "" {
 				registerFullMethod(lookup, sourcePackage, custom)
 			}
-		case goverter.ConfigDefault:
+		case ConfigDefault:
 			registerFullMethod(lookup, sourcePackage, rest)
 		}
 	}
 }
 
 func registerFullMethod(lookup map[string]struct{}, sourcePackage, fullMethod string) {
-	pkg, _, err := goverter.ParseMethodString(sourcePackage, fullMethod)
+	pkg, _, err := ParseMethodString(sourcePackage, fullMethod)
 	if err == nil {
 		lookup[pkg] = struct{}{}
 	}

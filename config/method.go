@@ -8,12 +8,12 @@ import (
 	"github.com/jmattheis/goverter"
 )
 
-func parseMethods(ctx *goverter.CfgContext, rawConverter *goverter.RawConverter, c *Converter) error {
-	if c.typ != nil {
-		interf := c.typ.Underlying().(*types.Interface)
+func ParseMethods(ctx *goverter.CfgContext, rawConverter *goverter.RawConverter, c *Converter) error {
+	if c.Type != nil {
+		interf := c.Type.Underlying().(*types.Interface)
 		for i := 0; i < interf.NumMethods(); i++ {
 			fun := interf.Method(i)
-			def, err := parseMethod(ctx, c, fun, rawConverter.Methods[fun.Name()])
+			def, err := ParseMethod(ctx, c, fun, rawConverter.Methods[fun.Name()])
 			if err != nil {
 				return err
 			}
@@ -26,7 +26,7 @@ func parseMethods(ctx *goverter.CfgContext, rawConverter *goverter.RawConverter,
 		if err != nil {
 			return err
 		}
-		def, err := parseMethod(ctx, c, fn, lines)
+		def, err := ParseMethod(ctx, c, fn, lines)
 		if err != nil {
 			return err
 		}
@@ -35,7 +35,7 @@ func parseMethods(ctx *goverter.CfgContext, rawConverter *goverter.RawConverter,
 	return nil
 }
 
-func parseMethod(ctx *goverter.CfgContext, c *Converter, obj types.Object, rawMethod goverter.RawLines) (*goverter.Method, error) {
+func ParseMethod(ctx *goverter.CfgContext, c *Converter, obj types.Object, rawMethod goverter.RawLines) (*goverter.Method, error) {
 	m := &goverter.Method{
 		Common:      c.Common,
 		Fields:      map[string]*goverter.FieldMapping{},
@@ -45,7 +45,7 @@ func parseMethod(ctx *goverter.CfgContext, c *Converter, obj types.Object, rawMe
 	}
 
 	for _, value := range rawMethod.Lines {
-		if err := parseMethodLine(ctx, c, m, value); err != nil {
+		if err := ParseMethodLine(ctx, c, m, value); err != nil {
 			return m, goverter.FormatLineError(rawMethod, obj.String(), value, err)
 		}
 	}
@@ -66,14 +66,14 @@ func parseMethod(ctx *goverter.CfgContext, c *Converter, obj types.Object, rawMe
 	return m, err
 }
 
-func parseMethodLine(ctx *goverter.CfgContext, c *Converter, m *goverter.Method, value string) (err error) {
+func ParseMethodLine(ctx *goverter.CfgContext, c *Converter, m *goverter.Method, value string) (err error) {
 	cmd, rest := goverter.ParseCommand(value)
 	fieldSetting := false
 	switch cmd {
 	case goverter.ConfigMap:
 		fieldSetting = true
 		var source, target, custom string
-		source, target, custom, err = parseMethodMap(rest)
+		source, target, custom, err = goverter.ParseMethodMap(rest)
 		if err != nil {
 			return err
 		}
@@ -123,7 +123,7 @@ func parseMethodLine(ctx *goverter.CfgContext, c *Converter, m *goverter.Method,
 		}
 
 		var t goverter.ConfiguredTransformer
-		t, err = parseTransformer(ctx, fields[0], config)
+		t, err = goverter.ParseTransformer(ctx, fields[0], config)
 		m.EnumMapping.Transformers = append(m.EnumMapping.Transformers, t)
 	case "autoMap":
 		fieldSetting = true
@@ -147,28 +147,4 @@ func parseMethodLine(ctx *goverter.CfgContext, c *Converter, m *goverter.Method,
 		m.RawFieldSettings = append(m.RawFieldSettings, value)
 	}
 	return err
-}
-
-func parseMethodMap(remaining string) (source, target, custom string, err error) {
-	parts := strings.SplitN(remaining, "|", 2)
-	if len(parts) == 2 {
-		custom = strings.TrimSpace(parts[1])
-	}
-
-	fields := strings.Fields(parts[0])
-	switch len(fields) {
-	case 1:
-		target = fields[0]
-	case 2:
-		source = fields[0]
-		target = fields[1]
-	case 0:
-		err = fmt.Errorf("missing target field")
-	default:
-		err = fmt.Errorf("too many fields expected at most 2 fields got %d: %s", len(fields), remaining)
-	}
-	if err == nil && strings.ContainsRune(target, '.') {
-		err = fmt.Errorf("the mapping target %q must be a field name but was a path.\nDots \".\" are not allowed.", target)
-	}
-	return source, target, custom, err
 }

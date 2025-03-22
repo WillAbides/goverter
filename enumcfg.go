@@ -58,3 +58,33 @@ func ValidateEnumAction(s string) error {
 		return fmt.Errorf("invalid enum action %q, must be one of %q, %q, or %q", s, EnumActionPanic, EnumActionIgnore, EnumActionError)
 	}
 }
+
+func ParseTransformer(ctx *CfgContext, name, config string) (ConfiguredTransformer, error) {
+	t, ok := ctx.EnumTransformers[name]
+	if !ok {
+		t, ok = DefaultEnumTransformers[name]
+	}
+
+	if !ok {
+		return ConfiguredTransformer{}, fmt.Errorf("transformer %q does not exist", name)
+	}
+
+	return ConfiguredTransformer{Name: name, Transformer: t, Config: config}, nil
+}
+
+func ParseIDPattern(cwd, rest string) (pattern EnumIDPattern, err error) {
+	path, name, err := ParseMethodString(cwd, rest)
+	if err != nil {
+		return pattern, err
+	}
+
+	pattern.Path, err = regexp.Compile(path)
+	if err != nil {
+		return pattern, err
+	}
+	pattern.Name, err = regexp.Compile(name)
+	if err != nil {
+		return pattern, err
+	}
+	return pattern, nil
+}
