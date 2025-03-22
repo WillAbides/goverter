@@ -5,8 +5,8 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/method"
 	"github.com/jmattheis/goverter/xtype"
+	"github.com/jmattheis/goverter/xtype/method"
 )
 
 // Builder builds converter implementations, and can decide if it can handle the given type.

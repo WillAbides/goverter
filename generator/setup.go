@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/generator/internal/builder"
-	"github.com/jmattheis/goverter/method"
+	"github.com/jmattheis/goverter/xtype/method"
 )
 
 func setupGenerator(converter *config.Converter, n *builder.Namer) (*generator, error) {

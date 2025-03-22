@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/jmattheis/goverter/method"
+	"github.com/jmattheis/goverter/xtype/method"
 	"golang.org/x/tools/go/packages"
 )
 

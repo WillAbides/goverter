@@ -3,7 +3,7 @@ package generator
 import (
 	"fmt"
 
-	"github.com/jmattheis/goverter/method"
+	"github.com/jmattheis/goverter/xtype/method"
 )
 
 func validateMethods(lookup *method.Index[generatedMethod]) error {

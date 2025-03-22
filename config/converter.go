@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/jmattheis/goverter/enum"
-	"github.com/jmattheis/goverter/method"
+	"github.com/jmattheis/goverter/xtype/method"
 )
 
 const (
