@@ -7,6 +7,6 @@ import (
 
 // goverter:converter
 type Converter interface {
-    // goverter:enum:unknown Unknown
-    Convert(input.Color) output.Color
+	// goverter:enum:unknown Unknown
+	Convert(input.Color) output.Color
 }

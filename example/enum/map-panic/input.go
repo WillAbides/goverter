@@ -8,6 +8,6 @@ import (
 // goverter:converter
 // goverter:enum:unknown @panic
 type Converter interface {
-    // goverter:enum:map Gray @panic
-    Convert(input.Color) output.Color
+	// goverter:enum:map Gray @panic
+	Convert(input.Color) output.Color
 }

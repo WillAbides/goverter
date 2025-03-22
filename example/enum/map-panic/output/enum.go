@@ -1,6 +1,7 @@
 package output
 
 type Color string
+
 const (
-    Green Color = "green"
+	Green Color = "green"
 )
