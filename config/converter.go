@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/xtype"
 	"github.com/jmattheis/goverter/xtype/method"
 )
@@ -219,7 +220,7 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 		}
 		c.Comments = append(c.Comments, rest)
 	case "enum:exclude":
-		var pattern xtype.EnumIDPattern
+		var pattern goverter.EnumIDPattern
 		pattern, err = parseIDPattern(c.Package, rest)
 		c.Enum.Excludes = append(c.Enum.Excludes, pattern)
 	case configExtend:

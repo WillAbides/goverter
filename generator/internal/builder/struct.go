@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/xtype"
 	"github.com/jmattheis/goverter/xtype/method"
@@ -80,7 +81,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 				return nil, err.Lift(lift...)
 			}
 			if shouldCheckAgainstZero(ctx, nextSource, targetFieldType, assignTo.Update, false) {
-				stmt = append(stmt, jen.If(nextID.Code.Clone().Op("!=").Add(xtype.ZeroValue(nextSource.T))).Block(fieldStmt...))
+				stmt = append(stmt, jen.If(nextID.Code.Clone().Op("!=").Add(goverter.ZeroValue(nextSource.T))).Block(fieldStmt...))
 			} else {
 				stmt = append(stmt, fieldStmt...)
 			}
@@ -122,7 +123,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 			callStmt = append(callStmt, assignTo.Stmt.Clone().Dot(targetField.Name()).Op("=").Add(callReturnID.Code))
 
 			if shouldCheckAgainstZero(ctx, functionCallSourceType, targetFieldType, assignTo.Update, true) {
-				stmt = append(stmt, jen.If(functionCallSourceID.Code.Clone().Op("!=").Add(xtype.ZeroValue(functionCallSourceType.T))).Block(callStmt...))
+				stmt = append(stmt, jen.If(functionCallSourceID.Code.Clone().Op("!=").Add(goverter.ZeroValue(functionCallSourceType.T))).Block(callStmt...))
 			} else {
 				stmt = append(stmt, callStmt...)
 			}

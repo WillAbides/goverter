@@ -1,4 +1,4 @@
-package xtype
+package goverter
 
 import (
 	"fmt"
@@ -7,18 +7,18 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-func toCode(t types.Type) *jen.Statement {
+func ToCode(t types.Type) *jen.Statement {
 	switch cast := t.(type) {
 	case *types.Named:
 		return toCodeNamed(cast)
 	case *types.Map:
-		return jen.Map(toCode(cast.Key())).Add(toCode(cast.Elem()))
+		return jen.Map(ToCode(cast.Key())).Add(ToCode(cast.Elem()))
 	case *types.Slice:
-		return jen.Index().Add(toCode(cast.Elem()))
+		return jen.Index().Add(ToCode(cast.Elem()))
 	case *types.Array:
-		return jen.Index(jen.Lit(int(cast.Len()))).Add(toCode(cast.Elem()))
+		return jen.Index(jen.Lit(int(cast.Len()))).Add(ToCode(cast.Elem()))
 	case *types.Pointer:
-		return jen.Op("*").Add(toCode(cast.Elem()))
+		return jen.Op("*").Add(ToCode(cast.Elem()))
 	case *types.Basic:
 		return toCodeBasic(cast.Kind())
 	case *types.Struct:
@@ -38,13 +38,13 @@ func toChan(t *types.Chan) *jen.Statement {
 	case types.SendRecv:
 		// chan (<-chan T) requires parentheses
 		if c, _ := t.Elem().(*types.Chan); c != nil && c.Dir() == types.RecvOnly {
-			return jen.Chan().Parens(toCode(t.Elem()))
+			return jen.Chan().Parens(ToCode(t.Elem()))
 		}
-		return jen.Chan().Add(toCode(t.Elem()))
+		return jen.Chan().Add(ToCode(t.Elem()))
 	case types.SendOnly:
-		return jen.Chan().Op("<-").Add(toCode(t.Elem()))
+		return jen.Chan().Op("<-").Add(ToCode(t.Elem()))
 	case types.RecvOnly:
-		return jen.Op("<-").Chan().Add(toCode(t.Elem()))
+		return jen.Op("<-").Chan().Add(ToCode(t.Elem()))
 	default:
 		panic("unsupported channel " + t.String())
 	}
@@ -53,7 +53,7 @@ func toChan(t *types.Chan) *jen.Statement {
 func toCodeInterface(t *types.Interface) *jen.Statement {
 	content := []jen.Code{}
 	for i := 0; i < t.NumEmbeddeds(); i++ {
-		content = append(content, toCode(t.EmbeddedType(i)))
+		content = append(content, ToCode(t.EmbeddedType(i)))
 	}
 
 	for i := 0; i < t.NumExplicitMethods(); i++ {
@@ -73,13 +73,13 @@ func toCodeSignature(t *types.Signature) *jen.Statement {
 	jenParams := []jen.Code{}
 	params := t.Params()
 	for i := 0; i < params.Len(); i++ {
-		jenParams = append(jenParams, toCode(params.At(i).Type()))
+		jenParams = append(jenParams, ToCode(params.At(i).Type()))
 	}
 
 	jenResults := []jen.Code{}
 	results := t.Results()
 	for i := 0; i < results.Len(); i++ {
-		jenResults = append(jenResults, toCode(results.At(i).Type()))
+		jenResults = append(jenResults, ToCode(results.At(i).Type()))
 	}
 	return jen.Params(jenParams...).Params(jenResults...)
 }
@@ -94,7 +94,7 @@ func toCodeNamed(t *types.Named) *jen.Statement {
 
 	jenArgs := []jen.Code{}
 	for i := 0; i < args.Len(); i++ {
-		jenArgs = append(jenArgs, toCode(args.At(i)))
+		jenArgs = append(jenArgs, ToCode(args.At(i)))
 	}
 
 	return name.Index(jen.List(jenArgs...))
@@ -113,7 +113,7 @@ func toCodeStruct(t *types.Struct) *jen.Statement {
 		f := t.Field(i)
 		tag := t.Tag(i)
 
-		fieldType := toCode(f.Type())
+		fieldType := ToCode(f.Type())
 		if tag != "" {
 			fieldType = fieldType.Add(jen.Id("`" + tag + "`"))
 		}

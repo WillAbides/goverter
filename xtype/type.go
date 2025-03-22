@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/jmattheis/goverter"
 )
 
 // Signature represents a signature for conversion.
@@ -47,7 +48,7 @@ type Type struct {
 	Chan          bool
 	ChanType      *types.Chan
 
-	enum *Enum
+	enum *goverter.Enum
 }
 
 func (t *Type) AssignableTo(other *Type) bool {
@@ -317,9 +318,9 @@ func (t *Type) asID(seeNamed, escapeReserved bool) string {
 // TypeAsJen returns a jen representation of the type.
 func (t *Type) TypeAsJen() *jen.Statement {
 	if t.Named {
-		return toCode(t.NamedType)
+		return goverter.ToCode(t.NamedType)
 	}
-	return toCode(t.T)
+	return goverter.ToCode(t.T)
 }
 
 func ambiguousMatchError(name string, ambNames []string) error {

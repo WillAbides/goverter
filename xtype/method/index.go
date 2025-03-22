@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/xtype"
 )
 
@@ -120,7 +121,7 @@ but not all required context params are available in the current method.
 func AvailableContextDebug(required, available map[string]*xtype.Type) []string {
 	var lines []string
 
-	use := xtype.UsageFromMap(available)
+	use := usageFromMap(available)
 	for key := range required {
 		_, ok := available[key]
 		use.Used(key)
@@ -148,4 +149,14 @@ func satisfiesContext(required, m map[string]*xtype.Type) bool {
 		}
 	}
 	return true
+}
+
+func usageFromMap[V any](value map[string]V) goverter.UsageChecker {
+	m := map[string]struct{}{}
+
+	for key := range value {
+		m[key] = struct{}{}
+	}
+
+	return m
 }

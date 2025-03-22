@@ -3,19 +3,13 @@ package xtype
 import (
 	"go/constant"
 	"go/types"
-	"regexp"
-	"sort"
+
+	"github.com/jmattheis/goverter"
 )
 
-type Enum struct {
-	Type    *types.Named
-	Members map[string]any
-	OK      bool
-}
-
-func (t *Type) Enum(cfg *EnumConfig) *Enum {
+func (t *Type) Enum(cfg *EnumConfig) *goverter.Enum {
 	if !t.Named {
-		return disabled
+		return DisabledEnum
 	}
 
 	if t.enum == nil {
@@ -24,37 +18,28 @@ func (t *Type) Enum(cfg *EnumConfig) *Enum {
 	return t.enum
 }
 
-func loadEnum(t *types.Named, cfg *EnumConfig) *Enum {
+func loadEnum(t *types.Named, cfg *EnumConfig) *goverter.Enum {
 	path := t.Obj().Pkg().Path()
 	name := t.Obj().Name()
 
 	if !cfg.Enabled || cfg.Excludes.Matches(path, name) {
-		return disabled
+		return DisabledEnum
 	}
 
 	e := detectEnum(t)
 	return &e
 }
 
-func (e Enum) SortedMembers() []string {
-	var m []string
-	for member := range e.Members {
-		m = append(m, member)
-	}
-	sort.Strings(m)
-	return m
-}
+var DisabledEnum = &goverter.Enum{OK: false}
 
-var disabled = &Enum{OK: false}
-
-func detectEnum(named *types.Named) Enum {
+func detectEnum(named *types.Named) goverter.Enum {
 	basic, ok := named.Underlying().(*types.Basic)
 	if !ok {
-		return Enum{}
+		return goverter.Enum{}
 	}
 
 	if basic.Info()&(types.IsFloat|types.IsString|types.IsInteger) == 0 {
-		return Enum{}
+		return goverter.Enum{}
 	}
 
 	scope := named.Obj().Pkg().Scope()
@@ -72,10 +57,10 @@ func detectEnum(named *types.Named) Enum {
 	}
 
 	if len(members) == 0 {
-		return Enum{}
+		return goverter.Enum{}
 	}
 
-	return Enum{
+	return goverter.Enum{
 		Type:    named,
 		Members: members,
 		OK:      true,
@@ -85,21 +70,5 @@ func detectEnum(named *types.Named) Enum {
 type EnumConfig struct {
 	Unknown  string
 	Enabled  bool
-	Excludes EnumIDPatterns
-}
-
-type EnumIDPattern struct {
-	Path *regexp.Regexp
-	Name *regexp.Regexp
-}
-
-type EnumIDPatterns []EnumIDPattern
-
-func (ids EnumIDPatterns) Matches(path, name string) bool {
-	for _, id := range ids {
-		if id.Path.MatchString(path) && id.Name.MatchString(name) {
-			return true
-		}
-	}
-	return false
+	Excludes goverter.EnumIDPatterns
 }

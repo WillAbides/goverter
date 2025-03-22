@@ -1,18 +1,8 @@
-package xtype
+package goverter
 
 import (
 	"sort"
 )
-
-func UsageFromMap[V any](value map[string]V) UsageChecker {
-	m := map[string]struct{}{}
-
-	for key := range value {
-		m[key] = struct{}{}
-	}
-
-	return UsageChecker(m)
-}
 
 type UsageChecker map[string]struct{}
 

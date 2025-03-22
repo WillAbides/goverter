@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/xtype"
 )
 
-// Basic handles basic data types.
 type Enum struct{}
 
 // Matches returns true, if the builder can create handle the given types.
@@ -120,7 +120,7 @@ func (s *Enum) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sou
 	return AssignByBuild(s, gen, ctx, assignTo, sourceID, source, target, path)
 }
 
-func caseAction(gen Generator, ctx *MethodContext, nameVar *jen.Statement, target *xtype.Type, targetEnum *xtype.Enum, targetName string, sourceID *xtype.JenID, errPath ErrorPath) (jen.Code, *Error) {
+func caseAction(gen Generator, ctx *MethodContext, nameVar *jen.Statement, target *xtype.Type, targetEnum *goverter.Enum, targetName string, sourceID *xtype.JenID, errPath ErrorPath) (jen.Code, *Error) {
 	if config.IsEnumAction(targetName) {
 		switch targetName {
 		case config.EnumActionIgnore:
@@ -147,12 +147,12 @@ func caseAction(gen Generator, ctx *MethodContext, nameVar *jen.Statement, targe
 	return nameVar.Clone().Op("=").Add(targetQual), nil
 }
 
-func executeTransformers(transformers []config.ConfiguredTransformer, source, target *xtype.Type, sourceEnum, targetEnum *xtype.Enum) (map[string]string, *Error) {
+func executeTransformers(transformers []config.ConfiguredTransformer, source, target *xtype.Type, sourceEnum, targetEnum *goverter.Enum) (map[string]string, *Error) {
 	transformerMapping := map[string]string{}
 	for _, t := range transformers {
 		m, err := t.Transformer(config.TransformEnumContext{
-			Source: xtype.Enum{OK: true, Type: source.NamedType, Members: sourceEnum.Members},
-			Target: xtype.Enum{OK: true, Type: target.NamedType, Members: targetEnum.Members},
+			Source: goverter.Enum{OK: true, Type: source.NamedType, Members: sourceEnum.Members},
+			Target: goverter.Enum{OK: true, Type: target.NamedType, Members: targetEnum.Members},
 			Config: t.Config,
 		})
 		if err != nil {
@@ -168,14 +168,14 @@ func executeTransformers(transformers []config.ConfiguredTransformer, source, ta
 	return transformerMapping, nil
 }
 
-func enumTargetMismatches(previous enumMapping, targetEnum *xtype.Enum, targetName string) bool {
+func enumTargetMismatches(previous enumMapping, targetEnum *goverter.Enum, targetName string) bool {
 	if !config.IsEnumAction(targetName) && !config.IsEnumAction(previous.Target) {
 		return targetEnum.Members[previous.Target] != targetEnum.Members[targetName]
 	}
 	return targetName != previous.Target
 }
 
-func enumTargetMismatchError(targetEnum *xtype.Enum, sourceName, targetName string, previous enumMapping, sourceValue interface{}) *Error {
+func enumTargetMismatchError(targetEnum *goverter.Enum, sourceName, targetName string, previous enumMapping, sourceValue interface{}) *Error {
 	return NewError(fmt.Sprintf(`Detected multiple enum source members with the same value but different target values/actions.
     %s(%v) -> %s
     %s(%v) -> %s
@@ -191,7 +191,7 @@ See https://goverter.jmattheis.de/guide/enum#mapping-enum-keys`,
 		sourceName, previous.Target))
 }
 
-func fmtEnumValue(targetEnum *xtype.Enum, targetName string) string {
+func fmtEnumValue(targetEnum *goverter.Enum, targetName string) string {
 	if config.IsEnumAction(targetName) {
 		return fmt.Sprintf("%s(action)", targetName)
 	}

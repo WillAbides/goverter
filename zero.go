@@ -1,4 +1,4 @@
-package xtype
+package goverter
 
 import (
 	"go/types"
@@ -20,12 +20,12 @@ func ZeroValue(t types.Type) *jen.Statement {
 	case *types.Named:
 		switch under := cast.Underlying().(type) {
 		case *types.Struct:
-			return jen.Parens(toCode(t).Block())
+			return jen.Parens(ToCode(t).Block())
 		default:
 			return ZeroValue(under)
 		}
 	case *types.Struct, *types.Array:
-		return toCode(t).Block()
+		return ToCode(t).Block()
 	case *types.Interface, *types.Signature, *types.Pointer, *types.Map, *types.Slice, *types.Chan:
 		return jen.Nil()
 	}
