@@ -1,12 +1,12 @@
 package generator
 
 import (
+	"github.com/jmattheis/goverter/builder"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/method"
-	"github.com/jmattheis/goverter/namer"
 )
 
-func setupGenerator(converter *config.Converter, n *namer.Namer) (*generator, error) {
+func setupGenerator(converter *config.Converter, n *builder.Namer) (*generator, error) {
 	extend := method.NewIndex[method.Definition]()
 	for _, def := range converter.Extend {
 		extend.RegisterOverrideOverlapping(def, def)

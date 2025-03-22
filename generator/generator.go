@@ -10,7 +10,6 @@ import (
 	"github.com/jmattheis/goverter/builder"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/method"
-	"github.com/jmattheis/goverter/namer"
 	"github.com/jmattheis/goverter/xtype"
 )
 
@@ -27,7 +26,7 @@ type generatedMethod struct {
 }
 
 type generator struct {
-	namer  *namer.Namer
+	namer  *builder.Namer
 	conf   *config.Converter
 	lookup *method.Index[generatedMethod]
 	extend *method.Index[method.Definition]
@@ -131,7 +130,7 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 	}
 
 	ctx := &builder.MethodContext{
-		Namer:             namer.New(),
+		Namer:             builder.NewNamer(),
 		Conf:              genMethod.Method,
 		FieldsTarget:      fieldsTarget,
 		AvailableContext:  context,

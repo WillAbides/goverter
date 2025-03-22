@@ -1,4 +1,4 @@
-package namer
+package builder
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"github.com/jmattheis/goverter/xtype"
 )
 
-// New returns a new namer.
-func New() *Namer {
+// NewNamer returns a new namer.
+func NewNamer() *Namer {
 	return &Namer{lookup: map[string]struct{}{xtype.ThisVar: {}}}
 }
 

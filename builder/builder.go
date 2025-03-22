@@ -6,7 +6,6 @@ import (
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/method"
-	"github.com/jmattheis/goverter/namer"
 	"github.com/jmattheis/goverter/xtype"
 )
 
@@ -60,7 +59,7 @@ type Generator interface {
 
 // MethodContext exposes information for the current method.
 type MethodContext struct {
-	*namer.Namer
+	*Namer
 	Conf              *config.Method
 	FieldsTarget      string
 	OutputPackagePath string

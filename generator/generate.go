@@ -4,7 +4,6 @@ import (
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter/builder"
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/namer"
 )
 
 // Config the generate config.
@@ -45,7 +44,7 @@ func Generate(converters []*config.Converter, c Config) (map[string][]byte, erro
 	return manager.renderFiles()
 }
 
-func generateConverter(converter *config.Converter, f *jen.File, n *namer.Namer) error {
+func generateConverter(converter *config.Converter, f *jen.File, n *builder.Namer) error {
 	gen, err := setupGenerator(converter, n)
 	if err != nil {
 		return err
