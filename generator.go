@@ -1,4 +1,4 @@
-package generator
+package goverter
 
 import (
 	"fmt"
@@ -7,27 +7,25 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/generator/internal/builder"
 )
 
 type generatedMethod struct {
-	*goverter.Method
+	*Method
 
 	Explicit bool
 	Dirty    bool
 
-	OriginPath []goverter.MethodIndexID
+	OriginPath []MethodIndexID
 	Jen        jen.Code
 
-	IndexID goverter.MethodIndexID
+	IndexID MethodIndexID
 }
 
 type generator struct {
-	namer  *goverter.Namer
-	conf   *goverter.Converter
-	lookup *goverter.MethodIndex[generatedMethod]
-	extend *goverter.MethodIndex[goverter.MethodDefinition]
+	namer  *Namer
+	conf   *Converter
+	lookup *MethodIndex[generatedMethod]
+	extend *MethodIndex[MethodDefinition]
 }
 
 func (g *generator) getGenMethods() []*generatedMethod {
@@ -56,13 +54,13 @@ func (g *generator) buildDirtyMethods() error {
 		genMethod.Dirty = false
 		err := g.buildMethod(genMethod, genMethod.Context)
 		if err != nil {
-			err = err.Lift(&goverter.ErrorMessagePath{
+			err = err.Lift(&ErrorMessagePath{
 				SourceID:   "source",
 				TargetID:   "target",
 				SourceType: genMethod.Source.String,
 				TargetType: genMethod.Target.String,
 			})
-			return fmt.Errorf("Error while creating converter method:\n    %s\n    %s%s\n\n%s", genMethod.Location, genMethod.ID, genMethod.MethodDefinition.ArgDebug("        "), goverter.BuildErrorToString(err))
+			return fmt.Errorf("Error while creating converter method:\n    %s\n    %s%s\n\n%s", genMethod.Location, genMethod.ID, genMethod.MethodDefinition.ArgDebug("        "), BuildErrorToString(err))
 		}
 	}
 	return nil
@@ -83,7 +81,7 @@ func (g *generator) appendGenerated(f *jen.File) {
 		f.Id(raw)
 	}
 
-	if g.conf.OutputFormat == goverter.OutputFormatStruct {
+	if g.conf.OutputFormat == OutputFormatStruct {
 		if len(g.conf.Comments) > 0 {
 			f.Comment(strings.Join(g.conf.Comments, "\n"))
 		}
@@ -95,15 +93,15 @@ func (g *generator) appendGenerated(f *jen.File) {
 
 	for _, def := range genMethods {
 		switch g.conf.OutputFormat {
-		case goverter.OutputFormatStruct:
-			funcs = append(funcs, jen.Func().Params(jen.Id(goverter.ThisVar).Op("*").Id(g.conf.Name)).Id(def.Name).Add(def.Jen))
-		case goverter.OutputFormatVariable:
+		case OutputFormatStruct:
+			funcs = append(funcs, jen.Func().Params(jen.Id(ThisVar).Op("*").Id(g.conf.Name)).Id(def.Name).Add(def.Jen))
+		case OutputFormatVariable:
 			if def.Explicit {
 				init = append(init, jen.Qual(def.Package, def.Name).Op("=").Func().Add(def.Jen))
 			} else {
 				funcs = append(funcs, jen.Func().Id(def.Name).Add(def.Jen))
 			}
-		case goverter.OutputFormatFunction:
+		case OutputFormatFunction:
 			funcs = append(funcs, jen.Func().Id(def.Name).Add(def.Jen))
 		}
 	}
@@ -117,8 +115,8 @@ func (g *generator) appendGenerated(f *jen.File) {
 	}
 }
 
-func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*goverter.Type) *goverter.BuildError {
-	var sourceID *goverter.JenID
+func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*Type) *BuildError {
+	var sourceID *JenID
 	source := genMethod.Source
 	target := genMethod.Target
 
@@ -127,14 +125,14 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 		fieldsTarget = genMethod.Target.PointerInner.String
 	}
 
-	ctx := &goverter.MethodContext{
-		Namer:             goverter.NewNamer(),
+	ctx := &MethodContext{
+		Namer:             NewNamer(),
 		Conf:              genMethod.Method,
 		FieldsTarget:      fieldsTarget,
 		AvailableContext:  context,
 		SeenNamed:         map[string]struct{}{},
 		TargetType:        genMethod.Target,
-		Context:           map[string]*goverter.JenID{},
+		Context:           map[string]*JenID{},
 		IndexID:           genMethod.IndexID,
 		Signature:         genMethod.Signature,
 		HasMethod:         g.hasMethod,
@@ -146,21 +144,21 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 	args := []jen.Code{}
 	for _, arg := range genMethod.RawArgs {
 		switch arg.Use {
-		case goverter.ArgUseInterface:
+		case ArgUseInterface:
 			panic("hopefully unreachable")
-		case goverter.ArgUseContext:
+		case ArgUseContext:
 			name := ctx.Name("context")
-			ctx.Context[arg.Type.String] = goverter.VariableID(jen.Id(name))
+			ctx.Context[arg.Type.String] = VariableID(jen.Id(name))
 			args = append(args, jen.Id(name).Add(arg.Type.TypeAsJen()))
-		case goverter.ArgUseSource:
+		case ArgUseSource:
 			name := ctx.Name("source")
-			sourceID = goverter.VariableID(jen.Id(name))
+			sourceID = VariableID(jen.Id(name))
 			args = append(args, jen.Id(name).Add(arg.Type.TypeAsJen()))
-		case goverter.ArgUseTarget:
+		case ArgUseTarget:
 			name := ctx.Name("target")
 			targetAssign = jen.Id(name)
 			args = append(args, jen.Id(name).Add(arg.Type.TypeAsJen()))
-		case goverter.ArgUseMultiSource:
+		case ArgUseMultiSource:
 			panic("multi source aren't supported right now. https://github.com/jmattheis/goverter/issues/143")
 		}
 	}
@@ -176,8 +174,8 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 
 	var funcBlock []jen.Code
 	if targetAssign != nil {
-		var err *goverter.BuildError
-		funcBlock, err = g.convertTo(ctx, goverter.AssignOf(targetAssign), sourceID, source, target, nil)
+		var err *BuildError
+		funcBlock, err = g.convertTo(ctx, AssignOf(targetAssign), sourceID, source, target, nil)
 		if err != nil {
 			return err
 		}
@@ -192,7 +190,7 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 		}
 		funcBlock = []jen.Code{jenReturn}
 	} else if err != nil {
-		return goverter.NewBuildError(err.Error())
+		return NewBuildError(err.Error())
 	} else {
 		stmt, newID, err := g.buildNoLookup(ctx, sourceID, source, target, nil)
 		if err != nil {
@@ -211,7 +209,12 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 	return nil
 }
 
-func (g *generator) buildNoLookup(ctx *goverter.MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
+func (g *generator) buildNoLookup(
+	ctx *MethodContext,
+	sourceID *JenID,
+	source, target *Type,
+	errPath ErrorPath,
+) ([]jen.Code, *JenID, *BuildError) {
 	if err := g.getOverlappingStructDefinition(ctx, source, target); err != nil {
 		return nil, nil, err
 	}
@@ -225,7 +228,13 @@ func (g *generator) buildNoLookup(ctx *goverter.MethodContext, sourceID *goverte
 	return nil, nil, typeMismatch(source, target)
 }
 
-func (g *generator) assignNoLookup(ctx *goverter.MethodContext, assignTo *goverter.AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
+func (g *generator) assignNoLookup(
+	ctx *MethodContext,
+	assignTo *AssignTo,
+	sourceID *JenID,
+	source, target *Type,
+	errPath ErrorPath,
+) ([]jen.Code, *BuildError) {
 	if err := g.getOverlappingStructDefinition(ctx, source, target); err != nil {
 		return nil, err
 	}
@@ -239,9 +248,15 @@ func (g *generator) assignNoLookup(ctx *goverter.MethodContext, assignTo *govert
 	return nil, typeMismatch(source, target)
 }
 
-func (g *generator) convertTo(ctx *goverter.MethodContext, assignTo *goverter.AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
+func (g *generator) convertTo(
+	ctx *MethodContext,
+	assignTo *AssignTo,
+	sourceID *JenID,
+	source, target *Type,
+	errPath ErrorPath,
+) ([]jen.Code, *BuildError) {
 	if !target.Pointer || !target.PointerInner.Struct {
-		return nil, goverter.NewBuildError("target type must be a pointer struct for goverter:update signatures.")
+		return nil, NewBuildError("target type must be a pointer struct for goverter:update signatures.")
 	}
 	sourcePointer := false
 	if !source.Struct {
@@ -249,11 +264,11 @@ func (g *generator) convertTo(ctx *goverter.MethodContext, assignTo *goverter.As
 			sourcePointer = true
 			source = source.PointerInner
 		} else {
-			return nil, goverter.NewBuildError("source type must be a struct or pointer struct for goverter:update signatures.")
+			return nil, NewBuildError("source type must be a struct or pointer struct for goverter:update signatures.")
 		}
 	}
 
-	var s builder.Struct
+	var s BuildStruct
 	stmt, err := s.Assign(g, ctx, assignTo, sourceID, source, target.PointerInner, errPath)
 	if sourcePointer {
 		stmt = []jen.Code{jen.If(sourceID.Code.Clone().Op("!=").Nil()).Block(stmt...)}
@@ -262,37 +277,37 @@ func (g *generator) convertTo(ctx *goverter.MethodContext, assignTo *goverter.As
 }
 
 func (g *generator) CallMethod(
-	ctx *goverter.MethodContext,
-	definition *goverter.MethodDefinition,
-	sourceID *goverter.JenID,
-	source, target *goverter.Type,
-	errPath goverter.ErrorPath,
-) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
+	ctx *MethodContext,
+	definition *MethodDefinition,
+	sourceID *JenID,
+	source, target *Type,
+	errPath ErrorPath,
+) ([]jen.Code, *JenID, *BuildError) {
 	params := []jen.Code{}
-	formatErr := func(s string) *goverter.BuildError {
-		return goverter.NewBuildError(fmt.Sprintf("Error using method:\n    %s%s\n\n%s", definition.ID, definition.ArgDebug("        "), s))
+	formatErr := func(s string) *BuildError {
+		return NewBuildError(fmt.Sprintf("Error using method:\n    %s%s\n\n%s", definition.ID, definition.ArgDebug("        "), s))
 	}
 
 	for _, arg := range definition.RawArgs {
 		switch arg.Use {
-		case goverter.ArgUseInterface:
-			params = append(params, jen.Id(goverter.ThisVar))
-		case goverter.ArgUseContext:
+		case ArgUseInterface:
+			params = append(params, jen.Id(ThisVar))
+		case ArgUseContext:
 			if !g.requireContext(ctx, arg.Type) {
-				return nil, nil, formatErr("Could not satisfy all required context parameters:\n" + strings.Join(goverter.AvailableContextDebug(definition.Context, ctx.AvailableContext), "\n"))
+				return nil, nil, formatErr("Could not satisfy all required context parameters:\n" + strings.Join(AvailableContextDebug(definition.Context, ctx.AvailableContext), "\n"))
 			}
 			if id, ok := ctx.Context[arg.Type.String]; ok {
 				params = append(params, id.Code.Clone())
 			}
-		case goverter.ArgUseSource:
+		case ArgUseSource:
 			if !source.AssignableTo(definition.Source) && !definition.TypeParams {
 				cause := fmt.Sprintf("Method source type mismatches with conversion source: %s != %s", definition.Source.String, source.String)
 				return nil, nil, formatErr(cause)
 			}
 			params = append(params, sourceID.Code)
-		case goverter.ArgUseMultiSource:
+		case ArgUseMultiSource:
 			panic("multi source aren't supported right now. https://github.com/jmattheis/goverter/issues/143")
-		case goverter.ArgUseTarget:
+		case ArgUseTarget:
 			panic("unreachable")
 		}
 	}
@@ -316,16 +331,16 @@ func (g *generator) CallMethod(
 			jen.List(jen.Id(name), jen.Id("err")).Op(":=").Add(qual.Call(params...)),
 			jen.If(jen.Id("err").Op("!=").Nil()).Block(ret),
 		}
-		return stmt, goverter.VariableID(jen.Id(name)), nil
+		return stmt, VariableID(jen.Id(name)), nil
 	}
-	id := goverter.OtherID(qual.Call(params...))
+	id := OtherID(qual.Call(params...))
 	return nil, id, nil
 }
 
-func (g *generator) ReturnError(ctx *goverter.MethodContext, errPath goverter.ErrorPath, id *jen.Statement) (jen.Code, bool) {
+func (g *generator) ReturnError(ctx *MethodContext, errPath ErrorPath, id *jen.Statement) (jen.Code, bool) {
 	current := g.lookup.ByID(ctx.IndexID)
 	if !ctx.Conf.ReturnError {
-		for _, path := range append([]goverter.MethodIndexID{ctx.IndexID}, current.OriginPath...) {
+		for _, path := range append([]MethodIndexID{ctx.IndexID}, current.OriginPath...) {
 			check := g.lookup.ByID(path)
 			if check.Explicit && !check.ReturnError {
 				return nil, false
@@ -345,13 +360,13 @@ func (g *generator) ReturnError(ctx *goverter.MethodContext, errPath goverter.Er
 	return jen.Return(returns...), true
 }
 
-func (g *generator) requireContext(ctx *goverter.MethodContext, need *goverter.Type) bool {
+func (g *generator) requireContext(ctx *MethodContext, need *Type) bool {
 	if _, ok := ctx.Context[need.String]; ok {
 		return true
 	}
 
 	current := g.lookup.ByID(ctx.IndexID)
-	for _, path := range append([]goverter.MethodIndexID{ctx.IndexID}, current.OriginPath...) {
+	for _, path := range append([]MethodIndexID{ctx.IndexID}, current.OriginPath...) {
 		check := g.lookup.ByID(path)
 
 		if _, ok := check.Context[need.String]; ok {
@@ -363,9 +378,9 @@ func (g *generator) requireContext(ctx *goverter.MethodContext, need *goverter.T
 		}
 
 		check.Context[need.String] = need
-		check.RawArgs = append(check.RawArgs, goverter.Arg{
+		check.RawArgs = append(check.RawArgs, Arg{
 			Name: "",
-			Use:  goverter.ArgUseContext,
+			Use:  ArgUseContext,
 			Type: need,
 		})
 		check.Dirty = true
@@ -374,23 +389,23 @@ func (g *generator) requireContext(ctx *goverter.MethodContext, need *goverter.T
 }
 
 func (g *generator) delegateMethod(
-	ctx *goverter.MethodContext,
-	delegateTo *goverter.MethodDefinition,
-	sourceID *goverter.JenID,
-) (*jen.Statement, *goverter.BuildError) {
+	ctx *MethodContext,
+	delegateTo *MethodDefinition,
+	sourceID *JenID,
+) (*jen.Statement, *BuildError) {
 	params := []jen.Code{}
 
 	for _, arg := range delegateTo.RawArgs {
 		switch arg.Use {
-		case goverter.ArgUseInterface:
-			params = append(params, jen.Id(goverter.ThisVar))
-		case goverter.ArgUseContext:
+		case ArgUseInterface:
+			params = append(params, jen.Id(ThisVar))
+		case ArgUseContext:
 			params = append(params, ctx.Context[arg.Type.String].Code.Clone())
-		case goverter.ArgUseSource:
+		case ArgUseSource:
 			params = append(params, sourceID.Code)
-		case goverter.ArgUseMultiSource:
+		case ArgUseMultiSource:
 			panic("not supported atm")
-		case goverter.ArgUseTarget:
+		case ArgUseTarget:
 			panic("unreachable")
 		}
 	}
@@ -401,7 +416,7 @@ func (g *generator) delegateMethod(
 
 	if delegateTo.ReturnError {
 		if !current.ReturnError {
-			return nil, goverter.NewBuildError(fmt.Sprintf("ReturnTypeMismatch: Cannot use\n\n    %s\n\nin\n\n    %s\n\nbecause no error is returned as second return parameter", delegateTo.OriginID, current.ID))
+			return nil, NewBuildError(fmt.Sprintf("ReturnTypeMismatch: Cannot use\n\n    %s\n\nin\n\n    %s\n\nbecause no error is returned as second return parameter", delegateTo.OriginID, current.ID))
 		}
 	} else {
 		if current.ReturnError {
@@ -412,7 +427,7 @@ func (g *generator) delegateMethod(
 }
 
 // wrap invokes the error wrapper if feature is enabled.
-func (g *generator) wrap(ctx *goverter.MethodContext, errPath goverter.ErrorPath, errStmt *jen.Statement) *jen.Statement {
+func (g *generator) wrap(ctx *MethodContext, errPath ErrorPath, errStmt *jen.Statement) *jen.Statement {
 	switch {
 	case ctx.Conf.WrapErrorsUsing != "":
 		return errPath.WrapErrorsUsing(ctx.Conf.WrapErrorsUsing, errStmt)
@@ -425,11 +440,11 @@ func (g *generator) wrap(ctx *goverter.MethodContext, errPath goverter.ErrorPath
 
 // Build builds an implementation for the given source and target type, or uses an existing method for it.
 func (g *generator) Build(
-	ctx *goverter.MethodContext,
-	sourceID *goverter.JenID,
-	source, target *goverter.Type,
-	errPath goverter.ErrorPath,
-) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
+	ctx *MethodContext,
+	sourceID *JenID,
+	source, target *Type,
+	errPath ErrorPath,
+) ([]jen.Code, *JenID, *BuildError) {
 	stmt, nextID, err := g.callExisting(ctx, sourceID, source, target, errPath)
 	if nextID != nil || err != nil {
 		return stmt, nextID, err
@@ -444,49 +459,49 @@ func (g *generator) Build(
 
 // Assign builds an implementation for the given source and target type, or uses an existing method for it.
 func (g *generator) Assign(
-	ctx *goverter.MethodContext,
-	assignTo *goverter.AssignTo,
-	sourceID *goverter.JenID,
-	source, target *goverter.Type,
-	errPath goverter.ErrorPath,
-) ([]jen.Code, *goverter.BuildError) {
+	ctx *MethodContext,
+	assignTo *AssignTo,
+	sourceID *JenID,
+	source, target *Type,
+	errPath ErrorPath,
+) ([]jen.Code, *BuildError) {
 	if assignTo.Must {
-		return goverter.ToAssignable(assignTo)(g.Build(ctx, sourceID, source, target, errPath))
+		return ToAssignable(assignTo)(g.Build(ctx, sourceID, source, target, errPath))
 	}
 
 	stmt, nextID, err := g.callExisting(ctx, sourceID, source, target, errPath)
 	if nextID != nil || err != nil {
-		return goverter.ToAssignable(assignTo)(stmt, nextID, err)
+		return ToAssignable(assignTo)(stmt, nextID, err)
 	}
 
 	if g.shouldCreateSubMethod(ctx, source, target) {
-		return goverter.ToAssignable(assignTo)(g.createSubMethod(ctx, sourceID, source, target, errPath))
+		return ToAssignable(assignTo)(g.createSubMethod(ctx, sourceID, source, target, errPath))
 	}
 
 	return g.assignNoLookup(ctx, assignTo, sourceID, source, target, errPath)
 }
 
 func (g *generator) callExisting(
-	ctx *goverter.MethodContext,
-	sourceID *goverter.JenID,
-	source, target *goverter.Type,
-	errPath goverter.ErrorPath,
-) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
+	ctx *MethodContext,
+	sourceID *JenID,
+	source, target *Type,
+	errPath ErrorPath,
+) ([]jen.Code, *JenID, *BuildError) {
 	signature := signatureOf(source, target)
 	if def, err := g.extend.Get(signature, ctx.AvailableContext); def != nil {
 		return g.CallMethod(ctx, def, sourceID, source, target, errPath)
 	} else if err != nil {
-		return nil, nil, goverter.NewBuildError(err.Error())
+		return nil, nil, NewBuildError(err.Error())
 	}
 	if genMethod, err := g.lookup.Get(signature, ctx.AvailableContext); genMethod != nil {
 		return g.CallMethod(ctx, genMethod.MethodDefinition, sourceID, source, target, errPath)
 	} else if err != nil {
-		return nil, nil, goverter.NewBuildError(err.Error())
+		return nil, nil, NewBuildError(err.Error())
 	}
 	return nil, nil, nil
 }
 
-func (g *generator) shouldCreateSubMethod(ctx *goverter.MethodContext, source, target *goverter.Type) bool {
+func (g *generator) shouldCreateSubMethod(ctx *MethodContext, source, target *Type) bool {
 	isCurrentPointerStructMethod := false
 	if source.Struct && target.Struct {
 		// This checks if we are currently inside the generation of one of the following combinations.
@@ -522,34 +537,39 @@ func (g *generator) shouldCreateSubMethod(ctx *goverter.MethodContext, source, t
 	return createSubMethod
 }
 
-func (g *generator) createSubMethod(ctx *goverter.MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPAth goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
+func (g *generator) createSubMethod(
+	ctx *MethodContext,
+	sourceID *JenID,
+	source, target *Type,
+	errPAth ErrorPath,
+) ([]jen.Code, *JenID, *BuildError) {
 	name := g.namer.Name(source.UnescapedID() + "To" + strings.Title(target.UnescapedID()))
 	orig := g.lookup.ByID(ctx.IndexID)
 
-	var args []goverter.Arg
-	args = append(args, goverter.Arg{
+	var args []Arg
+	args = append(args, Arg{
 		Name: "source",
 		Type: source,
-		Use:  goverter.ArgUseSource,
+		Use:  ArgUseSource,
 	})
 
-	path := append([]goverter.MethodIndexID{ctx.IndexID}, orig.OriginPath...)
+	path := append([]MethodIndexID{ctx.IndexID}, orig.OriginPath...)
 	genMethod := &generatedMethod{
 		OriginPath: path,
-		Method: &goverter.Method{
+		Method: &Method{
 			Common:      g.conf.Common,
-			Fields:      map[string]*goverter.FieldMapping{},
-			EnumMapping: &goverter.EnumMapping{Map: map[string]string{}},
-			MethodDefinition: &goverter.MethodDefinition{
+			Fields:      map[string]*FieldMapping{},
+			EnumMapping: &EnumMapping{Map: map[string]string{}},
+			MethodDefinition: &MethodDefinition{
 				OriginID:  ctx.Conf.OriginID,
 				ID:        name,
 				Package:   g.conf.OutputPackagePath,
 				Name:      name,
 				Generated: true,
-				Parameters: goverter.Parameters{
+				Parameters: Parameters{
 					Source:    source,
 					RawArgs:   args,
-					Context:   map[string]*goverter.Type{},
+					Context:   map[string]*Type{},
 					Signature: signatureOf(source, target),
 					Target:    target,
 				},
@@ -565,17 +585,17 @@ func (g *generator) createSubMethod(ctx *goverter.MethodContext, sourceID *gover
 	return g.CallMethod(ctx, genMethod.MethodDefinition, sourceID, source, target, errPAth)
 }
 
-func (g *generator) hasMethod(ctx *goverter.MethodContext, source, target types.Type) bool {
-	signature := goverter.Signature{Source: source.String(), Target: target.String()}
+func (g *generator) hasMethod(ctx *MethodContext, source, target types.Type) bool {
+	signature := Signature{Source: source.String(), Target: target.String()}
 	return g.extend.Has(signature) || g.lookup.Has(signature)
 }
 
-func (g *generator) getOverlappingStructDefinition(ctx *goverter.MethodContext, source, target *goverter.Type) *goverter.BuildError {
+func (g *generator) getOverlappingStructDefinition(ctx *MethodContext, source, target *Type) *BuildError {
 	if !source.Struct || !target.Struct {
 		return nil
 	}
 
-	overlapping := []goverter.Signature{
+	overlapping := []Signature{
 		{Source: source.AsPointerType().String(), Target: target.String},
 		{Source: source.AsPointerType().String(), Target: target.AsPointerType().String()},
 		{Source: source.String, Target: target.AsPointerType().String()},
@@ -593,7 +613,7 @@ func (g *generator) getOverlappingStructDefinition(ctx *goverter.MethodContext, 
 				toMethod = fmt.Sprintf("to a newly created method with this signature:\n    func(%s) %s", source.String, target.String)
 			}
 
-			return goverter.NewBuildError(fmt.Sprintf(`Overlapping struct settings found.
+			return NewBuildError(fmt.Sprintf(`Overlapping struct settings found.
 
 Move these field related settings:
     goverter:%s
@@ -607,9 +627,9 @@ and therefore the defined field settings would be ignored.`, strings.Join(def.Ra
 	return nil
 }
 
-func typeMismatch(source, target *goverter.Type) *goverter.BuildError {
+func typeMismatch(source, target *Type) *BuildError {
 	if source.Pointer && !target.Pointer {
-		return goverter.NewBuildError(fmt.Sprintf(`TypeMismatch: Cannot convert %s to %s
+		return NewBuildError(fmt.Sprintf(`TypeMismatch: Cannot convert %s to %s
 It is unclear how nil should be handled in the pointer to non pointer conversion.
 
 You can enable useZeroValueOnPointerInconsistency to instruct goverter to use the zero value if source is nil
@@ -619,25 +639,25 @@ or you can define a custom conversion method with extend:
 https://goverter.jmattheis.de/reference/extend`, source.T, target.T))
 	}
 
-	return goverter.NewBuildError(fmt.Sprintf(`TypeMismatch: Cannot convert %s to %s
+	return NewBuildError(fmt.Sprintf(`TypeMismatch: Cannot convert %s to %s
 
 You can define a custom conversion method with extend:
 https://goverter.jmattheis.de/reference/extend`, source.T, target.T))
 }
 
-func (g *generator) qualMethod(m *goverter.MethodDefinition) *jen.Statement {
+func (g *generator) qualMethod(m *MethodDefinition) *jen.Statement {
 	switch {
 	case m.CustomCall != nil:
 		return m.CustomCall.Clone()
-	case g.conf.OutputFormat == goverter.OutputFormatStruct && m.Generated:
-		return jen.Id(goverter.ThisVar).Dot(m.Name)
-	case g.conf.OutputFormat == goverter.OutputFormatFunction && m.Generated:
+	case g.conf.OutputFormat == OutputFormatStruct && m.Generated:
+		return jen.Id(ThisVar).Dot(m.Name)
+	case g.conf.OutputFormat == OutputFormatFunction && m.Generated:
 		return jen.Id(m.Name)
 	default:
 		return jen.Qual(m.Package, m.Name)
 	}
 }
 
-func signatureOf(source, target *goverter.Type) goverter.Signature {
-	return goverter.Signature{Source: source.String, Target: target.String}
+func signatureOf(source, target *Type) Signature {
+	return Signature{Source: source.String, Target: target.String}
 }

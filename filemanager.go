@@ -1,4 +1,4 @@
-package generator
+package goverter
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter"
 )
 
 type fileManager struct {
@@ -15,12 +14,12 @@ type fileManager struct {
 
 type managedFile struct {
 	PackageID string
-	Initial   *goverter.Converter
+	Initial   *Converter
 	Content   *jen.File
-	Namer     *goverter.Namer
+	Namer     *Namer
 }
 
-func (m *fileManager) Get(conv *goverter.Converter, cfg Config) (*jen.File, *goverter.Namer, error) {
+func (m *fileManager) Get(conv *Converter, cfg GenerateConfig) (*jen.File, *Namer, error) {
 	output := getOutputDir(conv)
 
 	f, ok := m.Files[output]
@@ -28,7 +27,7 @@ func (m *fileManager) Get(conv *goverter.Converter, cfg Config) (*jen.File, *gov
 		f = &managedFile{
 			PackageID: conv.PackageID(),
 			Initial:   conv,
-			Namer:     goverter.NewNamer(),
+			Namer:     NewNamer(),
 		}
 
 		if conv.OutputPackageName == "" {
@@ -64,7 +63,7 @@ func (m *fileManager) renderFiles() (map[string][]byte, error) {
 	return result, nil
 }
 
-func getOutputDir(c *goverter.Converter) string {
+func getOutputDir(c *Converter) string {
 	if filepath.IsAbs(c.OutputFile) {
 		return c.OutputFile
 	}

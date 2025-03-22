@@ -1,17 +1,16 @@
-package builder
+package goverter
 
 import (
 	"fmt"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter"
 )
 
 // UseUnderlyingTypeMethods handles UseUnderlyingTypeMethods.
 type UseUnderlyingTypeMethods struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*UseUnderlyingTypeMethods) Matches(ctx *goverter.MethodContext, source, target *goverter.Type) bool {
+func (*UseUnderlyingTypeMethods) Matches(ctx *MethodContext, source, target *Type) bool {
 	if !ctx.Conf.UseUnderlyingTypeMethods {
 		return false
 	}
@@ -21,9 +20,15 @@ func (*UseUnderlyingTypeMethods) Matches(ctx *goverter.MethodContext, source, ta
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*UseUnderlyingTypeMethods) Build(gen goverter.Generator, ctx *goverter.MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.JenID, *goverter.BuildError) {
-	if goverter.IsBuildEnum(ctx, source, target) {
-		return nil, nil, goverter.NewBuildError(fmt.Sprintf(`The conversion between the types
+func (*UseUnderlyingTypeMethods) Build(
+	gen Generator,
+	ctx *MethodContext,
+	sourceID *JenID,
+	source, target *Type,
+	errPath ErrorPath,
+) ([]jen.Code, *JenID, *BuildError) {
+	if IsBuildEnum(ctx, source, target) {
+		return nil, nil, NewBuildError(fmt.Sprintf(`The conversion between the types
     %s
     %s
 
@@ -37,17 +42,17 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 	innerTarget := target
 
 	if sourceUnderlying {
-		innerSource = goverter.TypeOf(source.NamedType.Underlying())
-		sourceID = goverter.OtherID(innerSource.TypeAsJen().Call(sourceID.Code))
+		innerSource = TypeOf(source.NamedType.Underlying())
+		sourceID = OtherID(innerSource.TypeAsJen().Call(sourceID.Code))
 	}
 
 	if targetUnderlying {
-		innerTarget = goverter.TypeOf(target.NamedType.Underlying())
+		innerTarget = TypeOf(target.NamedType.Underlying())
 	}
 
 	stmt, id, err := gen.Build(ctx, sourceID, innerSource, innerTarget, errPath)
 	if err != nil {
-		return nil, nil, err.Lift(&goverter.ErrorMessagePath{
+		return nil, nil, err.Lift(&ErrorMessagePath{
 			SourceID:   "*",
 			SourceType: innerSource.String,
 			TargetID:   "*",
@@ -56,17 +61,24 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 	}
 
 	if targetUnderlying {
-		id = goverter.OtherID(target.TypeAsJen().Call(id.Code))
+		id = OtherID(target.TypeAsJen().Call(id.Code))
 	}
 
 	return stmt, id, err
 }
 
-func (u *UseUnderlyingTypeMethods) Assign(gen goverter.Generator, ctx *goverter.MethodContext, assignTo *goverter.AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath goverter.ErrorPath) ([]jen.Code, *goverter.BuildError) {
-	return goverter.AssignByBuild(u, gen, ctx, assignTo, sourceID, source, target, errPath)
+func (u *UseUnderlyingTypeMethods) Assign(
+	gen Generator,
+	ctx *MethodContext,
+	assignTo *AssignTo,
+	sourceID *JenID,
+	source, target *Type,
+	errPath ErrorPath,
+) ([]jen.Code, *BuildError) {
+	return AssignByBuild(u, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
-func findUnderlyingExtendMapping(ctx *goverter.MethodContext, source, target *goverter.Type) (underlyingSource, underlyingTarget bool) {
+func findUnderlyingExtendMapping(ctx *MethodContext, source, target *Type) (underlyingSource, underlyingTarget bool) {
 	if source.Named {
 		if ctx.HasMethod(ctx, source.NamedType.Underlying(), target.NamedType) {
 			return true, false

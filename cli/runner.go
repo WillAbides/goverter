@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/generator"
 )
 
 // GenerateConfig the config for generating a converter.
@@ -58,7 +57,7 @@ func generateConvertersRaw(c *GenerateConfig) (map[string][]byte, error) {
 		return nil, err
 	}
 
-	return generator.Generate(converters, generator.Config{
+	return goverter.Generate(converters, goverter.GenerateConfig{
 		BuildConstraint: c.OutputBuildConstraint,
 	})
 }

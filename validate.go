@@ -1,12 +1,10 @@
-package generator
+package goverter
 
 import (
 	"fmt"
-
-	"github.com/jmattheis/goverter"
 )
 
-func validateMethods(lookup *goverter.MethodIndex[generatedMethod]) error {
+func validateMethods(lookup *MethodIndex[generatedMethod]) error {
 	for _, hits := range lookup.Exact {
 		for _, entry := range hits {
 			genMethod := entry.Item
