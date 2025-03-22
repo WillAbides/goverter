@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/generator"
 )
 
@@ -36,7 +35,7 @@ func GenerateConverters(c *GenerateConfig) error {
 }
 
 func generateConvertersRaw(c *GenerateConfig) (map[string][]byte, error) {
-	rawConverters, err := config.ParseDocs(config.ParseDocsConfig{
+	rawConverters, err := goverter.ParseDocs(goverter.ParseDocsConfig{
 		BuildTags:      c.BuildTags,
 		PackagePattern: c.PackagePatterns,
 		WorkingDir:     c.WorkingDir,
@@ -45,7 +44,7 @@ func generateConvertersRaw(c *GenerateConfig) (map[string][]byte, error) {
 		return nil, err
 	}
 
-	converters, err := config.ParseRaw(&goverter.Raw{
+	converters, err := goverter.ParseRaw(&goverter.Raw{
 		BuildTags:  c.BuildTags,
 		WorkDir:    c.WorkingDir,
 		Converters: rawConverters,

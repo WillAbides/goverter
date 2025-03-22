@@ -2,7 +2,7 @@ package generator
 
 import (
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/config"
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/generator/internal/builder"
 )
 
@@ -27,7 +27,7 @@ var BuildSteps = []builder.Builder{
 }
 
 // Generate generates a jen.File containing converters.
-func Generate(converters []*config.Converter, c Config) (map[string][]byte, error) {
+func Generate(converters []*goverter.Converter, c Config) (map[string][]byte, error) {
 	manager := &fileManager{Files: map[string]*managedFile{}}
 
 	for _, converter := range converters {
@@ -44,7 +44,7 @@ func Generate(converters []*config.Converter, c Config) (map[string][]byte, erro
 	return manager.renderFiles()
 }
 
-func generateConverter(converter *config.Converter, f *jen.File, n *builder.Namer) error {
+func generateConverter(converter *goverter.Converter, f *jen.File, n *builder.Namer) error {
 	gen, err := setupGenerator(converter, n)
 	if err != nil {
 		return err

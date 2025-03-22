@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/config"
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/generator/internal/builder"
 )
 
@@ -16,12 +16,12 @@ type fileManager struct {
 
 type managedFile struct {
 	PackageID string
-	Initial   *config.Converter
+	Initial   *goverter.Converter
 	Content   *jen.File
 	Namer     *builder.Namer
 }
 
-func (m *fileManager) Get(conv *config.Converter, cfg Config) (*jen.File, *builder.Namer, error) {
+func (m *fileManager) Get(conv *goverter.Converter, cfg Config) (*jen.File, *builder.Namer, error) {
 	output := getOutputDir(conv)
 
 	f, ok := m.Files[output]
@@ -65,7 +65,7 @@ func (m *fileManager) renderFiles() (map[string][]byte, error) {
 	return result, nil
 }
 
-func getOutputDir(c *config.Converter) string {
+func getOutputDir(c *goverter.Converter) string {
 	if filepath.IsAbs(c.OutputFile) {
 		return c.OutputFile
 	}

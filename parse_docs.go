@@ -1,16 +1,15 @@
-package config
+package goverter
 
 import (
 	"fmt"
 	"go/ast"
 	"go/token"
 
-	"github.com/jmattheis/goverter"
 	"golang.org/x/tools/go/packages"
 )
 
 const (
-	converterMarker = goverter.DirectivePrefix + "converter"
+	converterMarker = DirectivePrefix + "converter"
 )
 
 // ParseDocsConfig provides input to the ParseDocs method below.
@@ -23,7 +22,7 @@ type ParseDocsConfig struct {
 }
 
 // ParseDocs parses the docs for the given pattern.
-func ParseDocs(c ParseDocsConfig) ([]goverter.RawConverter, error) {
+func ParseDocs(c ParseDocsConfig) ([]RawConverter, error) {
 	loadCfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedSyntax,
 		Dir:  c.WorkingDir,
@@ -35,7 +34,7 @@ func ParseDocs(c ParseDocsConfig) ([]goverter.RawConverter, error) {
 	if err != nil {
 		return nil, err
 	}
-	rawConverters := []goverter.RawConverter{}
+	rawConverters := []RawConverter{}
 	for _, pkg := range pkgs {
 		if len(pkg.Errors) > 0 {
 			return nil, fmt.Errorf(`could not load package %s
@@ -61,14 +60,14 @@ requires the type information from the compiled sources.`, pkg.PkgPath, pkg.Erro
 	return rawConverters, nil
 }
 
-func parseFunctions(pkg *packages.Package, decl *ast.GenDecl, lines goverter.RawLines) ([]goverter.RawConverter, error) {
+func parseFunctions(pkg *packages.Package, decl *ast.GenDecl, lines RawLines) ([]RawConverter, error) {
 	if decl.Tok != token.VAR {
 		return nil, fmt.Errorf("%s must be defined on %q-block but was %q", converterMarker, token.VAR, decl.Tok.String())
 	}
 
 	location := pkg.Fset.Position(decl.Pos())
 
-	result := map[string]goverter.RawLines{}
+	result := map[string]RawLines{}
 	for _, spec := range decl.Specs {
 		value, ok := spec.(*ast.ValueSpec)
 		if !ok {
@@ -81,17 +80,17 @@ func parseFunctions(pkg *packages.Package, decl *ast.GenDecl, lines goverter.Raw
 		result[name] = rawLines(pkg, value)
 	}
 
-	converter := goverter.RawConverter{
+	converter := RawConverter{
 		FileName:    location.Filename,
 		Converter:   lines,
 		Methods:     result,
 		PackageName: pkg.Name,
 		PackagePath: pkg.PkgPath,
 	}
-	return []goverter.RawConverter{converter}, nil
+	return []RawConverter{converter}, nil
 }
 
-func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]goverter.RawConverter, error) {
+func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]RawConverter, error) {
 	lines := rawLines(pkg, decl)
 
 	if lines.HasSetting("variables") {
@@ -110,17 +109,17 @@ func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]goverter.RawConve
 		if !ok {
 			return nil, fmt.Errorf("%s may only be applied to type declarations ", converterMarker)
 		}
-		c, err := parseInterface(pkg, typeSpec, goverter.RawLines{
+		c, err := parseInterface(pkg, typeSpec, RawLines{
 			Lines:    lines.Lines,
 			Location: nodeLocation(pkg.Fset, typeSpec),
 		})
 		if err != nil {
 			return nil, err
 		}
-		return []goverter.RawConverter{c}, nil
+		return []RawConverter{c}, nil
 	}
 
-	var converters []goverter.RawConverter
+	var converters []RawConverter
 
 	for _, spec := range decl.Specs {
 		typeSpec, ok := spec.(*ast.TypeSpec)
@@ -140,19 +139,19 @@ func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]goverter.RawConve
 	return converters, nil
 }
 
-func parseInterface(pkg *packages.Package, typeSpec *ast.TypeSpec, lines goverter.RawLines) (goverter.RawConverter, error) {
+func parseInterface(pkg *packages.Package, typeSpec *ast.TypeSpec, lines RawLines) (RawConverter, error) {
 	astInterface, ok := typeSpec.Type.(*ast.InterfaceType)
 	if !ok {
-		return goverter.RawConverter{}, fmt.Errorf("%s may only be applied to type interface declarations ", converterMarker)
+		return RawConverter{}, fmt.Errorf("%s may only be applied to type interface declarations ", converterMarker)
 	}
 	typeName := typeSpec.Name.String()
 
 	location := pkg.Fset.Position(typeSpec.Pos())
 	methods, err := parseInterfaceMethods(pkg, astInterface)
 	if err != nil {
-		return goverter.RawConverter{}, fmt.Errorf("type %s: %s", typeName, err)
+		return RawConverter{}, fmt.Errorf("type %s: %s", typeName, err)
 	}
-	converter := goverter.RawConverter{
+	converter := RawConverter{
 		InterfaceName: typeName,
 		FileName:      location.Filename,
 		Converter:     lines,
@@ -163,8 +162,8 @@ func parseInterface(pkg *packages.Package, typeSpec *ast.TypeSpec, lines goverte
 	return converter, nil
 }
 
-func parseInterfaceMethods(pkg *packages.Package, inter *ast.InterfaceType) (map[string]goverter.RawLines, error) {
-	result := map[string]goverter.RawLines{}
+func parseInterfaceMethods(pkg *packages.Package, inter *ast.InterfaceType) (map[string]RawLines, error) {
+	result := map[string]RawLines{}
 	for _, method := range inter.Methods.List {
 		if len(method.Names) != 1 {
 			return result, fmt.Errorf("method must have one name")
@@ -175,7 +174,7 @@ func parseInterfaceMethods(pkg *packages.Package, inter *ast.InterfaceType) (map
 	return result, nil
 }
 
-func rawLines(pkg *packages.Package, node ast.Node) goverter.RawLines {
+func rawLines(pkg *packages.Package, node ast.Node) RawLines {
 	var comments []*ast.CommentGroup
 	for _, file := range pkg.Syntax {
 		if pkg.Fset.File(file.Pos()) == pkg.Fset.File(node.Pos()) {
@@ -183,9 +182,9 @@ func rawLines(pkg *packages.Package, node ast.Node) goverter.RawLines {
 			break
 		}
 	}
-	return goverter.RawLines{
+	return RawLines{
 		Location: nodeLocation(pkg.Fset, node),
-		Lines:    goverter.CommentGroupSettingLines(comments),
+		Lines:    CommentGroupSettingLines(comments),
 	}
 }
 

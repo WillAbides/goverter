@@ -8,7 +8,6 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/generator/internal/builder"
 )
 
@@ -26,7 +25,7 @@ type generatedMethod struct {
 
 type generator struct {
 	namer  *builder.Namer
-	conf   *config.Converter
+	conf   *goverter.Converter
 	lookup *goverter.MethodIndex[generatedMethod]
 	extend *goverter.MethodIndex[goverter.MethodDefinition]
 }
