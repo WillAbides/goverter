@@ -9,6 +9,9 @@ import (
 	"github.com/jmattheis/goverter/xtype/method"
 )
 
+// ThisVar is used as name for the reference to the converter interface.
+const ThisVar = "c"
+
 // Builder builds converter implementations, and can decide if it can handle the given type.
 type Builder interface {
 	// Matches returns true, if the builder can create handle the given types.

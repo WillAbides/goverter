@@ -2,13 +2,11 @@ package builder
 
 import (
 	"fmt"
-
-	"github.com/jmattheis/goverter/xtype"
 )
 
 // NewNamer returns a new namer.
 func NewNamer() *Namer {
-	return &Namer{lookup: map[string]struct{}{xtype.ThisVar: {}}}
+	return &Namer{lookup: map[string]struct{}{ThisVar: {}}}
 }
 
 // Namer keeps track of used variable names.
