@@ -220,8 +220,8 @@ func (g *generator) buildNoLookup(
 	}
 
 	for _, rule := range BuildSteps {
-		if rule.Matches(ctx, source, target) {
-			return rule.Build(g, ctx, sourceID, source, target, errPath)
+		if rule.matches(ctx, source, target) {
+			return rule.build(g, ctx, sourceID, source, target, errPath)
 		}
 	}
 
@@ -240,8 +240,8 @@ func (g *generator) assignNoLookup(
 	}
 
 	for _, rule := range BuildSteps {
-		if rule.Matches(ctx, source, target) {
-			return rule.Assign(g, ctx, assignTo, sourceID, source, target, errPath)
+		if rule.matches(ctx, source, target) {
+			return rule.assign(g, ctx, assignTo, sourceID, source, target, errPath)
 		}
 	}
 
@@ -269,7 +269,7 @@ func (g *generator) convertTo(
 	}
 
 	var s BuildStruct
-	stmt, err := s.Assign(g, ctx, assignTo, sourceID, source, target.PointerInner, errPath)
+	stmt, err := s.assign(g, ctx, assignTo, sourceID, source, target.PointerInner, errPath)
 	if sourcePointer {
 		stmt = []jen.Code{jen.If(sourceID.Code.Clone().Op("!=").Nil()).Block(stmt...)}
 	}

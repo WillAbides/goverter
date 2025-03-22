@@ -8,12 +8,12 @@ import (
 type Pointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Pointer) Matches(_ *MethodContext, source, target *Type) bool {
+func (*Pointer) matches(_ *MethodContext, source, target *Type) bool {
 	return source.Pointer && target.Pointer
 }
 
 // Build creates conversion source code for the given source and target type.
-func (p *Pointer) Build(
+func (p *Pointer) build(
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -45,7 +45,7 @@ func (p *Pointer) Build(
 	return buildByAssign(p, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (*Pointer) Assign(
+func (*Pointer) assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
@@ -81,12 +81,12 @@ func (*Pointer) Assign(
 type SourcePointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*SourcePointer) Matches(ctx *MethodContext, source, target *Type) bool {
+func (*SourcePointer) matches(ctx *MethodContext, source, target *Type) bool {
 	return ctx.Conf.UseZeroValueOnPointerInconsistency && source.Pointer && !target.Pointer
 }
 
 // Build creates conversion source code for the given source and target type.
-func (s *SourcePointer) Build(
+func (s *SourcePointer) build(
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -115,7 +115,7 @@ func (s *SourcePointer) Build(
 	return buildByAssign(s, gen, ctx, sourceID, source, target, path)
 }
 
-func (*SourcePointer) Assign(
+func (*SourcePointer) assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
@@ -144,12 +144,12 @@ func (*SourcePointer) Assign(
 type TargetPointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*TargetPointer) Matches(_ *MethodContext, source, target *Type) bool {
+func (*TargetPointer) matches(_ *MethodContext, source, target *Type) bool {
 	return !source.Pointer && target.Pointer
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*TargetPointer) Build(
+func (*TargetPointer) build(
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -191,7 +191,7 @@ func (*TargetPointer) Build(
 	return stmt, nextID, nil
 }
 
-func (tp *TargetPointer) Assign(
+func (tp *TargetPointer) assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,

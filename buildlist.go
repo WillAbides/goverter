@@ -8,12 +8,12 @@ import (
 type BuildList struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildList) Matches(_ *MethodContext, source, target *Type) bool {
+func (*BuildList) matches(_ *MethodContext, source, target *Type) bool {
 	return source.List && target.List && !target.ListFixed
 }
 
 // Build creates conversion source code for the given source and target type.
-func (l *BuildList) Build(
+func (l *BuildList) build(
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -23,7 +23,7 @@ func (l *BuildList) Build(
 	ctx.SetErrorTargetVar(jen.Nil())
 	targetSlice := ctx.Name(target.ID())
 
-	stmt, err := l.Assign(gen, ctx, AssignOf(jen.Id(targetSlice)), sourceID, source, target, path)
+	stmt, err := l.assign(gen, ctx, AssignOf(jen.Id(targetSlice)), sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -39,7 +39,7 @@ func (l *BuildList) Build(
 	return stmt, VariableID(jen.Id(targetSlice)), nil
 }
 
-func (*BuildList) Assign(
+func (*BuildList) assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,

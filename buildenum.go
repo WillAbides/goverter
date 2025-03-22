@@ -9,7 +9,7 @@ import (
 type BuildEnum struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildEnum) Matches(ctx *MethodContext, source, target *Type) bool {
+func (*BuildEnum) matches(ctx *MethodContext, source, target *Type) bool {
 	return IsBuildEnum(ctx, source, target)
 }
 
@@ -20,7 +20,7 @@ func IsBuildEnum(ctx *MethodContext, source, target *Type) bool {
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*BuildEnum) Build(
+func (*BuildEnum) build(
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -119,7 +119,7 @@ func (*BuildEnum) Build(
 	return stmt, VariableID(nameVar), nil
 }
 
-func (s *BuildEnum) Assign(
+func (s *BuildEnum) assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,

@@ -10,7 +10,7 @@ import (
 type UseUnderlyingTypeMethods struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*UseUnderlyingTypeMethods) Matches(ctx *MethodContext, source, target *Type) bool {
+func (*UseUnderlyingTypeMethods) matches(ctx *MethodContext, source, target *Type) bool {
 	if !ctx.Conf.UseUnderlyingTypeMethods {
 		return false
 	}
@@ -20,7 +20,7 @@ func (*UseUnderlyingTypeMethods) Matches(ctx *MethodContext, source, target *Typ
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*UseUnderlyingTypeMethods) Build(
+func (*UseUnderlyingTypeMethods) build(
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -67,7 +67,7 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 	return stmt, id, err
 }
 
-func (u *UseUnderlyingTypeMethods) Assign(
+func (u *UseUnderlyingTypeMethods) assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,

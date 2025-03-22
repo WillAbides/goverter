@@ -13,12 +13,12 @@ import (
 type BuildStruct struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildStruct) Matches(_ *MethodContext, source, target *Type) bool {
+func (*BuildStruct) matches(_ *MethodContext, source, target *Type) bool {
 	return source.Struct && target.Struct
 }
 
 // Build creates conversion source code for the given source and target type.
-func (s *BuildStruct) Build(
+func (s *BuildStruct) build(
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -32,7 +32,7 @@ func (s *BuildStruct) Build(
 	return buildByAssign(s, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (s *BuildStruct) Assign(
+func (s *BuildStruct) assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,

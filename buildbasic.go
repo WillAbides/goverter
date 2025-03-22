@@ -8,13 +8,13 @@ import (
 type basic struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*basic) Matches(_ *MethodContext, source, target *Type) bool {
+func (*basic) matches(_ *MethodContext, source, target *Type) bool {
 	return source.Basic && target.Basic &&
 		source.BasicType.Kind() == target.BasicType.Kind()
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*basic) Build(
+func (*basic) build(
 	_ Generator,
 	_ *MethodContext,
 	sourceID *JenID,
@@ -27,7 +27,7 @@ func (*basic) Build(
 	return nil, sourceID, nil
 }
 
-func (b *basic) Assign(
+func (b *basic) assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
@@ -42,12 +42,12 @@ func (b *basic) Assign(
 type BasicTargetPointerRule struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BasicTargetPointerRule) Matches(_ *MethodContext, source, target *Type) bool {
+func (*BasicTargetPointerRule) matches(_ *MethodContext, source, target *Type) bool {
 	return source.Basic && target.Pointer && target.PointerInner.Basic
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*BasicTargetPointerRule) Build(
+func (*BasicTargetPointerRule) build(
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -72,7 +72,7 @@ func (*BasicTargetPointerRule) Build(
 	return stmt, OtherID(newID), err
 }
 
-func (b *BasicTargetPointerRule) Assign(
+func (b *BasicTargetPointerRule) assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,

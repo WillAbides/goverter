@@ -10,7 +10,7 @@ type GenerateConfig struct {
 }
 
 // BuildSteps that'll used for generation.
-var BuildSteps = []Builder{
+var BuildSteps = []builder{
 	&UseUnderlyingTypeMethods{},
 	&SkipCopy{},
 	&BuildEnum{},

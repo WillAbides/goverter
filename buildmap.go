@@ -8,12 +8,12 @@ import (
 type BuildMap struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildMap) Matches(_ *MethodContext, source, target *Type) bool {
+func (*BuildMap) matches(_ *MethodContext, source, target *Type) bool {
 	return source.Map && target.Map
 }
 
 // Build creates conversion source code for the given source and target type.
-func (m *BuildMap) Build(
+func (m *BuildMap) build(
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -24,7 +24,7 @@ func (m *BuildMap) Build(
 	return buildByAssign(m, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (*BuildMap) Assign(
+func (*BuildMap) assign(
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,

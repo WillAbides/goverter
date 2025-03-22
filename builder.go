@@ -93,13 +93,13 @@ var (
 	emptyFields  = map[string]struct{}{}
 )
 
-// Builder builds converter implementations, and can decide if it can handle the given type.
-type Builder interface {
-	// Matches returns true, if the builder can create handle the given types.
-	Matches(ctx *MethodContext, source, target *Type) bool
+// builder builds converter implementations, and can decide if it can handle the given type.
+type builder interface {
+	// matches returns true, if the builder can create handle the given types.
+	matches(ctx *MethodContext, source, target *Type) bool
 
-	// Build creates conversion source code for the given source and target type.
-	Build(
+	// build creates conversion source code for the given source and target type.
+	build(
 		gen Generator,
 		ctx *MethodContext,
 		sourceID *JenID,
@@ -107,8 +107,8 @@ type Builder interface {
 		path ErrorPath,
 	) ([]jen.Code, *JenID, *BuildError)
 
-	// Assign creates conversion source code for the given source and target type and assigns it.
-	Assign(
+	// assign creates conversion source code for the given source and target type and assigns it.
+	assign(
 		gen Generator,
 		ctx *MethodContext,
 		assignTo *AssignTo,
@@ -119,7 +119,7 @@ type Builder interface {
 }
 
 // Generator checks all existing builders if they can create a conversion implementations for the given source and target type
-// If no one Builder#Matches then, an error is returned.
+// If no one builder#matches then, an error is returned.
 type Generator interface {
 	Build(
 		ctx *MethodContext,
@@ -236,7 +236,7 @@ func ToAssignable(assignTo *AssignTo) func(
 }
 
 func assignByBuild(
-	b Builder,
+	b builder,
 	gen Generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
@@ -244,11 +244,11 @@ func assignByBuild(
 	source, target *Type,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
-	return ToAssignable(assignTo)(b.Build(gen, ctx, sourceID, source, target, errPath))
+	return ToAssignable(assignTo)(b.build(gen, ctx, sourceID, source, target, errPath))
 }
 
 func buildByAssign(
-	b Builder,
+	b builder,
 	gen Generator,
 	ctx *MethodContext,
 	sourceID *JenID,
@@ -260,7 +260,7 @@ func buildByAssign(
 		return nil, nil, err
 	}
 
-	stmt, err := b.Assign(gen, ctx, AssignOf(valueVar), sourceID, source, target, path)
+	stmt, err := b.assign(gen, ctx, AssignOf(valueVar), sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err
 	}
