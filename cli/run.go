@@ -5,7 +5,6 @@ import (
 	"os"
 	"runtime/debug"
 
-	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/enum"
 )
 
@@ -32,7 +31,7 @@ func Run(args []string, opts RunOpts) {
 			}
 		}
 
-		if err = goverter.GenerateConverters(cmd.Config); err != nil {
+		if err = GenerateConverters(cmd.Config); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}

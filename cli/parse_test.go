@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/cli"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/enum"
@@ -74,7 +73,7 @@ func TestSuccess(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	expected := &cli.Generate{&goverter.GenerateConfig{
+	expected := &cli.Generate{&cli.GenerateConfig{
 		PackagePatterns:       []string{"pattern1", "pattern2"},
 		WorkingDir:            "file/path",
 		OutputBuildConstraint: "",
@@ -92,7 +91,7 @@ func TestDefault(t *testing.T) {
 	actual, err := cli.Parse([]string{"goverter", "gen", "pattern"})
 	require.NoError(t, err)
 
-	expected := &cli.Generate{&goverter.GenerateConfig{
+	expected := &cli.Generate{&cli.GenerateConfig{
 		PackagePatterns:       []string{"pattern"},
 		WorkingDir:            "",
 		OutputBuildConstraint: "!goverter",

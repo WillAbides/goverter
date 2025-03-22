@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/enum"
 )
@@ -82,7 +81,7 @@ func parseGen(cmd string, args []string) (Command, error) {
 		return nil, usageErr("missing PATTERN", cmd)
 	}
 
-	c := goverter.GenerateConfig{
+	c := GenerateConfig{
 		PackagePatterns:       patterns,
 		BuildTags:             *buildTags,
 		OutputBuildConstraint: *outputConstraint,

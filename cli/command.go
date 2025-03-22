@@ -1,13 +1,11 @@
 package cli
 
-import "github.com/jmattheis/goverter"
-
 type Command interface {
 	_c()
 }
 
 type Generate struct {
-	Config *goverter.GenerateConfig
+	Config *GenerateConfig
 }
 
 type Help struct {

@@ -1,4 +1,4 @@
-package goverter
+package cli
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ var (
 )
 
 func TestScenario(t *testing.T) {
-	rootDir := getCurrentPath()
+	rootDir := filepath.Join(getCurrentPath(), "..")
 	scenarioDir := filepath.Join(rootDir, "scenario")
 	workDir := filepath.Join(rootDir, "execution")
 	scenarioFiles, err := os.ReadDir(scenarioDir)
