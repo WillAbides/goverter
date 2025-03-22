@@ -8,7 +8,6 @@ import (
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/xtype/method"
 )
 
 // Struct handles struct types.
@@ -261,14 +260,14 @@ func mapField(
 	returnID := goverter.VariableID(nextIDCode)
 	innerStmt := []jen.Code{}
 	if nextSource.Func {
-		def, err := method.ParseMethod(nextSource.FuncType, &method.ParseMethodOpts{
+		def, err := goverter.ParseMethod(nextSource.FuncType, &goverter.ParseMethodOpts{
 			Converter:         nil,
 			OutputPackagePath: ctx.OutputPackagePath,
 			ErrorPrefix:       "Error parsing struct method",
 			Params:            goverter.ParamsNone,
 			ContextMatch:      config.StructMethodContextRegex,
 			CustomCall:        nextIDCode,
-		}, method.EmptyLocalMethodOpts)
+		}, goverter.EmptyLocalMethodOpts)
 		if err != nil {
 			return nil, nil, nil, nil, false, NewError(err.Error()).Lift(lift...)
 		}

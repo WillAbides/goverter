@@ -4,17 +4,16 @@ import (
 	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/generator/internal/builder"
-	"github.com/jmattheis/goverter/xtype/method"
 )
 
 func setupGenerator(converter *config.Converter, n *builder.Namer) (*generator, error) {
-	extend := method.NewMethodIndex[goverter.MethodDefinition]()
+	extend := goverter.NewMethodIndex[goverter.MethodDefinition]()
 	for _, def := range converter.Extend {
 		extend.RegisterOverrideOverlapping(def, def)
 	}
 
 	var err error
-	lookup := method.NewMethodIndex[generatedMethod]()
+	lookup := goverter.NewMethodIndex[generatedMethod]()
 	for _, cMethod := range converter.Methods {
 		gen := &generatedMethod{
 			Method:   cMethod,

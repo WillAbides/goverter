@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/xtype/method"
 )
 
 const (
@@ -224,7 +223,7 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 		c.Enum.Excludes = append(c.Enum.Excludes, pattern)
 	case configExtend:
 		for _, name := range strings.Fields(rest) {
-			opts := &method.ParseMethodOpts{
+			opts := &goverter.ParseMethodOpts{
 				ErrorPrefix:       "error parsing type",
 				OutputPackagePath: c.OutputPackagePath,
 				Converter:         c.typeForMethod(),

@@ -6,7 +6,6 @@ import (
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/xtype/method"
 )
 
 // ThisVar is used as name for the reference to the converter interface.
@@ -77,7 +76,7 @@ type MethodContext struct {
 	HasMethod         func(*MethodContext, types.Type, types.Type) bool
 	SeenNamed         map[string]struct{}
 
-	IndexID method.MethodIndexID
+	IndexID goverter.MethodIndexID
 	Context map[string]*goverter.JenID
 
 	AvailableContext map[string]*goverter.Type

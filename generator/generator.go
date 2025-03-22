@@ -10,7 +10,6 @@ import (
 	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/generator/internal/builder"
-	"github.com/jmattheis/goverter/xtype/method"
 )
 
 type generatedMethod struct {
@@ -19,17 +18,17 @@ type generatedMethod struct {
 	Explicit bool
 	Dirty    bool
 
-	OriginPath []method.MethodIndexID
+	OriginPath []goverter.MethodIndexID
 	Jen        jen.Code
 
-	IndexID method.MethodIndexID
+	IndexID goverter.MethodIndexID
 }
 
 type generator struct {
 	namer  *builder.Namer
 	conf   *config.Converter
-	lookup *method.MethodIndex[generatedMethod]
-	extend *method.MethodIndex[goverter.MethodDefinition]
+	lookup *goverter.MethodIndex[generatedMethod]
+	extend *goverter.MethodIndex[goverter.MethodDefinition]
 }
 
 func (g *generator) getGenMethods() []*generatedMethod {
@@ -281,7 +280,7 @@ func (g *generator) CallMethod(
 			params = append(params, jen.Id(builder.ThisVar))
 		case goverter.ArgUseContext:
 			if !g.requireContext(ctx, arg.Type) {
-				return nil, nil, formatErr("Could not satisfy all required context parameters:\n" + strings.Join(method.AvailableContextDebug(definition.Context, ctx.AvailableContext), "\n"))
+				return nil, nil, formatErr("Could not satisfy all required context parameters:\n" + strings.Join(goverter.AvailableContextDebug(definition.Context, ctx.AvailableContext), "\n"))
 			}
 			if id, ok := ctx.Context[arg.Type.String]; ok {
 				params = append(params, id.Code.Clone())
@@ -327,7 +326,7 @@ func (g *generator) CallMethod(
 func (g *generator) ReturnError(ctx *builder.MethodContext, errPath builder.ErrorPath, id *jen.Statement) (jen.Code, bool) {
 	current := g.lookup.ByID(ctx.IndexID)
 	if !ctx.Conf.ReturnError {
-		for _, path := range append([]method.MethodIndexID{ctx.IndexID}, current.OriginPath...) {
+		for _, path := range append([]goverter.MethodIndexID{ctx.IndexID}, current.OriginPath...) {
 			check := g.lookup.ByID(path)
 			if check.Explicit && !check.ReturnError {
 				return nil, false
@@ -353,7 +352,7 @@ func (g *generator) requireContext(ctx *builder.MethodContext, need *goverter.Ty
 	}
 
 	current := g.lookup.ByID(ctx.IndexID)
-	for _, path := range append([]method.MethodIndexID{ctx.IndexID}, current.OriginPath...) {
+	for _, path := range append([]goverter.MethodIndexID{ctx.IndexID}, current.OriginPath...) {
 		check := g.lookup.ByID(path)
 
 		if _, ok := check.Context[need.String]; ok {
@@ -535,7 +534,7 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *govert
 		Use:  goverter.ArgUseSource,
 	})
 
-	path := append([]method.MethodIndexID{ctx.IndexID}, orig.OriginPath...)
+	path := append([]goverter.MethodIndexID{ctx.IndexID}, orig.OriginPath...)
 	genMethod := &generatedMethod{
 		OriginPath: path,
 		Method: &config.Method{

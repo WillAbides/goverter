@@ -8,14 +8,13 @@ import (
 	"strings"
 
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/xtype/method"
 	"golang.org/x/tools/go/packages"
 )
 
 func newPackageLoader(workDir, buildTags string, paths []string) (*packageLoader, error) {
 	loader := &packageLoader{
 		lookup: map[string]*packages.Package{},
-		locals: map[string]map[string]method.LocalMethodOpts{},
+		locals: map[string]map[string]goverter.LocalMethodOpts{},
 	}
 	err := loader.load(workDir, buildTags, paths)
 	return loader, err
@@ -23,10 +22,10 @@ func newPackageLoader(workDir, buildTags string, paths []string) (*packageLoader
 
 type packageLoader struct {
 	lookup map[string]*packages.Package
-	locals map[string]map[string]method.LocalMethodOpts
+	locals map[string]map[string]goverter.LocalMethodOpts
 }
 
-func (g *packageLoader) getMatching(cwd, fullMethod string, opts *method.ParseMethodOpts) ([]*goverter.MethodDefinition, error) {
+func (g *packageLoader) getMatching(cwd, fullMethod string, opts *goverter.ParseMethodOpts) ([]*goverter.MethodDefinition, error) {
 	pkgName, name, err := parseMethodString(cwd, fullMethod)
 	if err != nil {
 		return nil, err
@@ -66,7 +65,7 @@ func (g *packageLoader) getMatching(cwd, fullMethod string, opts *method.ParseMe
 		}
 
 		obj := scope.Lookup(name)
-		m, err := method.ParseMethod(obj, opts, g.localConfig(pkg, name))
+		m, err := goverter.ParseMethod(obj, opts, g.localConfig(pkg, name))
 		if err == nil {
 			matches = append(matches, m)
 		}
@@ -101,10 +100,10 @@ func (g *packageLoader) getPkg(pkgName string) (*packages.Package, error) {
 	return pkg, nil
 }
 
-func (g *packageLoader) localConfig(pkg *packages.Package, name string) method.LocalMethodOpts {
+func (g *packageLoader) localConfig(pkg *packages.Package, name string) goverter.LocalMethodOpts {
 	fns, ok := g.locals[pkg.PkgPath]
 	if !ok {
-		fns = map[string]method.LocalMethodOpts{}
+		fns = map[string]goverter.LocalMethodOpts{}
 		for _, file := range pkg.Syntax {
 			commentMap := ast.NewCommentMap(pkg.Fset, file, file.Comments)
 			for _, decl := range file.Decls {
@@ -122,7 +121,7 @@ func (g *packageLoader) localConfig(pkg *packages.Package, name string) method.L
 							}
 						}
 					}
-					fns[fn.Name.Name] = method.LocalMethodOpts{Context: contexts}
+					fns[fn.Name.Name] = goverter.LocalMethodOpts{Context: contexts}
 				}
 			}
 		}
@@ -130,7 +129,7 @@ func (g *packageLoader) localConfig(pkg *packages.Package, name string) method.L
 	}
 	fn, ok := fns[name]
 	if !ok {
-		return method.EmptyLocalMethodOpts
+		return goverter.EmptyLocalMethodOpts
 	}
 	return fn
 }
@@ -148,7 +147,7 @@ func (g *packageLoader) getOneRaw(pkgName, name string) (*packages.Package, type
 	return pkg, obj, nil
 }
 
-func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *method.ParseMethodOpts) (*goverter.MethodDefinition, error) {
+func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *goverter.ParseMethodOpts) (*goverter.MethodDefinition, error) {
 	pkgName, name, err := parseMethodString(sourcePackage, fullMethod)
 	if err != nil {
 		return nil, err
@@ -156,13 +155,13 @@ func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *method.Pa
 	return g.getOneParsed(pkgName, name, opts)
 }
 
-func (g *packageLoader) getOneParsed(pkgName, name string, opts *method.ParseMethodOpts) (*goverter.MethodDefinition, error) {
+func (g *packageLoader) getOneParsed(pkgName, name string, opts *goverter.ParseMethodOpts) (*goverter.MethodDefinition, error) {
 	pkg, obj, err := g.getOneRaw(pkgName, name)
 	if err != nil {
 		return nil, err
 	}
 
-	def, err := method.ParseMethod(obj, opts, g.localConfig(pkg, name))
+	def, err := goverter.ParseMethod(obj, opts, g.localConfig(pkg, name))
 	if err != nil {
 		return nil, err
 	}

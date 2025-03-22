@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/xtype/method"
 )
 
 const (
@@ -30,7 +29,7 @@ type Method struct {
 
 	Location    string
 	updateParam string
-	localOpts   method.LocalMethodOpts
+	localOpts   goverter.LocalMethodOpts
 }
 
 type FieldMapping struct {
@@ -81,7 +80,7 @@ func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod RawLine
 		Fields:      map[string]*FieldMapping{},
 		Location:    rawMethod.Location,
 		EnumMapping: &EnumMapping{Map: map[string]string{}},
-		localOpts:   method.LocalMethodOpts{Context: map[string]bool{}},
+		localOpts:   goverter.LocalMethodOpts{Context: map[string]bool{}},
 	}
 
 	for _, value := range rawMethod.Lines {
@@ -90,7 +89,7 @@ func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod RawLine
 		}
 	}
 
-	def, err := method.ParseMethod(obj, &method.ParseMethodOpts{
+	def, err := goverter.ParseMethod(obj, &goverter.ParseMethodOpts{
 		ErrorPrefix:       "error parsing converter method",
 		Location:          rawMethod.Location,
 		Converter:         nil,
@@ -121,7 +120,7 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 		f.Source = source
 
 		if custom != "" {
-			opts := &method.ParseMethodOpts{
+			opts := &goverter.ParseMethodOpts{
 				ErrorPrefix:       "error parsing type",
 				OutputPackagePath: c.OutputPackagePath,
 				Converter:         c.typeForMethod(),
@@ -171,7 +170,7 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 		s, err = parseString(rest)
 		m.AutoMap = append(m.AutoMap, strings.TrimSpace(s))
 	case configDefault:
-		opts := &method.ParseMethodOpts{
+		opts := &goverter.ParseMethodOpts{
 			ErrorPrefix:       "error parsing type",
 			OutputPackagePath: c.OutputPackagePath,
 			Converter:         c.typeForMethod(),
