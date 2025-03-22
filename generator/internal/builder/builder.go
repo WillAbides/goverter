@@ -54,7 +54,7 @@ type Generator interface {
 
 	CallMethod(
 		ctx *MethodContext,
-		method *method.Definition,
+		method *method.MethodDefinition,
 		sourceID *goverter.JenID,
 		source, target *goverter.Type,
 		path ErrorPath,

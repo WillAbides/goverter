@@ -41,14 +41,14 @@ type LocalOpts struct {
 
 var EmptyLocalOpts = LocalOpts{Context: map[string]bool{}}
 
-// Parse parses an function into a Definition.
-func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*Definition, error) {
-	methodDef := &Definition{
+// Parse parses an function into a MethodDefinition.
+func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*MethodDefinition, error) {
+	methodDef := &MethodDefinition{
 		ID:         obj.String(),
 		OriginID:   obj.String(),
 		Generated:  opts.Generated,
 		CustomCall: opts.CustomCall,
-		Parameters: Parameters{
+		Parameters: goverter.Parameters{
 			Context: make(map[string]*goverter.Type, 0),
 		},
 		Name: obj.Name(),
@@ -79,16 +79,16 @@ func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*Definition,
 	}
 
 	for i := 0; i < sig.Params().Len(); i++ {
-		arg := Arg{
+		arg := goverter.Arg{
 			Name: sig.Params().At(i).Name(),
 			Type: goverter.TypeOf(sig.Params().At(i).Type()),
 		}
 
 		switch {
 		case types.Identical(arg.Type.T, opts.Converter):
-			arg.Use = ArgUseInterface
+			arg.Use = goverter.ArgUseInterface
 		case opts.UpdateParam != "" && arg.Name == opts.UpdateParam:
-			arg.Use = ArgUseTarget
+			arg.Use = goverter.ArgUseTarget
 			methodDef.Target = arg.Type
 			methodDef.UpdateTarget = true
 
@@ -102,13 +102,13 @@ func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*Definition,
 			}
 		case (opts.ContextMatch != nil && opts.ContextMatch.MatchString(arg.Name)) || localOpts.Context[arg.Name]:
 			methodDef.Context[arg.Type.String] = arg.Type
-			arg.Use = ArgUseContext
+			arg.Use = goverter.ArgUseContext
 		case methodDef.Source == nil:
-			arg.Use = ArgUseSource
+			arg.Use = goverter.ArgUseSource
 			methodDef.Source = arg.Type
 			methodDef.Signature.Source = methodDef.Source.String
 		default:
-			arg.Use = ArgUseMultiSource
+			arg.Use = goverter.ArgUseMultiSource
 			methodDef.MultiSources = append(methodDef.MultiSources, arg.Type)
 		}
 
@@ -156,14 +156,14 @@ func isError(obj *types.Var) bool {
 	return ok && t.Obj().Name() == "error" && t.Obj().Pkg() == nil
 }
 
-func (def *Definition) ArgDebug(indent string) string {
+func (def *MethodDefinition) ArgDebug(indent string) string {
 	var lines []string
 	for _, arg := range def.RawArgs {
 		argUse := arg.Use
-		if arg.Use == ArgUseMultiSource {
-			argUse = ArgUseSource
-		} else if arg.Use == ArgUseInterface {
-			argUse = ArgUseContext
+		if arg.Use == goverter.ArgUseMultiSource {
+			argUse = goverter.ArgUseSource
+		} else if arg.Use == goverter.ArgUseInterface {
+			argUse = goverter.ArgUseContext
 		}
 		lines = append(lines, fmt.Sprintf("[%s] %s", argUse, arg.Type.String))
 	}

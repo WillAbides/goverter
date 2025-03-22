@@ -5,8 +5,8 @@ import (
 	"github.com/jmattheis/goverter"
 )
 
-type Definition struct {
-	Parameters
+type MethodDefinition struct {
+	goverter.Parameters
 	OriginID string
 	Call     *jen.Statement
 	ID       string
@@ -16,35 +16,3 @@ type Definition struct {
 	Generated  bool
 	CustomCall *jen.Statement
 }
-
-type Parameters struct {
-	TypeParams bool
-
-	Source       *goverter.Type
-	MultiSources []*goverter.Type
-	Target       *goverter.Type
-	Context      map[string]*goverter.Type
-
-	Signature goverter.Signature
-
-	RawArgs []Arg
-
-	ReturnError  bool
-	UpdateTarget bool
-}
-
-type Arg struct {
-	Name string
-	Use  ArgUse
-	Type *goverter.Type
-}
-
-type ArgUse string
-
-const (
-	ArgUseSource      ArgUse = "source"
-	ArgUseMultiSource ArgUse = "additional-source"
-	ArgUseInterface   ArgUse = "interface"
-	ArgUseContext     ArgUse = "context"
-	ArgUseTarget      ArgUse = "target"
-)

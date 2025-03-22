@@ -17,10 +17,10 @@ const (
 var StructMethodContextRegex = regexp.MustCompile(".*")
 
 type Method struct {
-	*method.Definition
+	*method.MethodDefinition
 	Common
 
-	Constructor *method.Definition
+	Constructor *method.MethodDefinition
 	AutoMap     []string
 	Fields      map[string]*FieldMapping
 	EnumMapping *EnumMapping
@@ -34,7 +34,7 @@ type Method struct {
 
 type FieldMapping struct {
 	Source   string
-	Function *method.Definition
+	Function *method.MethodDefinition
 	Ignore   bool
 }
 
@@ -100,7 +100,7 @@ func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod RawLine
 		UpdateParam:       m.updateParam,
 	}, m.localOpts)
 
-	m.Definition = def
+	m.MethodDefinition = def
 
 	return m, err
 }

@@ -25,7 +25,7 @@ type packageLoader struct {
 	locals map[string]map[string]method.LocalOpts
 }
 
-func (g *packageLoader) getMatching(cwd, fullMethod string, opts *method.ParseOpts) ([]*method.Definition, error) {
+func (g *packageLoader) getMatching(cwd, fullMethod string, opts *method.ParseOpts) ([]*method.MethodDefinition, error) {
 	pkgName, name, err := parseMethodString(cwd, fullMethod)
 	if err != nil {
 		return nil, err
@@ -42,11 +42,11 @@ func (g *packageLoader) getMatching(cwd, fullMethod string, opts *method.ParseOp
 		if err != nil {
 			return nil, err
 		}
-		return []*method.Definition{m}, nil
+		return []*method.MethodDefinition{m}, nil
 	}
 
 	// this is regexp, scan thru the package methods to find funcs that match the pattern
-	var matches []*method.Definition
+	var matches []*method.MethodDefinition
 
 	pkg, err := g.getPkg(pkgName)
 	if err != nil {
@@ -147,7 +147,7 @@ func (g *packageLoader) getOneRaw(pkgName, name string) (*packages.Package, type
 	return pkg, obj, nil
 }
 
-func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *method.ParseOpts) (*method.Definition, error) {
+func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *method.ParseOpts) (*method.MethodDefinition, error) {
 	pkgName, name, err := parseMethodString(sourcePackage, fullMethod)
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *method.Pa
 	return g.getOneParsed(pkgName, name, opts)
 }
 
-func (g *packageLoader) getOneParsed(pkgName, name string, opts *method.ParseOpts) (*method.Definition, error) {
+func (g *packageLoader) getOneParsed(pkgName, name string, opts *method.ParseOpts) (*method.MethodDefinition, error) {
 	pkg, obj, err := g.getOneRaw(pkgName, name)
 	if err != nil {
 		return nil, err

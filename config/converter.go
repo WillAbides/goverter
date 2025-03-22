@@ -77,7 +77,7 @@ type ConverterConfig struct {
 	OutputPackagePath string
 	OutputPackageName string
 	OutputFormat      Format
-	Extend            []*method.Definition
+	Extend            []*method.MethodDefinition
 	Comments          []string
 }
 
@@ -231,7 +231,7 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 				Params:            method.ParamsRequired,
 				ContextMatch:      c.ArgContextRegex,
 			}
-			var defs []*method.Definition
+			var defs []*method.MethodDefinition
 			defs, err = ctx.Loader.getMatching(c.Package, name, opts)
 			if err != nil {
 				break

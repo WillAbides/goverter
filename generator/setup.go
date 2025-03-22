@@ -7,7 +7,7 @@ import (
 )
 
 func setupGenerator(converter *config.Converter, n *builder.Namer) (*generator, error) {
-	extend := method.NewIndex[method.Definition]()
+	extend := method.NewIndex[method.MethodDefinition]()
 	for _, def := range converter.Extend {
 		extend.RegisterOverrideOverlapping(def, def)
 	}
@@ -21,9 +21,9 @@ func setupGenerator(converter *config.Converter, n *builder.Namer) (*generator, 
 			Explicit: true,
 		}
 		if gen.UpdateTarget {
-			gen.IndexID, err = lookup.RegisterUpdate(gen, gen.Definition)
+			gen.IndexID, err = lookup.RegisterUpdate(gen, gen.MethodDefinition)
 		} else {
-			gen.IndexID, err = lookup.Register(gen, gen.Definition)
+			gen.IndexID, err = lookup.Register(gen, gen.MethodDefinition)
 		}
 		if err != nil {
 			return nil, err

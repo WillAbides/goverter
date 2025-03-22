@@ -29,7 +29,7 @@ type generator struct {
 	namer  *builder.Namer
 	conf   *config.Converter
 	lookup *method.Index[generatedMethod]
-	extend *method.Index[method.Definition]
+	extend *method.Index[method.MethodDefinition]
 }
 
 func (g *generator) getGenMethods() []*generatedMethod {
@@ -64,7 +64,7 @@ func (g *generator) buildDirtyMethods() error {
 				SourceType: genMethod.Source.String,
 				TargetType: genMethod.Target.String,
 			})
-			return fmt.Errorf("Error while creating converter method:\n    %s\n    %s%s\n\n%s", genMethod.Location, genMethod.ID, genMethod.Definition.ArgDebug("        "), builder.ToString(err))
+			return fmt.Errorf("Error while creating converter method:\n    %s\n    %s%s\n\n%s", genMethod.Location, genMethod.ID, genMethod.MethodDefinition.ArgDebug("        "), builder.ToString(err))
 		}
 	}
 	return nil
@@ -148,21 +148,21 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 	args := []jen.Code{}
 	for _, arg := range genMethod.RawArgs {
 		switch arg.Use {
-		case method.ArgUseInterface:
+		case goverter.ArgUseInterface:
 			panic("hopefully unreachable")
-		case method.ArgUseContext:
+		case goverter.ArgUseContext:
 			name := ctx.Name("context")
 			ctx.Context[arg.Type.String] = goverter.VariableID(jen.Id(name))
 			args = append(args, jen.Id(name).Add(arg.Type.TypeAsJen()))
-		case method.ArgUseSource:
+		case goverter.ArgUseSource:
 			name := ctx.Name("source")
 			sourceID = goverter.VariableID(jen.Id(name))
 			args = append(args, jen.Id(name).Add(arg.Type.TypeAsJen()))
-		case method.ArgUseTarget:
+		case goverter.ArgUseTarget:
 			name := ctx.Name("target")
 			targetAssign = jen.Id(name)
 			args = append(args, jen.Id(name).Add(arg.Type.TypeAsJen()))
-		case method.ArgUseMultiSource:
+		case goverter.ArgUseMultiSource:
 			panic("multi source aren't supported right now. https://github.com/jmattheis/goverter/issues/143")
 		}
 	}
@@ -265,7 +265,7 @@ func (g *generator) convertTo(ctx *builder.MethodContext, assignTo *builder.Assi
 
 func (g *generator) CallMethod(
 	ctx *builder.MethodContext,
-	definition *method.Definition,
+	definition *method.MethodDefinition,
 	sourceID *goverter.JenID,
 	source, target *goverter.Type,
 	errPath builder.ErrorPath,
@@ -277,24 +277,24 @@ func (g *generator) CallMethod(
 
 	for _, arg := range definition.RawArgs {
 		switch arg.Use {
-		case method.ArgUseInterface:
+		case goverter.ArgUseInterface:
 			params = append(params, jen.Id(builder.ThisVar))
-		case method.ArgUseContext:
+		case goverter.ArgUseContext:
 			if !g.requireContext(ctx, arg.Type) {
 				return nil, nil, formatErr("Could not satisfy all required context parameters:\n" + strings.Join(method.AvailableContextDebug(definition.Context, ctx.AvailableContext), "\n"))
 			}
 			if id, ok := ctx.Context[arg.Type.String]; ok {
 				params = append(params, id.Code.Clone())
 			}
-		case method.ArgUseSource:
+		case goverter.ArgUseSource:
 			if !source.AssignableTo(definition.Source) && !definition.TypeParams {
 				cause := fmt.Sprintf("Method source type mismatches with conversion source: %s != %s", definition.Source.String, source.String)
 				return nil, nil, formatErr(cause)
 			}
 			params = append(params, sourceID.Code)
-		case method.ArgUseMultiSource:
+		case goverter.ArgUseMultiSource:
 			panic("multi source aren't supported right now. https://github.com/jmattheis/goverter/issues/143")
-		case method.ArgUseTarget:
+		case goverter.ArgUseTarget:
 			panic("unreachable")
 		}
 	}
@@ -365,9 +365,9 @@ func (g *generator) requireContext(ctx *builder.MethodContext, need *goverter.Ty
 		}
 
 		check.Context[need.String] = need
-		check.RawArgs = append(check.RawArgs, method.Arg{
+		check.RawArgs = append(check.RawArgs, goverter.Arg{
 			Name: "",
-			Use:  method.ArgUseContext,
+			Use:  goverter.ArgUseContext,
 			Type: need,
 		})
 		check.Dirty = true
@@ -377,22 +377,22 @@ func (g *generator) requireContext(ctx *builder.MethodContext, need *goverter.Ty
 
 func (g *generator) delegateMethod(
 	ctx *builder.MethodContext,
-	delegateTo *method.Definition,
+	delegateTo *method.MethodDefinition,
 	sourceID *goverter.JenID,
 ) (*jen.Statement, *builder.Error) {
 	params := []jen.Code{}
 
 	for _, arg := range delegateTo.RawArgs {
 		switch arg.Use {
-		case method.ArgUseInterface:
+		case goverter.ArgUseInterface:
 			params = append(params, jen.Id(builder.ThisVar))
-		case method.ArgUseContext:
+		case goverter.ArgUseContext:
 			params = append(params, ctx.Context[arg.Type.String].Code.Clone())
-		case method.ArgUseSource:
+		case goverter.ArgUseSource:
 			params = append(params, sourceID.Code)
-		case method.ArgUseMultiSource:
+		case goverter.ArgUseMultiSource:
 			panic("not supported atm")
-		case method.ArgUseTarget:
+		case goverter.ArgUseTarget:
 			panic("unreachable")
 		}
 	}
@@ -481,7 +481,7 @@ func (g *generator) callExisting(
 		return nil, nil, builder.NewError(err.Error())
 	}
 	if genMethod, err := g.lookup.Get(signature, ctx.AvailableContext); genMethod != nil {
-		return g.CallMethod(ctx, genMethod.Definition, sourceID, source, target, errPath)
+		return g.CallMethod(ctx, genMethod.MethodDefinition, sourceID, source, target, errPath)
 	} else if err != nil {
 		return nil, nil, builder.NewError(err.Error())
 	}
@@ -528,11 +528,11 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *govert
 	name := g.namer.Name(source.UnescapedID() + "To" + strings.Title(target.UnescapedID()))
 	orig := g.lookup.ByID(ctx.IndexID)
 
-	var args []method.Arg
-	args = append(args, method.Arg{
+	var args []goverter.Arg
+	args = append(args, goverter.Arg{
 		Name: "source",
 		Type: source,
-		Use:  method.ArgUseSource,
+		Use:  goverter.ArgUseSource,
 	})
 
 	path := append([]method.IndexID{ctx.IndexID}, orig.OriginPath...)
@@ -542,13 +542,13 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *govert
 			Common:      g.conf.Common,
 			Fields:      map[string]*config.FieldMapping{},
 			EnumMapping: &config.EnumMapping{Map: map[string]string{}},
-			Definition: &method.Definition{
+			MethodDefinition: &method.MethodDefinition{
 				OriginID:  ctx.Conf.OriginID,
 				ID:        name,
 				Package:   g.conf.OutputPackagePath,
 				Name:      name,
 				Generated: true,
-				Parameters: method.Parameters{
+				Parameters: goverter.Parameters{
 					Source:    source,
 					RawArgs:   args,
 					Context:   map[string]*goverter.Type{},
@@ -559,12 +559,12 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *govert
 		},
 	}
 
-	genMethod.IndexID, _ = g.lookup.Register(genMethod, genMethod.Definition)
+	genMethod.IndexID, _ = g.lookup.Register(genMethod, genMethod.MethodDefinition)
 
 	if err := g.buildMethod(genMethod, ctx.AvailableContext); err != nil {
 		return nil, nil, err
 	}
-	return g.CallMethod(ctx, genMethod.Definition, sourceID, source, target, errPAth)
+	return g.CallMethod(ctx, genMethod.MethodDefinition, sourceID, source, target, errPAth)
 }
 
 func (g *generator) hasMethod(ctx *builder.MethodContext, source, target types.Type) bool {
@@ -627,7 +627,7 @@ You can define a custom conversion method with extend:
 https://goverter.jmattheis.de/reference/extend`, source.T, target.T))
 }
 
-func (g *generator) qualMethod(m *method.Definition) *jen.Statement {
+func (g *generator) qualMethod(m *method.MethodDefinition) *jen.Statement {
 	switch {
 	case m.CustomCall != nil:
 		return m.CustomCall.Clone()

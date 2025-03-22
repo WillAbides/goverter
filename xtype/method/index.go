@@ -9,7 +9,7 @@ import (
 )
 
 type IndexEntry[T any] struct {
-	Def  *Definition
+	Def  *MethodDefinition
 	Item *T
 }
 
@@ -40,7 +40,7 @@ func (l *Index[T]) GetAll() []*T {
 	return append(items, l.Update...)
 }
 
-func (l *Index[T]) RegisterOverrideOverlapping(t *T, def *Definition) {
+func (l *Index[T]) RegisterOverrideOverlapping(t *T, def *MethodDefinition) {
 	newEntry := IndexEntry[T]{Def: def, Item: t}
 	for i, entry := range l.Exact[def.Signature] {
 		if satisfiesContext(entry.Def.Context, def.Context) || satisfiesContext(def.Context, entry.Def.Context) {
@@ -52,12 +52,12 @@ func (l *Index[T]) RegisterOverrideOverlapping(t *T, def *Definition) {
 	l.Exact[def.Signature] = append(l.Exact[def.Signature], newEntry)
 }
 
-func (l *Index[T]) RegisterUpdate(t *T, def *Definition) (IndexID, error) {
+func (l *Index[T]) RegisterUpdate(t *T, def *MethodDefinition) (IndexID, error) {
 	l.Update = append(l.Update, t)
 	return IndexID{update: true, idx: len(l.Update) - 1}, nil
 }
 
-func (l *Index[T]) Register(t *T, def *Definition) (IndexID, error) {
+func (l *Index[T]) Register(t *T, def *MethodDefinition) (IndexID, error) {
 	for _, entry := range l.Exact[def.Signature] {
 		if err := checkOverlap(entry.Def, def); err != nil {
 			return IndexID{}, err
@@ -72,7 +72,7 @@ func (l *Index[T]) Register(t *T, def *Definition) (IndexID, error) {
 	return IndexID{sig: def.Signature, idx: len(l.Exact[def.Signature]) - 1}, nil
 }
 
-func checkOverlap(left, right *Definition) error {
+func checkOverlap(left, right *MethodDefinition) error {
 	if satisfiesContext(left.Context, right.Context) {
 		return fmt.Errorf("Overlapping signatures found. All sources and contexts of this method\n    %s%s\n\nare contained in method\n    %s%s\n\nGoverter doesn't know which method to use when all contexts of the second method are available.\nRemove one of the methods to prevent this ambiguity.", left.ID, left.ArgDebug("        "), right.ID, right.ArgDebug("        "))
 	}
