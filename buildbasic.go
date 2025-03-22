@@ -15,11 +15,11 @@ func (*basic) matches(_ *MethodContext, source, target *Type) bool {
 
 // Build creates conversion source code for the given source and target type.
 func (*basic) build(
-	_ Generator,
-	_ *MethodContext,
+	gen *generator,
+	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,
-	errPath ErrorPath,
+	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	if target.Named || (!target.Named && source.Named) {
 		return nil, OtherID(target.TypeAsJen().Call(sourceID.Code)), nil
@@ -28,7 +28,7 @@ func (*basic) build(
 }
 
 func (b *basic) assign(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
@@ -48,7 +48,7 @@ func (*BasicTargetPointerRule) matches(_ *MethodContext, source, target *Type) b
 
 // Build creates conversion source code for the given source and target type.
 func (*BasicTargetPointerRule) build(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,
@@ -73,7 +73,7 @@ func (*BasicTargetPointerRule) build(
 }
 
 func (b *BasicTargetPointerRule) assign(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,

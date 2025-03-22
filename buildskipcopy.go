@@ -14,22 +14,22 @@ func (*SkipCopy) matches(ctx *MethodContext, source, target *Type) bool {
 
 // Build creates conversion source code for the given source and target type.
 func (*SkipCopy) build(
-	_ Generator,
-	_ *MethodContext,
+	gen *generator,
+	ctx *MethodContext,
 	sourceID *JenID,
-	_, _ *Type,
-	_ ErrorPath,
+	source, target *Type,
+	path ErrorPath,
 ) ([]jen.Code, *JenID, *BuildError) {
 	return nil, sourceID, nil
 }
 
 func (*SkipCopy) assign(
-	_ Generator,
-	_ *MethodContext,
+	gen *generator,
+	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
-	_, _ *Type,
-	_ ErrorPath,
+	source, target *Type,
+	path ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	return []jen.Code{assignTo.Stmt.Clone().Op("=").Add(sourceID.Code)}, nil
 }

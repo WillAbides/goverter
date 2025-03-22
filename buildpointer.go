@@ -14,7 +14,7 @@ func (*Pointer) matches(_ *MethodContext, source, target *Type) bool {
 
 // Build creates conversion source code for the given source and target type.
 func (p *Pointer) build(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,
@@ -46,7 +46,7 @@ func (p *Pointer) build(
 }
 
 func (*Pointer) assign(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
@@ -87,7 +87,7 @@ func (*SourcePointer) matches(ctx *MethodContext, source, target *Type) bool {
 
 // Build creates conversion source code for the given source and target type.
 func (s *SourcePointer) build(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,
@@ -116,7 +116,7 @@ func (s *SourcePointer) build(
 }
 
 func (*SourcePointer) assign(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
@@ -150,7 +150,7 @@ func (*TargetPointer) matches(_ *MethodContext, source, target *Type) bool {
 
 // Build creates conversion source code for the given source and target type.
 func (*TargetPointer) build(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,
@@ -192,7 +192,7 @@ func (*TargetPointer) build(
 }
 
 func (tp *TargetPointer) assign(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,

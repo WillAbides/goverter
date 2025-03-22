@@ -94,7 +94,7 @@ func (g *generator) appendGenerated(f *jen.File) {
 	for _, def := range genMethods {
 		switch g.conf.OutputFormat {
 		case OutputFormatStruct:
-			funcs = append(funcs, jen.Func().Params(jen.Id(ThisVar).Op("*").Id(g.conf.Name)).Id(def.Name).Add(def.Jen))
+			funcs = append(funcs, jen.Func().Params(jen.Id(thisVar).Op("*").Id(g.conf.Name)).Id(def.Name).Add(def.Jen))
 		case OutputFormatVariable:
 			if def.Explicit {
 				init = append(init, jen.Qual(def.Package, def.Name).Op("=").Func().Add(def.Jen))
@@ -141,7 +141,7 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 	}
 
 	var targetAssign *jen.Statement
-	args := []jen.Code{}
+	var args []jen.Code
 	for _, arg := range genMethod.RawArgs {
 		switch arg.Use {
 		case ArgUseInterface:
@@ -291,7 +291,7 @@ func (g *generator) CallMethod(
 	for _, arg := range definition.RawArgs {
 		switch arg.Use {
 		case ArgUseInterface:
-			params = append(params, jen.Id(ThisVar))
+			params = append(params, jen.Id(thisVar))
 		case ArgUseContext:
 			if !g.requireContext(ctx, arg.Type) {
 				return nil, nil, formatErr("Could not satisfy all required context parameters:\n" + strings.Join(AvailableContextDebug(definition.Context, ctx.AvailableContext), "\n"))
@@ -398,7 +398,7 @@ func (g *generator) delegateMethod(
 	for _, arg := range delegateTo.RawArgs {
 		switch arg.Use {
 		case ArgUseInterface:
-			params = append(params, jen.Id(ThisVar))
+			params = append(params, jen.Id(thisVar))
 		case ArgUseContext:
 			params = append(params, ctx.Context[arg.Type.String].Code.Clone())
 		case ArgUseSource:
@@ -650,7 +650,7 @@ func (g *generator) qualMethod(m *MethodDefinition) *jen.Statement {
 	case m.CustomCall != nil:
 		return m.CustomCall.Clone()
 	case g.conf.OutputFormat == OutputFormatStruct && m.Generated:
-		return jen.Id(ThisVar).Dot(m.Name)
+		return jen.Id(thisVar).Dot(m.Name)
 	case g.conf.OutputFormat == OutputFormatFunction && m.Generated:
 		return jen.Id(m.Name)
 	default:

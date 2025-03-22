@@ -19,7 +19,7 @@ func (*BuildStruct) matches(_ *MethodContext, source, target *Type) bool {
 
 // Build creates conversion source code for the given source and target type.
 func (s *BuildStruct) build(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,
@@ -33,7 +33,7 @@ func (s *BuildStruct) build(
 }
 
 func (s *BuildStruct) assign(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
@@ -178,7 +178,7 @@ func shouldCheckAgainstZero(ctx *MethodContext, s, t *Type, isUpdate, call bool)
 var structMethodContextRegex = regexp.MustCompile(".*")
 
 func mapField(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	targetField *types.Var,
 	sourceID *JenID,

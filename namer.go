@@ -6,7 +6,7 @@ import (
 
 // NewNamer returns a new namer.
 func NewNamer() *Namer {
-	return &Namer{lookup: map[string]struct{}{ThisVar: {}}}
+	return &Namer{lookup: map[string]struct{}{thisVar: {}}}
 }
 
 // Namer keeps track of used variable names.

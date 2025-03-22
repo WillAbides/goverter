@@ -21,7 +21,7 @@ func IsBuildEnum(ctx *MethodContext, source, target *Type) bool {
 
 // Build creates conversion source code for the given source and target type.
 func (*BuildEnum) build(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,
@@ -120,7 +120,7 @@ func (*BuildEnum) build(
 }
 
 func (s *BuildEnum) assign(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
@@ -131,7 +131,7 @@ func (s *BuildEnum) assign(
 }
 
 func caseAction(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	nameVar *jen.Statement,
 	target *Type,

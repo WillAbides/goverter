@@ -21,7 +21,7 @@ func (*UseUnderlyingTypeMethods) matches(ctx *MethodContext, source, target *Typ
 
 // Build creates conversion source code for the given source and target type.
 func (*UseUnderlyingTypeMethods) build(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,
@@ -68,7 +68,7 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 }
 
 func (u *UseUnderlyingTypeMethods) assign(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,

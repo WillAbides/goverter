@@ -6,8 +6,8 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-// ThisVar is used as name for the reference to the converter interface.
-const ThisVar = "c"
+// thisVar is used as name for the reference to the converter interface.
+const thisVar = "c"
 
 // MethodContext exposes information for the current method.
 type MethodContext struct {
@@ -100,7 +100,7 @@ type builder interface {
 
 	// build creates conversion source code for the given source and target type.
 	build(
-		gen Generator,
+		gen *generator,
 		ctx *MethodContext,
 		sourceID *JenID,
 		source, target *Type,
@@ -109,50 +109,17 @@ type builder interface {
 
 	// assign creates conversion source code for the given source and target type and assigns it.
 	assign(
-		gen Generator,
+		gen *generator,
 		ctx *MethodContext,
 		assignTo *AssignTo,
 		sourceID *JenID,
 		source, target *Type,
 		path ErrorPath,
 	) ([]jen.Code, *BuildError)
-}
-
-// Generator checks all existing builders if they can create a conversion implementations for the given source and target type
-// If no one builder#matches then, an error is returned.
-type Generator interface {
-	Build(
-		ctx *MethodContext,
-		sourceID *JenID,
-		source, target *Type,
-		path ErrorPath,
-	) ([]jen.Code, *JenID, *BuildError)
-
-	Assign(
-		ctx *MethodContext,
-		assignTo *AssignTo,
-		sourceID *JenID,
-		source, target *Type,
-		path ErrorPath,
-	) ([]jen.Code, *BuildError)
-
-	CallMethod(
-		ctx *MethodContext,
-		method *MethodDefinition,
-		sourceID *JenID,
-		source, target *Type,
-		path ErrorPath,
-	) ([]jen.Code, *JenID, *BuildError)
-
-	ReturnError(
-		ctx *MethodContext,
-		path ErrorPath,
-		id *jen.Statement,
-	) (jen.Code, bool)
 }
 
 func buildTargetVar(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,
@@ -237,7 +204,7 @@ func ToAssignable(assignTo *AssignTo) func(
 
 func assignByBuild(
 	b builder,
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
@@ -249,7 +216,7 @@ func assignByBuild(
 
 func buildByAssign(
 	b builder,
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,

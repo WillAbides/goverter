@@ -14,7 +14,7 @@ func (*BuildMap) matches(_ *MethodContext, source, target *Type) bool {
 
 // Build creates conversion source code for the given source and target type.
 func (m *BuildMap) build(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	sourceID *JenID,
 	source, target *Type,
@@ -25,7 +25,7 @@ func (m *BuildMap) build(
 }
 
 func (*BuildMap) assign(
-	gen Generator,
+	gen *generator,
 	ctx *MethodContext,
 	assignTo *AssignTo,
 	sourceID *JenID,
