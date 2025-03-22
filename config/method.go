@@ -18,7 +18,7 @@ var StructMethodContextRegex = regexp.MustCompile(".*")
 
 type Method struct {
 	*goverter.MethodDefinition
-	Common
+	goverter.Common
 
 	Constructor *goverter.MethodDefinition
 	AutoMap     []string
@@ -47,7 +47,7 @@ func (m *Method) Field(targetName string) *FieldMapping {
 	return target
 }
 
-func parseMethods(ctx *context, rawConverter *RawConverter, c *Converter) error {
+func parseMethods(ctx *context, rawConverter *goverter.RawConverter, c *Converter) error {
 	if c.typ != nil {
 		interf := c.typ.Underlying().(*types.Interface)
 		for i := 0; i < interf.NumMethods(); i++ {
@@ -61,7 +61,7 @@ func parseMethods(ctx *context, rawConverter *RawConverter, c *Converter) error 
 		return nil
 	}
 	for name, lines := range rawConverter.Methods {
-		_, fn, err := ctx.Loader.getOneRaw(c.Package, name)
+		_, fn, err := ctx.Loader.GetOneRaw(c.Package, name)
 		if err != nil {
 			return err
 		}
@@ -74,7 +74,7 @@ func parseMethods(ctx *context, rawConverter *RawConverter, c *Converter) error 
 	return nil
 }
 
-func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod RawLines) (*Method, error) {
+func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod goverter.RawLines) (*Method, error) {
 	m := &Method{
 		Common:      c.Common,
 		Fields:      map[string]*FieldMapping{},
@@ -106,7 +106,7 @@ func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod RawLine
 }
 
 func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err error) {
-	cmd, rest := parseCommand(value)
+	cmd, rest := goverter.ParseCommand(value)
 	fieldSetting := false
 	switch cmd {
 	case configMap:
@@ -128,7 +128,7 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 				AllowTypeParams:   true,
 				ContextMatch:      m.ArgContextRegex,
 			}
-			f.Function, err = ctx.Loader.getOne(c.Package, custom, opts)
+			f.Function, err = ctx.Loader.GetOne(c.Package, custom, opts)
 		}
 	case "ignore":
 		fieldSetting = true
@@ -137,10 +137,10 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 			m.Field(f).Ignore = true
 		}
 	case "update":
-		m.updateParam, err = parseString(rest)
+		m.updateParam, err = goverter.ParseString(rest)
 	case "context":
 		var key string
-		key, err = parseString(rest)
+		key, err = goverter.ParseString(rest)
 		m.localOpts.Context[key] = true
 	case "enum:map":
 		fields := strings.Fields(rest)
@@ -167,7 +167,7 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 	case "autoMap":
 		fieldSetting = true
 		var s string
-		s, err = parseString(rest)
+		s, err = goverter.ParseString(rest)
 		m.AutoMap = append(m.AutoMap, strings.TrimSpace(s))
 	case configDefault:
 		opts := &goverter.ParseMethodOpts{
@@ -178,7 +178,7 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 			AllowTypeParams:   true,
 			ContextMatch:      m.ArgContextRegex,
 		}
-		m.Constructor, err = ctx.Loader.getOne(c.Package, rest, opts)
+		m.Constructor, err = ctx.Loader.GetOne(c.Package, rest, opts)
 	default:
 		fieldSetting, err = parseCommon(&m.Common, cmd, rest)
 	}

@@ -5,11 +5,11 @@ import (
 	"os"
 	"runtime/debug"
 
-	"github.com/jmattheis/goverter/config"
+	"github.com/jmattheis/goverter"
 )
 
 type RunOpts struct {
-	EnumTransformers map[string]config.EnumTransformer
+	EnumTransformers map[string]goverter.EnumTransformer
 }
 
 // Run runs the goverter cli with the given args and customizations.

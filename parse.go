@@ -1,4 +1,4 @@
-package config
+package goverter
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func parseMethodString(sourcePackage, fullMethod string) (pkg, name string, err error) {
+func ParseMethodString(sourcePackage, fullMethod string) (pkg, name string, err error) {
 	parts := strings.SplitN(fullMethod, ":", 2)
 	switch len(parts) {
 	case 0:
@@ -41,7 +41,7 @@ See https://goverter.jmattheis.de/reference/extend`, fullMethod)
 	return pkg, name, nil
 }
 
-func parseCommand(value string) (string, string) {
+func ParseCommand(value string) (string, string) {
 	parts := strings.SplitN(value, " ", 2)
 	if len(parts) == 2 {
 		return parts[0], parts[1]
@@ -49,7 +49,7 @@ func parseCommand(value string) (string, string) {
 	return parts[0], ""
 }
 
-func parseEnum[T ~string](empty bool, remaining string, values ...T) (T, error) {
+func ParseEnum[T ~string](empty bool, remaining string, values ...T) (T, error) {
 	fields := strings.Fields(remaining)
 
 	switch {
@@ -62,13 +62,13 @@ func parseEnum[T ~string](empty bool, remaining string, values ...T) (T, error) 
 			}
 		}
 
-		return "", fmt.Errorf("invalid value: '%s' must be one of: %s", fields[0], formatValues(values))
+		return "", fmt.Errorf("invalid value: '%s' must be one of: %s", fields[0], FormatValues(values))
 	default:
 		return "", fmt.Errorf("invalid value: expected one value but got %d: %s", len(fields), fields)
 	}
 }
 
-func formatValues[T ~string](values []T) string {
+func FormatValues[T ~string](values []T) string {
 	strs := make([]string, len(values))
 	for i, id := range values {
 		strs[i] = string(id)
@@ -76,12 +76,12 @@ func formatValues[T ~string](values []T) string {
 	return strings.Join(strs, ", ")
 }
 
-func parseBool(remaining string) (bool, error) {
-	val, err := parseEnum(true, remaining, "yes", "no")
+func ParseBool(remaining string) (bool, error) {
+	val, err := ParseEnum(true, remaining, "yes", "no")
 	return val == "" || val == "yes", err
 }
 
-func parseString(remaining string) (string, error) {
+func ParseString(remaining string) (string, error) {
 	fields := strings.Fields(remaining)
 	if len(fields) != 1 {
 		return "", fmt.Errorf("must have one value but got %d: %#v", len(fields), remaining)
@@ -89,16 +89,16 @@ func parseString(remaining string) (string, error) {
 	return fields[0], nil
 }
 
-func parseRegex(remaining string) (*regexp.Regexp, error) {
-	value, err := parseString(remaining)
+func ParseRegex(remaining string) (*regexp.Regexp, error) {
+	value, err := ParseString(remaining)
 	if err != nil {
 		return nil, err
 	}
 	return regexp.Compile(value)
 }
 
-func parseFile(cwd, rest string) (string, error) {
-	field, err := parseString(rest)
+func ParseFile(cwd, rest string) (string, error) {
+	field, err := ParseString(rest)
 	if err != nil {
 		return field, err
 	}

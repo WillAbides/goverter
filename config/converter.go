@@ -22,7 +22,7 @@ const (
 	FormatFunction Format = "function"
 )
 
-var DefaultCommon = Common{
+var DefaultCommon = goverter.Common{
 	Enum: goverter.EnumConfig{Enabled: true},
 }
 
@@ -69,7 +69,7 @@ func (c *Converter) IDString() string {
 }
 
 type ConverterConfig struct {
-	Common
+	goverter.Common
 	Name              string
 	OutputRaw         []string
 	OutputFile        string
@@ -93,7 +93,7 @@ func defaultOutputFile(name string) string {
 	return strings.TrimSuffix(f, ext) + ".gen" + ext
 }
 
-func parseConverter(ctx *context, rawConverter *RawConverter, global RawLines) (*Converter, error) {
+func parseConverter(ctx *context, rawConverter *goverter.RawConverter, global goverter.RawLines) (*Converter, error) {
 	c, err := initConverter(ctx.Loader, rawConverter)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func resolveOutputPackage(ctx *context, c *Converter) {
 		c.OutputPackagePath = targetPackage
 	}
 
-	pkg := ctx.Loader.getUncheckedPkg(targetPackage)
+	pkg := ctx.Loader.GetUncheckedPkg(targetPackage)
 
 	if pkg == nil {
 		return
@@ -133,7 +133,7 @@ func resolveOutputPackage(ctx *context, c *Converter) {
 	}
 }
 
-func initConverter(loader *packageLoader, rawConverter *RawConverter) (*Converter, error) {
+func initConverter(loader *PackageLoader, rawConverter *goverter.RawConverter) (*Converter, error) {
 	c := &Converter{
 		FileName: rawConverter.FileName,
 		Package:  rawConverter.PackagePath,
@@ -142,7 +142,7 @@ func initConverter(loader *packageLoader, rawConverter *RawConverter) (*Converte
 
 	if rawConverter.InterfaceName != "" {
 		c.ConverterConfig = DefaultConfigInterface
-		_, interfaceObj, err := loader.getOneRaw(c.Package, rawConverter.InterfaceName)
+		_, interfaceObj, err := loader.GetOneRaw(c.Package, rawConverter.InterfaceName)
 		if err != nil {
 			return nil, err
 		}
@@ -159,7 +159,7 @@ func initConverter(loader *packageLoader, rawConverter *RawConverter) (*Converte
 	return c, nil
 }
 
-func parseConverterLines(ctx *context, c *Converter, source string, raw RawLines) error {
+func parseConverterLines(ctx *context, c *Converter, source string, raw goverter.RawLines) error {
 	for _, value := range raw.Lines {
 		if err := parseConverterLine(ctx, c, value); err != nil {
 			return formatLineError(raw, source, value, err)
@@ -170,7 +170,7 @@ func parseConverterLines(ctx *context, c *Converter, source string, raw RawLines
 }
 
 func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
-	cmd, rest := parseCommand(value)
+	cmd, rest := goverter.ParseCommand(value)
 	switch cmd {
 	case "converter", "variables":
 		// only a marker interface
@@ -178,17 +178,17 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 		if err = c.requireStruct(); err != nil {
 			return err
 		}
-		c.Name, err = parseString(rest)
+		c.Name, err = goverter.ParseString(rest)
 	case "output:raw":
 		c.OutputRaw = append(c.OutputRaw, rest)
 	case configOutputFile:
-		c.OutputFile, err = parseFile(ctx.WorkDir, rest)
+		c.OutputFile, err = goverter.ParseFile(ctx.WorkDir, rest)
 	case "output:format":
 		if len(c.Extend) != 0 {
 			return fmt.Errorf("Cannot change output:format after extend functions have been added.\nMove the extend below the output:format setting.")
 		}
 
-		c.OutputFormat, err = parseEnum(false, rest, FormatFunction, FormatStruct, FormatVariable)
+		c.OutputFormat, err = goverter.ParseEnum(false, rest, FormatFunction, FormatStruct, FormatVariable)
 		if err != nil {
 			return err
 		}
@@ -202,7 +202,7 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 	case "output:package":
 		c.OutputPackageName = ""
 		var pkg string
-		pkg, err = parseString(rest)
+		pkg, err = goverter.ParseString(rest)
 
 		parts := strings.SplitN(pkg, ":", 2)
 		switch len(parts) {
@@ -231,7 +231,7 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 				ContextMatch:      c.ArgContextRegex,
 			}
 			var defs []*goverter.MethodDefinition
-			defs, err = ctx.Loader.getMatching(c.Package, name, opts)
+			defs, err = ctx.Loader.GetMatching(c.Package, name, opts)
 			if err != nil {
 				break
 			}

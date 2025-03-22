@@ -3,6 +3,8 @@ package config
 import (
 	"path/filepath"
 	"strings"
+
+	"github.com/jmattheis/goverter"
 )
 
 func resolvePackage(sourceFileName, sourcePackage, targetFile string) (string, error) {
@@ -18,7 +20,7 @@ func resolvePackage(sourceFileName, sourcePackage, targetFile string) (string, e
 	return filepath.Dir(filepath.Join(sourcePackage, relativeFile)), nil
 }
 
-func getPackages(raw *Raw) []string {
+func getPackages(raw *goverter.Raw) []string {
 	lookup := map[string]struct{}{}
 	for _, c := range raw.Converters {
 		lookup[c.PackagePath] = struct{}{}
@@ -42,16 +44,16 @@ func getPackages(raw *Raw) []string {
 	return pkgs
 }
 
-func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePackage string, lines RawLines) {
+func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePackage string, lines goverter.RawLines) {
 	for _, line := range lines.Lines {
-		cmd, rest := parseCommand(line)
+		cmd, rest := goverter.ParseCommand(line)
 		switch cmd {
 		case configExtend:
 			for _, fullMethod := range strings.Fields(rest) {
 				registerFullMethod(lookup, sourcePackage, fullMethod)
 			}
 		case configOutputFile:
-			file, err := parseFile(cwd, rest)
+			file, err := goverter.ParseFile(cwd, rest)
 			if err != nil {
 				continue
 			}
@@ -64,9 +66,9 @@ func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePac
 	}
 }
 
-func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines RawLines) {
+func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines goverter.RawLines) {
 	for _, line := range lines.Lines {
-		cmd, rest := parseCommand(line)
+		cmd, rest := goverter.ParseCommand(line)
 		switch cmd {
 		case configMap:
 			if _, _, custom, err := parseMethodMap(rest); err == nil && custom != "" {
@@ -79,7 +81,7 @@ func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines
 }
 
 func registerFullMethod(lookup map[string]struct{}, sourcePackage, fullMethod string) {
-	pkg, _, err := parseMethodString(sourcePackage, fullMethod)
+	pkg, _, err := goverter.ParseMethodString(sourcePackage, fullMethod)
 	if err == nil {
 		lookup[pkg] = struct{}{}
 	}

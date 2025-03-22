@@ -11,22 +11,22 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func newPackageLoader(workDir, buildTags string, paths []string) (*packageLoader, error) {
-	loader := &packageLoader{
+func NewPackageLoader(workDir, buildTags string, paths []string) (*PackageLoader, error) {
+	loader := &PackageLoader{
 		lookup: map[string]*packages.Package{},
 		locals: map[string]map[string]goverter.LocalMethodOpts{},
 	}
-	err := loader.load(workDir, buildTags, paths)
+	err := loader.Load(workDir, buildTags, paths)
 	return loader, err
 }
 
-type packageLoader struct {
+type PackageLoader struct {
 	lookup map[string]*packages.Package
 	locals map[string]map[string]goverter.LocalMethodOpts
 }
 
-func (g *packageLoader) getMatching(cwd, fullMethod string, opts *goverter.ParseMethodOpts) ([]*goverter.MethodDefinition, error) {
-	pkgName, name, err := parseMethodString(cwd, fullMethod)
+func (g *PackageLoader) GetMatching(cwd, fullMethod string, opts *goverter.ParseMethodOpts) ([]*goverter.MethodDefinition, error) {
+	pkgName, name, err := goverter.ParseMethodString(cwd, fullMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (g *packageLoader) getMatching(cwd, fullMethod string, opts *goverter.Parse
 
 	if _, complete := pattern.LiteralPrefix(); complete {
 		// not a regex
-		m, err := g.getOneParsed(pkgName, name, opts)
+		m, err := g.GetOneParsed(pkgName, name, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -48,7 +48,7 @@ func (g *packageLoader) getMatching(cwd, fullMethod string, opts *goverter.Parse
 	// this is regexp, scan thru the package methods to find funcs that match the pattern
 	var matches []*goverter.MethodDefinition
 
-	pkg, err := g.getPkg(pkgName)
+	pkg, err := g.GetPkg(pkgName)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (g *packageLoader) getMatching(cwd, fullMethod string, opts *goverter.Parse
 		}
 
 		obj := scope.Lookup(name)
-		m, err := goverter.ParseMethod(obj, opts, g.localConfig(pkg, name))
+		m, err := goverter.ParseMethod(obj, opts, g.LocalConfig(pkg, name))
 		if err == nil {
 			matches = append(matches, m)
 		}
@@ -79,11 +79,11 @@ the golang regexp pattern %q and a convert signature`, pkgName, name)
 	return matches, nil
 }
 
-func (g *packageLoader) getUncheckedPkg(pkgName string) *packages.Package {
+func (g *PackageLoader) GetUncheckedPkg(pkgName string) *packages.Package {
 	return g.lookup[pkgName]
 }
 
-func (g *packageLoader) getPkg(pkgName string) (*packages.Package, error) {
+func (g *PackageLoader) GetPkg(pkgName string) (*packages.Package, error) {
 	pkg := g.lookup[pkgName]
 	if pkg == nil {
 		return nil, fmt.Errorf("failed to load package %q:\nmake sure it's a valid golang package", pkgName)
@@ -100,7 +100,7 @@ func (g *packageLoader) getPkg(pkgName string) (*packages.Package, error) {
 	return pkg, nil
 }
 
-func (g *packageLoader) localConfig(pkg *packages.Package, name string) goverter.LocalMethodOpts {
+func (g *PackageLoader) LocalConfig(pkg *packages.Package, name string) goverter.LocalMethodOpts {
 	fns, ok := g.locals[pkg.PkgPath]
 	if !ok {
 		fns = map[string]goverter.LocalMethodOpts{}
@@ -115,8 +115,8 @@ func (g *packageLoader) localConfig(pkg *packages.Package, name string) goverter
 
 					contexts := map[string]bool{}
 					for _, line := range lines {
-						if cmd, rest := parseCommand(line); cmd == "context" {
-							if ctx, err := parseString(rest); err == nil {
+						if cmd, rest := goverter.ParseCommand(line); cmd == "context" {
+							if ctx, err := goverter.ParseString(rest); err == nil {
 								contexts[ctx] = true
 							}
 						}
@@ -134,8 +134,8 @@ func (g *packageLoader) localConfig(pkg *packages.Package, name string) goverter
 	return fn
 }
 
-func (g *packageLoader) getOneRaw(pkgName, name string) (*packages.Package, types.Object, error) {
-	pkg, err := g.getPkg(pkgName)
+func (g *PackageLoader) GetOneRaw(pkgName, name string) (*packages.Package, types.Object, error) {
+	pkg, err := g.GetPkg(pkgName)
 	if err != nil {
 		return pkg, nil, err
 	}
@@ -147,29 +147,29 @@ func (g *packageLoader) getOneRaw(pkgName, name string) (*packages.Package, type
 	return pkg, obj, nil
 }
 
-func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *goverter.ParseMethodOpts) (*goverter.MethodDefinition, error) {
-	pkgName, name, err := parseMethodString(sourcePackage, fullMethod)
+func (g *PackageLoader) GetOne(sourcePackage, fullMethod string, opts *goverter.ParseMethodOpts) (*goverter.MethodDefinition, error) {
+	pkgName, name, err := goverter.ParseMethodString(sourcePackage, fullMethod)
 	if err != nil {
 		return nil, err
 	}
-	return g.getOneParsed(pkgName, name, opts)
+	return g.GetOneParsed(pkgName, name, opts)
 }
 
-func (g *packageLoader) getOneParsed(pkgName, name string, opts *goverter.ParseMethodOpts) (*goverter.MethodDefinition, error) {
-	pkg, obj, err := g.getOneRaw(pkgName, name)
+func (g *PackageLoader) GetOneParsed(pkgName, name string, opts *goverter.ParseMethodOpts) (*goverter.MethodDefinition, error) {
+	pkg, obj, err := g.GetOneRaw(pkgName, name)
 	if err != nil {
 		return nil, err
 	}
 
-	def, err := goverter.ParseMethod(obj, opts, g.localConfig(pkg, name))
+	def, err := goverter.ParseMethod(obj, opts, g.LocalConfig(pkg, name))
 	if err != nil {
 		return nil, err
 	}
 	return def, nil
 }
 
-// loadPackages is used to load extend packages, with caching support.
-func (g *packageLoader) load(workDir, buildTags string, paths []string) error {
+// Load is used to load extend packages, with caching support.
+func (g *PackageLoader) Load(workDir, buildTags string, paths []string) error {
 	packagesCfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedSyntax,
 		Dir:  workDir,

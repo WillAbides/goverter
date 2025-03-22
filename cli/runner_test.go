@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmattheis/goverter/config"
+	"github.com/jmattheis/goverter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -78,7 +78,7 @@ func TestScenario(t *testing.T) {
 					PackagePatterns:       patterns,
 					OutputBuildConstraint: scenario.BuildConstraint,
 					BuildTags:             "goverter",
-					Global: config.RawLines{
+					Global: goverter.RawLines{
 						Lines:    scenario.Global,
 						Location: "scenario global",
 					},

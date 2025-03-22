@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/generator"
 )
@@ -15,13 +16,13 @@ type GenerateConfig struct {
 	// WorkingDir is the working directory (usually the location of go.mod file), can be empty.
 	WorkingDir string
 	// Global are the global config commands that will be applied to all converters
-	Global config.RawLines
+	Global goverter.RawLines
 	// BuildTags is a comma separated list passed to -tags when scanning for conversion interfaces.
 	BuildTags string
 	// OutputBuildConstraint will be added as go:build constraints to all files.
 	OutputBuildConstraint string
 	// EnumTransformers describes additional enum transformers usable in the enum:transform setting.
-	EnumTransformers map[string]config.EnumTransformer
+	EnumTransformers map[string]goverter.EnumTransformer
 }
 
 // GenerateConverters generates converters.
@@ -44,7 +45,7 @@ func generateConvertersRaw(c *GenerateConfig) (map[string][]byte, error) {
 		return nil, err
 	}
 
-	converters, err := config.Parse(&config.Raw{
+	converters, err := config.Parse(&goverter.Raw{
 		BuildTags:  c.BuildTags,
 		WorkDir:    c.WorkingDir,
 		Converters: rawConverters,

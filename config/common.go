@@ -2,75 +2,56 @@ package config
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/jmattheis/goverter"
 )
 
-type Common struct {
-	FieldSettings                      []string
-	WrapErrors                         bool
-	WrapErrorsUsing                    string
-	IgnoreUnexported                   bool
-	IgnoreBasicZeroValueField          bool
-	IgnoreStructZeroValueField         bool
-	IgnoreNillableZeroValueField       bool
-	MatchIgnoreCase                    bool
-	IgnoreMissing                      bool
-	SkipCopySameType                   bool
-	UseZeroValueOnPointerInconsistency bool
-	UseUnderlyingTypeMethods           bool
-	DefaultUpdate                      bool
-	ArgContextRegex                    *regexp.Regexp
-	Enum                               goverter.EnumConfig
-}
-
-func parseCommon(c *Common, cmd, rest string) (fieldSetting bool, err error) {
+func parseCommon(c *goverter.Common, cmd, rest string) (fieldSetting bool, err error) {
 	switch cmd {
 	case "wrapErrors":
 		if c.WrapErrorsUsing != "" {
 			return false, fmt.Errorf("cannot be used in combination with wrapErrorsUsing")
 		}
-		c.WrapErrors, err = parseBool(rest)
+		c.WrapErrors, err = goverter.ParseBool(rest)
 	case "wrapErrorsUsing":
 		if c.WrapErrors {
 			return false, fmt.Errorf("cannot be used in combination with wrapErrors")
 		}
-		c.WrapErrorsUsing, err = parseString(rest)
+		c.WrapErrorsUsing, err = goverter.ParseString(rest)
 	case "ignoreUnexported":
 		fieldSetting = true
-		c.IgnoreUnexported, err = parseBool(rest)
+		c.IgnoreUnexported, err = goverter.ParseBool(rest)
 	case "update:ignoreZeroValueField":
 		fieldSetting = true
-		c.IgnoreBasicZeroValueField, err = parseBool(rest)
+		c.IgnoreBasicZeroValueField, err = goverter.ParseBool(rest)
 		c.IgnoreStructZeroValueField = c.IgnoreBasicZeroValueField
 		c.IgnoreNillableZeroValueField = c.IgnoreBasicZeroValueField
 	case "update:ignoreZeroValueField:basic":
-		c.IgnoreBasicZeroValueField, err = parseBool(rest)
+		c.IgnoreBasicZeroValueField, err = goverter.ParseBool(rest)
 	case "update:ignoreZeroValueField:struct":
-		c.IgnoreStructZeroValueField, err = parseBool(rest)
+		c.IgnoreStructZeroValueField, err = goverter.ParseBool(rest)
 	case "update:ignoreZeroValueField:nillable":
-		c.IgnoreNillableZeroValueField, err = parseBool(rest)
+		c.IgnoreNillableZeroValueField, err = goverter.ParseBool(rest)
 	case "default:update":
-		c.DefaultUpdate, err = parseBool(rest)
+		c.DefaultUpdate, err = goverter.ParseBool(rest)
 	case "matchIgnoreCase":
 		fieldSetting = true
-		c.MatchIgnoreCase, err = parseBool(rest)
+		c.MatchIgnoreCase, err = goverter.ParseBool(rest)
 	case "ignoreMissing":
 		fieldSetting = true
-		c.IgnoreMissing, err = parseBool(rest)
+		c.IgnoreMissing, err = goverter.ParseBool(rest)
 	case "skipCopySameType":
-		c.SkipCopySameType, err = parseBool(rest)
+		c.SkipCopySameType, err = goverter.ParseBool(rest)
 	case "useZeroValueOnPointerInconsistency":
-		c.UseZeroValueOnPointerInconsistency, err = parseBool(rest)
+		c.UseZeroValueOnPointerInconsistency, err = goverter.ParseBool(rest)
 	case "useUnderlyingTypeMethods":
-		c.UseUnderlyingTypeMethods, err = parseBool(rest)
+		c.UseUnderlyingTypeMethods, err = goverter.ParseBool(rest)
 	case "enum":
-		c.Enum.Enabled, err = parseBool(rest)
+		c.Enum.Enabled, err = goverter.ParseBool(rest)
 	case "arg:context:regex":
-		c.ArgContextRegex, err = parseRegex(rest)
+		c.ArgContextRegex, err = goverter.ParseRegex(rest)
 	case "enum:unknown":
-		c.Enum.Unknown, err = parseString(rest)
+		c.Enum.Unknown, err = goverter.ParseString(rest)
 		if err == nil && IsEnumAction(c.Enum.Unknown) {
 			err = validateEnumAction(c.Enum.Unknown)
 		}
