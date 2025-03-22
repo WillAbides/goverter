@@ -2,19 +2,19 @@ package builder
 
 import (
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/xtype"
+	"github.com/jmattheis/goverter"
 )
 
 // List handles array / slice types.
 type List struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*List) Matches(_ *MethodContext, source, target *xtype.Type) bool {
+func (*List) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 	return source.List && target.List && !target.ListFixed
 }
 
 // Build creates conversion source code for the given source and target type.
-func (l *List) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, path ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func (l *List) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	targetSlice := ctx.Name(target.ID())
 
@@ -31,14 +31,14 @@ func (l *List) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, s
 	}
 	stmt = append([]jen.Code{id}, stmt...)
 
-	return stmt, xtype.VariableID(jen.Id(targetSlice)), nil
+	return stmt, goverter.VariableID(jen.Id(targetSlice)), nil
 }
 
-func (*List) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, path ErrorPath) ([]jen.Code, *Error) {
+func (*List) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *Error) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	index := ctx.Index()
 
-	indexedSource := xtype.VariableID(sourceID.Code.Clone().Index(jen.Id(index)))
+	indexedSource := goverter.VariableID(sourceID.Code.Clone().Index(jen.Id(index)))
 
 	forBlock, err := gen.Assign(ctx, assignTo.WithIndex(jen.Id(index)), indexedSource, source.ListInner, target.ListInner, path.Index(jen.Id(index)))
 	if err != nil {

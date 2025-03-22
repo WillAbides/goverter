@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/xtype"
 )
 
 type IndexEntry[T any] struct {
@@ -92,7 +91,7 @@ func (l *Index[T]) Has(sig goverter.Signature) bool {
 	return ok
 }
 
-func (l *Index[T]) Get(sig goverter.Signature, m map[string]*xtype.Type) (*T, error) {
+func (l *Index[T]) Get(sig goverter.Signature, m map[string]*goverter.Type) (*T, error) {
 	hits, ok := l.Exact[sig]
 	if !ok {
 		return nil, nil
@@ -107,7 +106,7 @@ func (l *Index[T]) Get(sig goverter.Signature, m map[string]*xtype.Type) (*T, er
 	return nil, satisfiedError(sig, m, hits)
 }
 
-func satisfiedError[T any](sig goverter.Signature, available map[string]*xtype.Type, hits []IndexEntry[T]) error {
+func satisfiedError[T any](sig goverter.Signature, available map[string]*goverter.Type, hits []IndexEntry[T]) error {
 	var hitStrings []string
 	for _, hit := range hits {
 		hitStrings = append(hitStrings, fmt.Sprintf("%s:\n    %s", hit.Def.ID, strings.Join(AvailableContextDebug(hit.Def.Context, available), "\n    ")))
@@ -118,7 +117,7 @@ but not all required context params are available in the current method.
 %s`, sig.Source, sig.Target, strings.Join(hitStrings, "\n\n"))
 }
 
-func AvailableContextDebug(required, available map[string]*xtype.Type) []string {
+func AvailableContextDebug(required, available map[string]*goverter.Type) []string {
 	var lines []string
 
 	use := usageFromMap(available)
@@ -142,7 +141,7 @@ func AvailableContextDebug(required, available map[string]*xtype.Type) []string 
 	return lines
 }
 
-func satisfiesContext(required, m map[string]*xtype.Type) bool {
+func satisfiesContext(required, m map[string]*goverter.Type) bool {
 	for key := range required {
 		if _, ok := m[key]; !ok {
 			return false

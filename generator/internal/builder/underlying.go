@@ -4,14 +4,14 @@ import (
 	"fmt"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/xtype"
+	"github.com/jmattheis/goverter"
 )
 
 // UseUnderlyingTypeMethods handles UseUnderlyingTypeMethods.
 type UseUnderlyingTypeMethods struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*UseUnderlyingTypeMethods) Matches(ctx *MethodContext, source, target *xtype.Type) bool {
+func (*UseUnderlyingTypeMethods) Matches(ctx *MethodContext, source, target *goverter.Type) bool {
 	if !ctx.Conf.UseUnderlyingTypeMethods {
 		return false
 	}
@@ -21,7 +21,7 @@ func (*UseUnderlyingTypeMethods) Matches(ctx *MethodContext, source, target *xty
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*UseUnderlyingTypeMethods) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func (*UseUnderlyingTypeMethods) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	if isEnum(ctx, source, target) {
 		return nil, nil, NewError(fmt.Sprintf(`The conversion between the types
     %s
@@ -37,12 +37,12 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 	innerTarget := target
 
 	if sourceUnderlying {
-		innerSource = xtype.TypeOf(source.NamedType.Underlying())
-		sourceID = xtype.OtherID(innerSource.TypeAsJen().Call(sourceID.Code))
+		innerSource = goverter.TypeOf(source.NamedType.Underlying())
+		sourceID = goverter.OtherID(innerSource.TypeAsJen().Call(sourceID.Code))
 	}
 
 	if targetUnderlying {
-		innerTarget = xtype.TypeOf(target.NamedType.Underlying())
+		innerTarget = goverter.TypeOf(target.NamedType.Underlying())
 	}
 
 	stmt, id, err := gen.Build(ctx, sourceID, innerSource, innerTarget, errPath)
@@ -56,17 +56,17 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 	}
 
 	if targetUnderlying {
-		id = xtype.OtherID(target.TypeAsJen().Call(id.Code))
+		id = goverter.OtherID(target.TypeAsJen().Call(id.Code))
 	}
 
 	return stmt, id, err
 }
 
-func (u *UseUnderlyingTypeMethods) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func (u *UseUnderlyingTypeMethods) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
 	return AssignByBuild(u, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
-func findUnderlyingExtendMapping(ctx *MethodContext, source, target *xtype.Type) (underlyingSource, underlyingTarget bool) {
+func findUnderlyingExtendMapping(ctx *MethodContext, source, target *goverter.Type) (underlyingSource, underlyingTarget bool) {
 	if source.Named {
 		if ctx.HasMethod(ctx, source.NamedType.Underlying(), target.NamedType) {
 			return true, false

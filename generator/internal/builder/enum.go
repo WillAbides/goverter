@@ -6,24 +6,23 @@ import (
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/xtype"
 )
 
 type Enum struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Enum) Matches(ctx *MethodContext, source, target *xtype.Type) bool {
+func (*Enum) Matches(ctx *MethodContext, source, target *goverter.Type) bool {
 	return isEnum(ctx, source, target)
 }
 
-func isEnum(ctx *MethodContext, source, target *xtype.Type) bool {
+func isEnum(ctx *MethodContext, source, target *goverter.Type) bool {
 	return ctx.Conf.Enum.Enabled &&
 		source.Enum(&ctx.Conf.Enum).OK &&
 		target.Enum(&ctx.Conf.Enum).OK
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*Enum) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, path ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func (*Enum) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	stmt, nameVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err
@@ -113,14 +112,14 @@ func (*Enum) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, sou
 	}
 
 	stmt = append(stmt, jen.Switch(sourceID.Code).Block(cases...))
-	return stmt, xtype.VariableID(nameVar), nil
+	return stmt, goverter.VariableID(nameVar), nil
 }
 
-func (s *Enum) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, path ErrorPath) ([]jen.Code, *Error) {
+func (s *Enum) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *Error) {
 	return AssignByBuild(s, gen, ctx, assignTo, sourceID, source, target, path)
 }
 
-func caseAction(gen Generator, ctx *MethodContext, nameVar *jen.Statement, target *xtype.Type, targetEnum *goverter.Enum, targetName string, sourceID *xtype.JenID, errPath ErrorPath) (jen.Code, *Error) {
+func caseAction(gen Generator, ctx *MethodContext, nameVar *jen.Statement, target *goverter.Type, targetEnum *goverter.Enum, targetName string, sourceID *goverter.JenID, errPath ErrorPath) (jen.Code, *Error) {
 	if config.IsEnumAction(targetName) {
 		switch targetName {
 		case config.EnumActionIgnore:
@@ -147,7 +146,7 @@ func caseAction(gen Generator, ctx *MethodContext, nameVar *jen.Statement, targe
 	return nameVar.Clone().Op("=").Add(targetQual), nil
 }
 
-func executeTransformers(transformers []config.ConfiguredTransformer, source, target *xtype.Type, sourceEnum, targetEnum *goverter.Enum) (map[string]string, *Error) {
+func executeTransformers(transformers []config.ConfiguredTransformer, source, target *goverter.Type, sourceEnum, targetEnum *goverter.Enum) (map[string]string, *Error) {
 	transformerMapping := map[string]string{}
 	for _, t := range transformers {
 		m, err := t.Transformer(config.TransformEnumContext{

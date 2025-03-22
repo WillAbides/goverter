@@ -6,7 +6,6 @@ import (
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/xtype"
 	"github.com/jmattheis/goverter/xtype/method"
 )
 
@@ -16,22 +15,22 @@ const ThisVar = "c"
 // Builder builds converter implementations, and can decide if it can handle the given type.
 type Builder interface {
 	// Matches returns true, if the builder can create handle the given types.
-	Matches(ctx *MethodContext, source, target *xtype.Type) bool
+	Matches(ctx *MethodContext, source, target *goverter.Type) bool
 
 	// Build creates conversion source code for the given source and target type.
 	Build(gen Generator,
 		ctx *MethodContext,
-		sourceID *xtype.JenID,
-		source, target *xtype.Type,
+		sourceID *goverter.JenID,
+		source, target *goverter.Type,
 		path ErrorPath,
-	) ([]jen.Code, *xtype.JenID, *Error)
+	) ([]jen.Code, *goverter.JenID, *Error)
 
 	// Assign creates conversion source code for the given source and target type and assigns it.
 	Assign(gen Generator,
 		ctx *MethodContext,
 		assignTo *AssignTo,
-		sourceID *xtype.JenID,
-		source, target *xtype.Type,
+		sourceID *goverter.JenID,
+		source, target *goverter.Type,
 		path ErrorPath,
 	) ([]jen.Code, *Error)
 }
@@ -41,25 +40,25 @@ type Builder interface {
 type Generator interface {
 	Build(
 		ctx *MethodContext,
-		sourceID *xtype.JenID,
-		source, target *xtype.Type,
+		sourceID *goverter.JenID,
+		source, target *goverter.Type,
 		path ErrorPath,
-	) ([]jen.Code, *xtype.JenID, *Error)
+	) ([]jen.Code, *goverter.JenID, *Error)
 
 	Assign(ctx *MethodContext,
 		assignTo *AssignTo,
-		sourceID *xtype.JenID,
-		source, target *xtype.Type,
+		sourceID *goverter.JenID,
+		source, target *goverter.Type,
 		path ErrorPath,
 	) ([]jen.Code, *Error)
 
 	CallMethod(
 		ctx *MethodContext,
 		method *method.Definition,
-		sourceID *xtype.JenID,
-		source, target *xtype.Type,
+		sourceID *goverter.JenID,
+		source, target *goverter.Type,
 		path ErrorPath,
-	) ([]jen.Code, *xtype.JenID, *Error)
+	) ([]jen.Code, *goverter.JenID, *Error)
 
 	ReturnError(ctx *MethodContext,
 		path ErrorPath,
@@ -74,19 +73,19 @@ type MethodContext struct {
 	OutputPackagePath string
 	UseConstructor    bool
 	Signature         goverter.Signature
-	TargetType        *xtype.Type
+	TargetType        *goverter.Type
 	HasMethod         func(*MethodContext, types.Type, types.Type) bool
 	SeenNamed         map[string]struct{}
 
 	IndexID method.IndexID
-	Context map[string]*xtype.JenID
+	Context map[string]*goverter.JenID
 
-	AvailableContext map[string]*xtype.Type
+	AvailableContext map[string]*goverter.Type
 
 	TargetVar *jen.Statement
 }
 
-func (ctx *MethodContext) HasSeen(source *xtype.Type) bool {
+func (ctx *MethodContext) HasSeen(source *goverter.Type) bool {
 	if !source.Named {
 		return false
 	}
@@ -95,7 +94,7 @@ func (ctx *MethodContext) HasSeen(source *xtype.Type) bool {
 	return ok
 }
 
-func (ctx *MethodContext) MarkSeen(source *xtype.Type) {
+func (ctx *MethodContext) MarkSeen(source *goverter.Type) {
 	if !source.Named {
 		return
 	}
@@ -109,7 +108,7 @@ func (ctx *MethodContext) SetErrorTargetVar(m *jen.Statement) {
 	}
 }
 
-func (ctx *MethodContext) Field(target *xtype.Type, name string) *config.FieldMapping {
+func (ctx *MethodContext) Field(target *goverter.Type, name string) *config.FieldMapping {
 	if ctx.FieldsTarget != target.String {
 		return emptyMapping
 	}
@@ -121,7 +120,7 @@ func (ctx *MethodContext) Field(target *xtype.Type, name string) *config.FieldMa
 	return prop
 }
 
-func (ctx *MethodContext) DefinedFields(target *xtype.Type) map[string]struct{} {
+func (ctx *MethodContext) DefinedFields(target *goverter.Type) map[string]struct{} {
 	if ctx.FieldsTarget != target.String {
 		return emptyFields
 	}
@@ -133,7 +132,7 @@ func (ctx *MethodContext) DefinedFields(target *xtype.Type) map[string]struct{} 
 	return f
 }
 
-func (ctx *MethodContext) DefinedEnumFields(target *xtype.Type) map[string]struct{} {
+func (ctx *MethodContext) DefinedEnumFields(target *goverter.Type) map[string]struct{} {
 	if ctx.FieldsTarget != target.String {
 		return emptyFields
 	}

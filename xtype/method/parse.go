@@ -8,7 +8,6 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/xtype"
 )
 
 type ParamType int
@@ -50,7 +49,7 @@ func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*Definition,
 		Generated:  opts.Generated,
 		CustomCall: opts.CustomCall,
 		Parameters: Parameters{
-			Context: make(map[string]*xtype.Type, 0),
+			Context: make(map[string]*goverter.Type, 0),
 		},
 		Name: obj.Name(),
 	}
@@ -82,7 +81,7 @@ func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*Definition,
 	for i := 0; i < sig.Params().Len(); i++ {
 		arg := Arg{
 			Name: sig.Params().At(i).Name(),
-			Type: xtype.TypeOf(sig.Params().At(i).Type()),
+			Type: goverter.TypeOf(sig.Params().At(i).Type()),
 		}
 
 		switch {
@@ -131,7 +130,7 @@ func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*Definition,
 			}
 		}
 
-		methodDef.Target = xtype.TypeOf(sig.Results().At(0).Type())
+		methodDef.Target = goverter.TypeOf(sig.Results().At(0).Type())
 	}
 
 	if methodDef.TypeParams && !opts.AllowTypeParams {

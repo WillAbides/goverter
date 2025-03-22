@@ -2,19 +2,19 @@ package builder
 
 import (
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/xtype"
+	"github.com/jmattheis/goverter"
 )
 
 // Pointer handles pointer types.
 type Pointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Pointer) Matches(_ *MethodContext, source, target *xtype.Type) bool {
+func (*Pointer) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 	return source.Pointer && target.Pointer
 }
 
 // Build creates conversion source code for the given source and target type.
-func (p *Pointer) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func (p *Pointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	if ctx.UseConstructor && ctx.Conf.DefaultUpdate {
 		buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, errPath)
@@ -34,13 +34,13 @@ func (p *Pointer) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID
 
 		buildStmt = append(buildStmt, jen.If(sourceID.Code.Clone().Op("!=").Nil()).Block(stmt...))
 
-		return buildStmt, xtype.VariableID(valueVar), nil
+		return buildStmt, goverter.VariableID(valueVar), nil
 	}
 
 	return BuildByAssign(p, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (*Pointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func (*Pointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
 	ctx.SetErrorTargetVar(jen.Nil())
 
 	nextBlock, id, err := gen.Build(ctx, sourceID.Deref(source), source.PointerInner, target.PointerInner, errPath)
@@ -69,12 +69,12 @@ func (*Pointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, so
 type SourcePointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*SourcePointer) Matches(ctx *MethodContext, source, target *xtype.Type) bool {
+func (*SourcePointer) Matches(ctx *MethodContext, source, target *goverter.Type) bool {
 	return ctx.Conf.UseZeroValueOnPointerInconsistency && source.Pointer && !target.Pointer
 }
 
 // Build creates conversion source code for the given source and target type.
-func (s *SourcePointer) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, path ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func (s *SourcePointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	if ctx.UseConstructor && ctx.Conf.DefaultUpdate {
 		buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 		if err != nil {
@@ -91,13 +91,13 @@ func (s *SourcePointer) Build(gen Generator, ctx *MethodContext, sourceID *xtype
 
 		buildStmt = append(buildStmt, jen.If(sourceID.Code.Clone().Op("!=").Nil()).Block(stmt...))
 
-		return buildStmt, xtype.VariableID(valueVar), nil
+		return buildStmt, goverter.VariableID(valueVar), nil
 	}
 
 	return BuildByAssign(s, gen, ctx, sourceID, source, target, path)
 }
 
-func (*SourcePointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, path ErrorPath) ([]jen.Code, *Error) {
+func (*SourcePointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *Error) {
 	nextInner, nextID, err := gen.Build(ctx, sourceID.Deref(source), source.PointerInner, target, path)
 	if err != nil {
 		return nil, err.Lift(&Path{
@@ -119,12 +119,12 @@ func (*SourcePointer) Assign(gen Generator, ctx *MethodContext, assignTo *Assign
 type TargetPointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*TargetPointer) Matches(_ *MethodContext, source, target *xtype.Type) bool {
+func (*TargetPointer) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 	return !source.Pointer && target.Pointer
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*TargetPointer) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, path ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func (*TargetPointer) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	ctx.SetErrorTargetVar(jen.Nil())
 
 	if ctx.UseConstructor {
@@ -143,7 +143,7 @@ func (*TargetPointer) Build(gen Generator, ctx *MethodContext, sourceID *xtype.J
 
 		buildStmt = append(buildStmt, stmt...)
 
-		return buildStmt, xtype.VariableID(valueVar), nil
+		return buildStmt, goverter.VariableID(valueVar), nil
 	}
 
 	stmt, id, err := gen.Build(ctx, sourceID, source, target.PointerInner, path)
@@ -160,6 +160,6 @@ func (*TargetPointer) Build(gen Generator, ctx *MethodContext, sourceID *xtype.J
 	return stmt, nextID, nil
 }
 
-func (tp *TargetPointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, path ErrorPath) ([]jen.Code, *Error) {
+func (tp *TargetPointer) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *Error) {
 	return AssignByBuild(tp, gen, ctx, assignTo, sourceID, source, target, path)
 }

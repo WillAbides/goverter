@@ -3,7 +3,6 @@ package method
 import (
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/xtype"
 )
 
 type Definition struct {
@@ -21,10 +20,10 @@ type Definition struct {
 type Parameters struct {
 	TypeParams bool
 
-	Source       *xtype.Type
-	MultiSources []*xtype.Type
-	Target       *xtype.Type
-	Context      map[string]*xtype.Type
+	Source       *goverter.Type
+	MultiSources []*goverter.Type
+	Target       *goverter.Type
+	Context      map[string]*goverter.Type
 
 	Signature goverter.Signature
 
@@ -37,7 +36,7 @@ type Parameters struct {
 type Arg struct {
 	Name string
 	Use  ArgUse
-	Type *xtype.Type
+	Type *goverter.Type
 }
 
 type ArgUse string

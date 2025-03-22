@@ -4,10 +4,10 @@ import (
 	"go/types"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/xtype"
+	"github.com/jmattheis/goverter"
 )
 
-func buildTargetVar(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *jen.Statement, *Error) {
+func buildTargetVar(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *jen.Statement, *Error) {
 	if !ctx.UseConstructor ||
 		!types.Identical(ctx.Conf.Source.T, source.T) ||
 		!types.Identical(ctx.Conf.Target.T, target.T) {

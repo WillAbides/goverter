@@ -8,7 +8,6 @@ import (
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/xtype"
 	"github.com/jmattheis/goverter/xtype/method"
 )
 
@@ -16,12 +15,12 @@ import (
 type Struct struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Struct) Matches(_ *MethodContext, source, target *xtype.Type) bool {
+func (*Struct) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 	return source.Struct && target.Struct
 }
 
 // Build creates conversion source code for the given source and target type.
-func (s *Struct) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func (s *Struct) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	// Optimization for golang sets
 	if !source.Named && !target.Named && source.StructType.NumFields() == 0 && target.StructType.NumFields() == 0 {
 		return nil, sourceID, nil
@@ -29,7 +28,7 @@ func (s *Struct) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID,
 	return BuildByAssign(s, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
 	additionalFieldSources, err := parseAutoMap(ctx, source)
 	if err != nil {
 		return nil, err
@@ -62,7 +61,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 			})
 		}
 
-		targetFieldType := xtype.TypeOf(targetField.Type())
+		targetFieldType := goverter.TypeOf(targetField.Type())
 		targetFieldPath := errPath.Field(targetField.Name())
 
 		if fieldMapping.Function == nil {
@@ -89,8 +88,8 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 			def := fieldMapping.Function
 
 			sourceLift := []*Path{}
-			var functionCallSourceID *xtype.JenID
-			var functionCallSourceType *xtype.Type
+			var functionCallSourceID *goverter.JenID
+			var functionCallSourceType *goverter.Type
 			if def.Source != nil {
 				usedSourceID = true
 				nextID, nextSource, mapStmt, mapLift, _, err := mapField(gen, ctx, targetField, sourceID, source, target, additionalFieldSources, targetFieldPath)
@@ -144,7 +143,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 	return stmt, nil
 }
 
-func shouldCheckAgainstZero(ctx *MethodContext, s, t *xtype.Type, isUpdate, call bool) bool {
+func shouldCheckAgainstZero(ctx *MethodContext, s, t *goverter.Type, isUpdate, call bool) bool {
 	switch {
 	case !ctx.Conf.UpdateTarget && !isUpdate:
 		return false
@@ -169,11 +168,11 @@ func mapField(
 	gen Generator,
 	ctx *MethodContext,
 	targetField *types.Var,
-	sourceID *xtype.JenID,
-	source, target *xtype.Type,
-	additionalFieldSources []xtype.FieldSources,
+	sourceID *goverter.JenID,
+	source, target *goverter.Type,
+	additionalFieldSources []goverter.FieldSources,
 	errPath ErrorPath,
-) (*xtype.JenID, *xtype.Type, []jen.Code, []*Path, bool, *Error) {
+) (*goverter.JenID, *goverter.Type, []jen.Code, []*Path, bool, *Error) {
 	lift := []*Path{}
 	def := ctx.Field(target, targetField.Name())
 	pathString := def.Source
@@ -190,12 +189,12 @@ func mapField(
 
 	var path []string
 	if pathString == "" {
-		sourceMatch, err := xtype.FindField(targetField.Name(), ctx.Conf.MatchIgnoreCase, source, additionalFieldSources)
+		sourceMatch, err := goverter.FindField(targetField.Name(), ctx.Conf.MatchIgnoreCase, source, additionalFieldSources)
 		if err != nil {
 			cause := fmt.Sprintf("Cannot match the target field with the source entry: %s.", err.Error())
 			skip := false
 			if ctx.Conf.IgnoreMissing {
-				_, skip = err.(*xtype.NoMatchError)
+				_, skip = err.(*goverter.NoMatchError)
 			}
 			return nil, nil, nil, nil, skip, NewError(cause).Lift(&Path{
 				Prefix:     ".",
@@ -233,7 +232,7 @@ func mapField(
 				SourceType: "???",
 			}).Lift(lift...)
 		}
-		sourceMatch, err := xtype.FindExactField(nextSource, path[i])
+		sourceMatch, err := goverter.FindExactField(nextSource, path[i])
 		if err == nil {
 			nextSource = sourceMatch.Type
 			nextIDCode = nextIDCode.Clone().Dot(sourceMatch.Name)
@@ -259,7 +258,7 @@ func mapField(
 		}).Lift(lift...)
 	}
 
-	returnID := xtype.VariableID(nextIDCode)
+	returnID := goverter.VariableID(nextIDCode)
 	innerStmt := []jen.Code{}
 	if nextSource.Func {
 		def, err := method.Parse(nextSource.FuncType, &method.ParseOpts{
@@ -312,7 +311,7 @@ func mapField(
 
 		stmt = append(stmt, jen.If(condition).Block(innerStmt...))
 		nextSource = pointerNext
-		returnID = xtype.VariableID(jen.Id(tempName))
+		returnID = goverter.VariableID(jen.Id(tempName))
 	} else {
 		stmt = append(stmt, innerStmt...)
 	}
@@ -320,14 +319,14 @@ func mapField(
 	return returnID, nextSource, stmt, lift, false, nil
 }
 
-func parseAutoMap(ctx *MethodContext, source *xtype.Type) ([]xtype.FieldSources, *Error) {
-	fieldSources := []xtype.FieldSources{}
+func parseAutoMap(ctx *MethodContext, source *goverter.Type) ([]goverter.FieldSources, *Error) {
+	fieldSources := []goverter.FieldSources{}
 	for _, field := range ctx.Conf.AutoMap {
 		innerSource := source
 		lift := []*Path{}
 		path := strings.Split(field, ".")
 		for _, part := range path {
-			field, err := xtype.FindExactField(innerSource, part)
+			field, err := goverter.FindExactField(innerSource, part)
 			if err != nil {
 				return nil, NewError(err.Error()).Lift(&Path{
 					Prefix:     ".",
@@ -344,7 +343,7 @@ func parseAutoMap(ctx *MethodContext, source *xtype.Type) ([]xtype.FieldSources,
 
 			switch {
 			case innerSource.Pointer && innerSource.PointerInner.Struct:
-				innerSource = xtype.TypeOf(innerSource.PointerInner.StructType)
+				innerSource = goverter.TypeOf(innerSource.PointerInner.StructType)
 			case innerSource.Struct:
 				// ok
 			default:
@@ -352,7 +351,7 @@ func parseAutoMap(ctx *MethodContext, source *xtype.Type) ([]xtype.FieldSources,
 			}
 		}
 
-		fieldSources = append(fieldSources, xtype.FieldSources{Path: path, Type: innerSource})
+		fieldSources = append(fieldSources, goverter.FieldSources{Path: path, Type: innerSource})
 	}
 	return fieldSources, nil
 }

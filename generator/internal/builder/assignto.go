@@ -2,7 +2,7 @@ package builder
 
 import (
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/xtype"
+	"github.com/jmattheis/goverter"
 )
 
 type AssignTo struct {
@@ -31,8 +31,8 @@ func (a *AssignTo) IsUpdate() *AssignTo {
 	return a
 }
 
-func ToAssignable(assignTo *AssignTo) func(stmt []jen.Code, nextID *xtype.JenID, err *Error) ([]jen.Code, *Error) {
-	return func(stmt []jen.Code, nextID *xtype.JenID, err *Error) ([]jen.Code, *Error) {
+func ToAssignable(assignTo *AssignTo) func(stmt []jen.Code, nextID *goverter.JenID, err *Error) ([]jen.Code, *Error) {
+	return func(stmt []jen.Code, nextID *goverter.JenID, err *Error) ([]jen.Code, *Error) {
 		if err != nil {
 			return nil, err
 		}
@@ -41,11 +41,11 @@ func ToAssignable(assignTo *AssignTo) func(stmt []jen.Code, nextID *xtype.JenID,
 	}
 }
 
-func AssignByBuild(b Builder, gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func AssignByBuild(b Builder, gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
 	return ToAssignable(assignTo)(b.Build(gen, ctx, sourceID, source, target, errPath))
 }
 
-func BuildByAssign(b Builder, gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, path ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func BuildByAssign(b Builder, gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, path ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err
@@ -57,5 +57,5 @@ func BuildByAssign(b Builder, gen Generator, ctx *MethodContext, sourceID *xtype
 	}
 
 	buildStmt = append(buildStmt, stmt...)
-	return buildStmt, xtype.VariableID(valueVar), nil
+	return buildStmt, goverter.VariableID(valueVar), nil
 }

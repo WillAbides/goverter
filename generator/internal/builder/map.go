@@ -2,30 +2,30 @@ package builder
 
 import (
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/xtype"
+	"github.com/jmattheis/goverter"
 )
 
 // Map handles map types.
 type Map struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Map) Matches(_ *MethodContext, source, target *xtype.Type) bool {
+func (*Map) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 	return source.Map && target.Map
 }
 
 // Build creates conversion source code for the given source and target type.
-func (m *Map) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func (m *Map) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	return BuildByAssign(m, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (*Map) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func (*Map) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	key, value := ctx.Map()
 
 	errPath = errPath.Key(jen.Id(key))
 
-	block, keyID, err := gen.Build(ctx, xtype.VariableID(jen.Id(key)), source.MapKey, target.MapKey, errPath)
+	block, keyID, err := gen.Build(ctx, goverter.VariableID(jen.Id(key)), source.MapKey, target.MapKey, errPath)
 	if err != nil {
 		return nil, err.Lift(&Path{
 			SourceID:   "[]",
@@ -35,7 +35,7 @@ func (*Map) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, source
 		})
 	}
 	valueStmt, err := gen.Assign(
-		ctx, assignTo.WithIndex(keyID.Code).MustAssign(), xtype.VariableID(jen.Id(value)), source.MapValue, target.MapValue, errPath)
+		ctx, assignTo.WithIndex(keyID.Code).MustAssign(), goverter.VariableID(jen.Id(value)), source.MapValue, target.MapValue, errPath)
 	if err != nil {
 		return nil, err.Lift(&Path{
 			SourceID:   "[]",

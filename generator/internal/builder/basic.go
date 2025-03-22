@@ -2,27 +2,27 @@ package builder
 
 import (
 	"github.com/dave/jennifer/jen"
-	"github.com/jmattheis/goverter/xtype"
+	"github.com/jmattheis/goverter"
 )
 
 // Basic handles basic data types.
 type Basic struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Basic) Matches(_ *MethodContext, source, target *xtype.Type) bool {
+func (*Basic) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 	return source.Basic && target.Basic &&
 		source.BasicType.Kind() == target.BasicType.Kind()
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*Basic) Build(_ Generator, _ *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func (*Basic) Build(_ Generator, _ *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	if target.Named || (!target.Named && source.Named) {
-		return nil, xtype.OtherID(target.TypeAsJen().Call(sourceID.Code)), nil
+		return nil, goverter.OtherID(target.TypeAsJen().Call(sourceID.Code)), nil
 	}
 	return nil, sourceID, nil
 }
 
-func (b *Basic) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func (b *Basic) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
 	return AssignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
@@ -30,12 +30,12 @@ func (b *Basic) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, so
 type BasicTargetPointerRule struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BasicTargetPointerRule) Matches(_ *MethodContext, source, target *xtype.Type) bool {
+func (*BasicTargetPointerRule) Matches(_ *MethodContext, source, target *goverter.Type) bool {
 	return source.Basic && target.Pointer && target.PointerInner.Basic
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*BasicTargetPointerRule) Build(gen Generator, ctx *MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *xtype.JenID, *Error) {
+func (*BasicTargetPointerRule) Build(gen Generator, ctx *MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *goverter.JenID, *Error) {
 	name := ctx.Name(target.ID())
 	ctx.SetErrorTargetVar(jen.Nil())
 
@@ -51,9 +51,9 @@ func (*BasicTargetPointerRule) Build(gen Generator, ctx *MethodContext, sourceID
 	stmt = append(stmt, jen.Id(name).Op(":=").Add(id.Code))
 	newID := jen.Op("&").Id(name)
 
-	return stmt, xtype.OtherID(newID), err
+	return stmt, goverter.OtherID(newID), err
 }
 
-func (b *BasicTargetPointerRule) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath ErrorPath) ([]jen.Code, *Error) {
+func (b *BasicTargetPointerRule) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath ErrorPath) ([]jen.Code, *Error) {
 	return AssignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)
 }

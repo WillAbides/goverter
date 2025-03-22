@@ -10,7 +10,6 @@ import (
 	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/config"
 	"github.com/jmattheis/goverter/generator/internal/builder"
-	"github.com/jmattheis/goverter/xtype"
 	"github.com/jmattheis/goverter/xtype/method"
 )
 
@@ -120,8 +119,8 @@ func (g *generator) appendGenerated(f *jen.File) {
 	}
 }
 
-func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*xtype.Type) *builder.Error {
-	var sourceID *xtype.JenID
+func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*goverter.Type) *builder.Error {
+	var sourceID *goverter.JenID
 	source := genMethod.Source
 	target := genMethod.Target
 
@@ -137,7 +136,7 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 		AvailableContext:  context,
 		SeenNamed:         map[string]struct{}{},
 		TargetType:        genMethod.Target,
-		Context:           map[string]*xtype.JenID{},
+		Context:           map[string]*goverter.JenID{},
 		IndexID:           genMethod.IndexID,
 		Signature:         genMethod.Signature,
 		HasMethod:         g.hasMethod,
@@ -153,11 +152,11 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 			panic("hopefully unreachable")
 		case method.ArgUseContext:
 			name := ctx.Name("context")
-			ctx.Context[arg.Type.String] = xtype.VariableID(jen.Id(name))
+			ctx.Context[arg.Type.String] = goverter.VariableID(jen.Id(name))
 			args = append(args, jen.Id(name).Add(arg.Type.TypeAsJen()))
 		case method.ArgUseSource:
 			name := ctx.Name("source")
-			sourceID = xtype.VariableID(jen.Id(name))
+			sourceID = goverter.VariableID(jen.Id(name))
 			args = append(args, jen.Id(name).Add(arg.Type.TypeAsJen()))
 		case method.ArgUseTarget:
 			name := ctx.Name("target")
@@ -214,7 +213,7 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 	return nil
 }
 
-func (g *generator) buildNoLookup(ctx *builder.MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPath builder.ErrorPath) ([]jen.Code, *xtype.JenID, *builder.Error) {
+func (g *generator) buildNoLookup(ctx *builder.MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPath builder.ErrorPath) ([]jen.Code, *goverter.JenID, *builder.Error) {
 	if err := g.getOverlappingStructDefinition(ctx, source, target); err != nil {
 		return nil, nil, err
 	}
@@ -228,7 +227,7 @@ func (g *generator) buildNoLookup(ctx *builder.MethodContext, sourceID *xtype.Je
 	return nil, nil, typeMismatch(source, target)
 }
 
-func (g *generator) assignNoLookup(ctx *builder.MethodContext, assignTo *builder.AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath builder.ErrorPath) ([]jen.Code, *builder.Error) {
+func (g *generator) assignNoLookup(ctx *builder.MethodContext, assignTo *builder.AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath builder.ErrorPath) ([]jen.Code, *builder.Error) {
 	if err := g.getOverlappingStructDefinition(ctx, source, target); err != nil {
 		return nil, err
 	}
@@ -242,7 +241,7 @@ func (g *generator) assignNoLookup(ctx *builder.MethodContext, assignTo *builder
 	return nil, typeMismatch(source, target)
 }
 
-func (g *generator) convertTo(ctx *builder.MethodContext, assignTo *builder.AssignTo, sourceID *xtype.JenID, source, target *xtype.Type, errPath builder.ErrorPath) ([]jen.Code, *builder.Error) {
+func (g *generator) convertTo(ctx *builder.MethodContext, assignTo *builder.AssignTo, sourceID *goverter.JenID, source, target *goverter.Type, errPath builder.ErrorPath) ([]jen.Code, *builder.Error) {
 	if !target.Pointer || !target.PointerInner.Struct {
 		return nil, builder.NewError("target type must be a pointer struct for goverter:update signatures.")
 	}
@@ -267,10 +266,10 @@ func (g *generator) convertTo(ctx *builder.MethodContext, assignTo *builder.Assi
 func (g *generator) CallMethod(
 	ctx *builder.MethodContext,
 	definition *method.Definition,
-	sourceID *xtype.JenID,
-	source, target *xtype.Type,
+	sourceID *goverter.JenID,
+	source, target *goverter.Type,
 	errPath builder.ErrorPath,
-) ([]jen.Code, *xtype.JenID, *builder.Error) {
+) ([]jen.Code, *goverter.JenID, *builder.Error) {
 	params := []jen.Code{}
 	formatErr := func(s string) *builder.Error {
 		return builder.NewError(fmt.Sprintf("Error using method:\n    %s%s\n\n%s", definition.ID, definition.ArgDebug("        "), s))
@@ -319,9 +318,9 @@ func (g *generator) CallMethod(
 			jen.List(jen.Id(name), jen.Id("err")).Op(":=").Add(qual.Call(params...)),
 			jen.If(jen.Id("err").Op("!=").Nil()).Block(ret),
 		}
-		return stmt, xtype.VariableID(jen.Id(name)), nil
+		return stmt, goverter.VariableID(jen.Id(name)), nil
 	}
-	id := xtype.OtherID(qual.Call(params...))
+	id := goverter.OtherID(qual.Call(params...))
 	return nil, id, nil
 }
 
@@ -348,7 +347,7 @@ func (g *generator) ReturnError(ctx *builder.MethodContext, errPath builder.Erro
 	return jen.Return(returns...), true
 }
 
-func (g *generator) requireContext(ctx *builder.MethodContext, need *xtype.Type) bool {
+func (g *generator) requireContext(ctx *builder.MethodContext, need *goverter.Type) bool {
 	if _, ok := ctx.Context[need.String]; ok {
 		return true
 	}
@@ -379,7 +378,7 @@ func (g *generator) requireContext(ctx *builder.MethodContext, need *xtype.Type)
 func (g *generator) delegateMethod(
 	ctx *builder.MethodContext,
 	delegateTo *method.Definition,
-	sourceID *xtype.JenID,
+	sourceID *goverter.JenID,
 ) (*jen.Statement, *builder.Error) {
 	params := []jen.Code{}
 
@@ -429,10 +428,10 @@ func (g *generator) wrap(ctx *builder.MethodContext, errPath builder.ErrorPath, 
 // Build builds an implementation for the given source and target type, or uses an existing method for it.
 func (g *generator) Build(
 	ctx *builder.MethodContext,
-	sourceID *xtype.JenID,
-	source, target *xtype.Type,
+	sourceID *goverter.JenID,
+	source, target *goverter.Type,
 	errPath builder.ErrorPath,
-) ([]jen.Code, *xtype.JenID, *builder.Error) {
+) ([]jen.Code, *goverter.JenID, *builder.Error) {
 	stmt, nextID, err := g.callExisting(ctx, sourceID, source, target, errPath)
 	if nextID != nil || err != nil {
 		return stmt, nextID, err
@@ -449,8 +448,8 @@ func (g *generator) Build(
 func (g *generator) Assign(
 	ctx *builder.MethodContext,
 	assignTo *builder.AssignTo,
-	sourceID *xtype.JenID,
-	source, target *xtype.Type,
+	sourceID *goverter.JenID,
+	source, target *goverter.Type,
 	errPath builder.ErrorPath,
 ) ([]jen.Code, *builder.Error) {
 	if assignTo.Must {
@@ -471,10 +470,10 @@ func (g *generator) Assign(
 
 func (g *generator) callExisting(
 	ctx *builder.MethodContext,
-	sourceID *xtype.JenID,
-	source, target *xtype.Type,
+	sourceID *goverter.JenID,
+	source, target *goverter.Type,
 	errPath builder.ErrorPath,
-) ([]jen.Code, *xtype.JenID, *builder.Error) {
+) ([]jen.Code, *goverter.JenID, *builder.Error) {
 	signature := signatureOf(source, target)
 	if def, err := g.extend.Get(signature, ctx.AvailableContext); def != nil {
 		return g.CallMethod(ctx, def, sourceID, source, target, errPath)
@@ -489,7 +488,7 @@ func (g *generator) callExisting(
 	return nil, nil, nil
 }
 
-func (g *generator) shouldCreateSubMethod(ctx *builder.MethodContext, source, target *xtype.Type) bool {
+func (g *generator) shouldCreateSubMethod(ctx *builder.MethodContext, source, target *goverter.Type) bool {
 	isCurrentPointerStructMethod := false
 	if source.Struct && target.Struct {
 		// This checks if we are currently inside the generation of one of the following combinations.
@@ -525,7 +524,7 @@ func (g *generator) shouldCreateSubMethod(ctx *builder.MethodContext, source, ta
 	return createSubMethod
 }
 
-func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *xtype.JenID, source, target *xtype.Type, errPAth builder.ErrorPath) ([]jen.Code, *xtype.JenID, *builder.Error) {
+func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *goverter.JenID, source, target *goverter.Type, errPAth builder.ErrorPath) ([]jen.Code, *goverter.JenID, *builder.Error) {
 	name := g.namer.Name(source.UnescapedID() + "To" + strings.Title(target.UnescapedID()))
 	orig := g.lookup.ByID(ctx.IndexID)
 
@@ -552,7 +551,7 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *xtype.
 				Parameters: method.Parameters{
 					Source:    source,
 					RawArgs:   args,
-					Context:   map[string]*xtype.Type{},
+					Context:   map[string]*goverter.Type{},
 					Signature: signatureOf(source, target),
 					Target:    target,
 				},
@@ -573,7 +572,7 @@ func (g *generator) hasMethod(ctx *builder.MethodContext, source, target types.T
 	return g.extend.Has(signature) || g.lookup.Has(signature)
 }
 
-func (g *generator) getOverlappingStructDefinition(ctx *builder.MethodContext, source, target *xtype.Type) *builder.Error {
+func (g *generator) getOverlappingStructDefinition(ctx *builder.MethodContext, source, target *goverter.Type) *builder.Error {
 	if !source.Struct || !target.Struct {
 		return nil
 	}
@@ -610,7 +609,7 @@ and therefore the defined field settings would be ignored.`, strings.Join(def.Ra
 	return nil
 }
 
-func typeMismatch(source, target *xtype.Type) *builder.Error {
+func typeMismatch(source, target *goverter.Type) *builder.Error {
 	if source.Pointer && !target.Pointer {
 		return builder.NewError(fmt.Sprintf(`TypeMismatch: Cannot convert %s to %s
 It is unclear how nil should be handled in the pointer to non pointer conversion.
@@ -641,6 +640,6 @@ func (g *generator) qualMethod(m *method.Definition) *jen.Statement {
 	}
 }
 
-func signatureOf(source, target *xtype.Type) goverter.Signature {
+func signatureOf(source, target *goverter.Type) goverter.Signature {
 	return goverter.Signature{Source: source.String, Target: target.String}
 }
