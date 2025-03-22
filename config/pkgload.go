@@ -1,4 +1,4 @@
-package pkgload
+package config
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func New(workDir, buildTags string, paths []string) (*PackageLoader, error) {
+func NewPackageLoader(workDir, buildTags string, paths []string) (*PackageLoader, error) {
 	loader := &PackageLoader{
 		lookup: map[string]*packages.Package{},
 		locals: map[string]map[string]method.LocalOpts{},

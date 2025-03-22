@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/jmattheis/goverter/config/parse"
-	"github.com/jmattheis/goverter/pkgload"
 )
 
 func resolvePackage(sourceFileName, sourcePackage, targetFile string) (string, error) {
@@ -82,7 +81,7 @@ func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines
 }
 
 func registerFullMethod(lookup map[string]struct{}, sourcePackage, fullMethod string) {
-	pkg, _, err := pkgload.ParseMethodString(sourcePackage, fullMethod)
+	pkg, _, err := ParseMethodString(sourcePackage, fullMethod)
 	if err == nil {
 		lookup[pkg] = struct{}{}
 	}

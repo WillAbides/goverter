@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/jmattheis/goverter/enum"
-	"github.com/jmattheis/goverter/pkgload"
 )
 
 const (
@@ -53,7 +52,7 @@ func validateEnumAction(s string) error {
 }
 
 func parseIDPattern(cwd, rest string) (pattern enum.IDPattern, err error) {
-	path, name, err := pkgload.ParseMethodString(cwd, rest)
+	path, name, err := ParseMethodString(cwd, rest)
 	if err != nil {
 		return pattern, err
 	}

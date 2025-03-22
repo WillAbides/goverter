@@ -8,7 +8,6 @@ import (
 
 	"github.com/jmattheis/goverter/config/parse"
 	"github.com/jmattheis/goverter/enum"
-	"github.com/jmattheis/goverter/pkgload"
 )
 
 type RawLines struct {
@@ -51,13 +50,13 @@ type Raw struct {
 }
 
 type context struct {
-	Loader           *pkgload.PackageLoader
+	Loader           *PackageLoader
 	WorkDir          string
 	EnumTransformers map[string]enum.Transformer
 }
 
 func Parse(raw *Raw) ([]*Converter, error) {
-	loader, err := pkgload.New(raw.WorkDir, raw.BuildTags, getPackages(raw))
+	loader, err := NewPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
 	if err != nil {
 		return nil, err
 	}

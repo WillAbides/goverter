@@ -9,7 +9,6 @@ import (
 	"github.com/jmattheis/goverter/config/parse"
 	"github.com/jmattheis/goverter/enum"
 	"github.com/jmattheis/goverter/method"
-	"github.com/jmattheis/goverter/pkgload"
 )
 
 const (
@@ -136,7 +135,7 @@ func resolveOutputPackage(ctx *context, c *Converter) {
 	}
 }
 
-func initConverter(loader *pkgload.PackageLoader, rawConverter *RawConverter) (*Converter, error) {
+func initConverter(loader *PackageLoader, rawConverter *RawConverter) (*Converter, error) {
 	c := &Converter{
 		FileName: rawConverter.FileName,
 		Package:  rawConverter.PackagePath,

@@ -1,4 +1,4 @@
-package pkgload
+package config
 
 import (
 	"fmt"

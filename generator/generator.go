@@ -469,7 +469,7 @@ func (g *generator) Assign(
 	return g.assignNoLookup(ctx, assignTo, sourceID, source, target, errPath)
 }
 
-func (g generator) callExisting(
+func (g *generator) callExisting(
 	ctx *builder.MethodContext,
 	sourceID *xtype.JenID,
 	source, target *xtype.Type,
