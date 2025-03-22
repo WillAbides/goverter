@@ -28,46 +28,46 @@ func parseCommon(c *commonCfg, cmd, rest string) (fieldSetting bool, err error) 
 		if c.WrapErrorsUsing != "" {
 			return false, fmt.Errorf("cannot be used in combination with wrapErrorsUsing")
 		}
-		c.WrapErrors, err = ParseBool(rest)
+		c.WrapErrors, err = parseBool(rest)
 	case "wrapErrorsUsing":
 		if c.WrapErrors {
 			return false, fmt.Errorf("cannot be used in combination with wrapErrors")
 		}
-		c.WrapErrorsUsing, err = ParseString(rest)
+		c.WrapErrorsUsing, err = parseString(rest)
 	case "ignoreUnexported":
 		fieldSetting = true
-		c.IgnoreUnexported, err = ParseBool(rest)
+		c.IgnoreUnexported, err = parseBool(rest)
 	case "update:ignoreZeroValueField":
 		fieldSetting = true
-		c.IgnoreBasicZeroValueField, err = ParseBool(rest)
+		c.IgnoreBasicZeroValueField, err = parseBool(rest)
 		c.IgnoreStructZeroValueField = c.IgnoreBasicZeroValueField
 		c.IgnoreNillableZeroValueField = c.IgnoreBasicZeroValueField
 	case "update:ignoreZeroValueField:basic":
-		c.IgnoreBasicZeroValueField, err = ParseBool(rest)
+		c.IgnoreBasicZeroValueField, err = parseBool(rest)
 	case "update:ignoreZeroValueField:struct":
-		c.IgnoreStructZeroValueField, err = ParseBool(rest)
+		c.IgnoreStructZeroValueField, err = parseBool(rest)
 	case "update:ignoreZeroValueField:nillable":
-		c.IgnoreNillableZeroValueField, err = ParseBool(rest)
+		c.IgnoreNillableZeroValueField, err = parseBool(rest)
 	case "default:update":
-		c.DefaultUpdate, err = ParseBool(rest)
+		c.DefaultUpdate, err = parseBool(rest)
 	case "matchIgnoreCase":
 		fieldSetting = true
-		c.MatchIgnoreCase, err = ParseBool(rest)
+		c.MatchIgnoreCase, err = parseBool(rest)
 	case "ignoreMissing":
 		fieldSetting = true
-		c.IgnoreMissing, err = ParseBool(rest)
+		c.IgnoreMissing, err = parseBool(rest)
 	case "skipCopySameType":
-		c.SkipCopySameType, err = ParseBool(rest)
+		c.SkipCopySameType, err = parseBool(rest)
 	case "useZeroValueOnPointerInconsistency":
-		c.UseZeroValueOnPointerInconsistency, err = ParseBool(rest)
+		c.UseZeroValueOnPointerInconsistency, err = parseBool(rest)
 	case "useUnderlyingTypeMethods":
-		c.UseUnderlyingTypeMethods, err = ParseBool(rest)
+		c.UseUnderlyingTypeMethods, err = parseBool(rest)
 	case "enum":
-		c.Enum.enabled, err = ParseBool(rest)
+		c.Enum.enabled, err = parseBool(rest)
 	case "arg:context:regex":
-		c.ArgContextRegex, err = ParseRegex(rest)
+		c.ArgContextRegex, err = parseRegex(rest)
 	case "enum:unknown":
-		c.Enum.unknown, err = ParseString(rest)
+		c.Enum.unknown, err = parseString(rest)
 		if err == nil && IsEnumAction(c.Enum.unknown) {
 			err = ValidateEnumAction(c.Enum.unknown)
 		}

@@ -125,7 +125,7 @@ func parseMethodCfg(ctx *CfgContext, c *Converter, obj types.Object, rawMethod R
 }
 
 func parseMethodLine(ctx *CfgContext, c *Converter, m *method, value string) (err error) {
-	cmd, rest := ParseCommand(value)
+	cmd, rest := parseCommand(value)
 	fieldSetting := false
 	switch cmd {
 	case configMap:
@@ -156,10 +156,10 @@ func parseMethodLine(ctx *CfgContext, c *Converter, m *method, value string) (er
 			m.Field(f).Ignore = true
 		}
 	case "update":
-		m.UpdateParam, err = ParseString(rest)
+		m.UpdateParam, err = parseString(rest)
 	case "context":
 		var key string
-		key, err = ParseString(rest)
+		key, err = parseString(rest)
 		m.LocalOpts.Context[key] = true
 	case "enum:map":
 		fields := strings.Fields(rest)
@@ -186,7 +186,7 @@ func parseMethodLine(ctx *CfgContext, c *Converter, m *method, value string) (er
 	case "autoMap":
 		fieldSetting = true
 		var s string
-		s, err = ParseString(rest)
+		s, err = parseString(rest)
 		m.AutoMap = append(m.AutoMap, strings.TrimSpace(s))
 	case configDefault:
 		opts := &parseMethodOpts{

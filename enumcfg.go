@@ -73,7 +73,7 @@ func ParseTransformer(ctx *CfgContext, name, config string) (ConfiguredTransform
 }
 
 func ParseIDPattern(cwd, rest string) (pattern EnumIDPattern, err error) {
-	path, name, err := ParseMethodString(cwd, rest)
+	path, name, err := parseMethodString(cwd, rest)
 	if err != nil {
 		return pattern, err
 	}

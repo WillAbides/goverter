@@ -25,7 +25,7 @@ type PackageLoader struct {
 }
 
 func (g *PackageLoader) GetMatching(cwd, fullMethod string, opts *parseMethodOpts) ([]*methodDefinition, error) {
-	pkgName, name, err := ParseMethodString(cwd, fullMethod)
+	pkgName, name, err := parseMethodString(cwd, fullMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -114,8 +114,8 @@ func (g *PackageLoader) LocalConfig(pkg *packages.Package, name string) localMet
 
 					contexts := map[string]bool{}
 					for _, line := range lines {
-						if cmd, rest := ParseCommand(line); cmd == "context" {
-							if ctx, err := ParseString(rest); err == nil {
+						if cmd, rest := parseCommand(line); cmd == "context" {
+							if ctx, err := parseString(rest); err == nil {
 								contexts[ctx] = true
 							}
 						}
@@ -147,7 +147,7 @@ func (g *PackageLoader) GetOneRaw(pkgName, name string) (*packages.Package, type
 }
 
 func (g *PackageLoader) GetOne(sourcePackage, fullMethod string, opts *parseMethodOpts) (*methodDefinition, error) {
-	pkgName, name, err := ParseMethodString(sourcePackage, fullMethod)
+	pkgName, name, err := parseMethodString(sourcePackage, fullMethod)
 	if err != nil {
 		return nil, err
 	}

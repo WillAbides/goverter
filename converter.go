@@ -168,7 +168,7 @@ func parseConverterLines(ctx *CfgContext, c *Converter, source string, raw RawLi
 }
 
 func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error) {
-	cmd, rest := ParseCommand(value)
+	cmd, rest := parseCommand(value)
 	switch cmd {
 	case "converter", "variables":
 		// only a marker interface
@@ -176,17 +176,17 @@ func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error)
 		if err = c.requireStruct(); err != nil {
 			return err
 		}
-		c.Name, err = ParseString(rest)
+		c.Name, err = parseString(rest)
 	case "output:raw":
 		c.OutputRaw = append(c.OutputRaw, rest)
 	case configOutputFile:
-		c.OutputFile, err = ParseFile(ctx.WorkDir, rest)
+		c.OutputFile, err = parseFile(ctx.WorkDir, rest)
 	case "output:format":
 		if len(c.Extend) != 0 {
 			return fmt.Errorf("Cannot change output:format after extend functions have been added.\nMove the extend below the output:format setting.")
 		}
 
-		c.OutputFormat, err = ParseEnum(false, rest, OutputFormatFunction, OutputFormatStruct, OutputFormatVariable)
+		c.OutputFormat, err = parseEnum(false, rest, OutputFormatFunction, OutputFormatStruct, OutputFormatVariable)
 		if err != nil {
 			return err
 		}
@@ -200,7 +200,7 @@ func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error)
 	case "output:package":
 		c.OutputPackageName = ""
 		var pkg string
-		pkg, err = ParseString(rest)
+		pkg, err = parseString(rest)
 
 		parts := strings.SplitN(pkg, ":", 2)
 		switch len(parts) {

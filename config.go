@@ -63,7 +63,7 @@ type Raw struct {
 }
 
 func FormatLineError(lines RawLines, t, value string, err error) error {
-	cmd, _ := ParseCommand(value)
+	cmd, _ := parseCommand(value)
 	msg := `error parsing 'goverter:%s' at
     %s
     %s
