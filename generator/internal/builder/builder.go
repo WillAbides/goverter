@@ -54,7 +54,7 @@ type Generator interface {
 
 	CallMethod(
 		ctx *MethodContext,
-		method *method.MethodDefinition,
+		method *goverter.MethodDefinition,
 		sourceID *goverter.JenID,
 		source, target *goverter.Type,
 		path ErrorPath,
@@ -77,7 +77,7 @@ type MethodContext struct {
 	HasMethod         func(*MethodContext, types.Type, types.Type) bool
 	SeenNamed         map[string]struct{}
 
-	IndexID method.IndexID
+	IndexID method.MethodIndexID
 	Context map[string]*goverter.JenID
 
 	AvailableContext map[string]*goverter.Type

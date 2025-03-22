@@ -6,7 +6,7 @@ import (
 	"github.com/jmattheis/goverter/xtype/method"
 )
 
-func validateMethods(lookup *method.Index[generatedMethod]) error {
+func validateMethods(lookup *method.MethodIndex[generatedMethod]) error {
 	for _, hits := range lookup.Exact {
 		for _, entry := range hits {
 			genMethod := entry.Item

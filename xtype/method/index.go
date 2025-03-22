@@ -8,30 +8,30 @@ import (
 	"github.com/jmattheis/goverter"
 )
 
-type IndexEntry[T any] struct {
-	Def  *MethodDefinition
+type methodIndexEntry[T any] struct {
+	Def  *goverter.MethodDefinition
 	Item *T
 }
 
-type IndexID struct {
+type MethodIndexID struct {
 	sig    goverter.Signature
 	idx    int
 	update bool
 }
 
-func NewIndex[T any]() *Index[T] {
-	return &Index[T]{
-		Exact: map[goverter.Signature][]IndexEntry[T]{},
+func NewMethodIndex[T any]() *MethodIndex[T] {
+	return &MethodIndex[T]{
+		Exact: map[goverter.Signature][]methodIndexEntry[T]{},
 	}
 }
 
-type Index[T any] struct {
-	Exact  map[goverter.Signature][]IndexEntry[T]
+type MethodIndex[T any] struct {
+	Exact  map[goverter.Signature][]methodIndexEntry[T]
 	Update []*T
 }
 
-func (l *Index[T]) GetAll() []*T {
-	items := []*T{}
+func (l *MethodIndex[T]) GetAll() []*T {
+	var items []*T
 	for _, exacts := range l.Exact {
 		for _, exact := range exacts {
 			items = append(items, exact.Item)
@@ -40,8 +40,8 @@ func (l *Index[T]) GetAll() []*T {
 	return append(items, l.Update...)
 }
 
-func (l *Index[T]) RegisterOverrideOverlapping(t *T, def *MethodDefinition) {
-	newEntry := IndexEntry[T]{Def: def, Item: t}
+func (l *MethodIndex[T]) RegisterOverrideOverlapping(t *T, def *goverter.MethodDefinition) {
+	newEntry := methodIndexEntry[T]{Def: def, Item: t}
 	for i, entry := range l.Exact[def.Signature] {
 		if satisfiesContext(entry.Def.Context, def.Context) || satisfiesContext(def.Context, entry.Def.Context) {
 			l.Exact[def.Signature][i] = newEntry
@@ -52,46 +52,46 @@ func (l *Index[T]) RegisterOverrideOverlapping(t *T, def *MethodDefinition) {
 	l.Exact[def.Signature] = append(l.Exact[def.Signature], newEntry)
 }
 
-func (l *Index[T]) RegisterUpdate(t *T) (IndexID, error) {
+func (l *MethodIndex[T]) RegisterUpdate(t *T) (MethodIndexID, error) {
 	l.Update = append(l.Update, t)
-	return IndexID{update: true, idx: len(l.Update) - 1}, nil
+	return MethodIndexID{update: true, idx: len(l.Update) - 1}, nil
 }
 
-func (l *Index[T]) Register(t *T, def *MethodDefinition) (IndexID, error) {
+func (l *MethodIndex[T]) Register(t *T, def *goverter.MethodDefinition) (MethodIndexID, error) {
 	for _, entry := range l.Exact[def.Signature] {
-		if err := checkOverlap(entry.Def, def); err != nil {
-			return IndexID{}, err
+		if err := checkMethodOverlap(entry.Def, def); err != nil {
+			return MethodIndexID{}, err
 		}
-		if err := checkOverlap(def, entry.Def); err != nil {
-			return IndexID{}, err
+		if err := checkMethodOverlap(def, entry.Def); err != nil {
+			return MethodIndexID{}, err
 		}
 	}
 
-	newEntry := IndexEntry[T]{Def: def, Item: t}
+	newEntry := methodIndexEntry[T]{Def: def, Item: t}
 	l.Exact[def.Signature] = append(l.Exact[def.Signature], newEntry)
-	return IndexID{sig: def.Signature, idx: len(l.Exact[def.Signature]) - 1}, nil
+	return MethodIndexID{sig: def.Signature, idx: len(l.Exact[def.Signature]) - 1}, nil
 }
 
-func checkOverlap(left, right *MethodDefinition) error {
+func checkMethodOverlap(left, right *goverter.MethodDefinition) error {
 	if satisfiesContext(left.Context, right.Context) {
 		return fmt.Errorf("Overlapping signatures found. All sources and contexts of this method\n    %s%s\n\nare contained in method\n    %s%s\n\nGoverter doesn't know which method to use when all contexts of the second method are available.\nRemove one of the methods to prevent this ambiguity.", left.ID, left.ArgDebug("        "), right.ID, right.ArgDebug("        "))
 	}
 	return nil
 }
 
-func (l *Index[T]) ByID(id IndexID) *T {
+func (l *MethodIndex[T]) ByID(id MethodIndexID) *T {
 	if id.update {
 		return l.Update[id.idx]
 	}
 	return l.Exact[id.sig][id.idx].Item
 }
 
-func (l *Index[T]) Has(sig goverter.Signature) bool {
+func (l *MethodIndex[T]) Has(sig goverter.Signature) bool {
 	_, ok := l.Exact[sig]
 	return ok
 }
 
-func (l *Index[T]) Get(sig goverter.Signature, m map[string]*goverter.Type) (*T, error) {
+func (l *MethodIndex[T]) Get(sig goverter.Signature, m map[string]*goverter.Type) (*T, error) {
 	hits, ok := l.Exact[sig]
 	if !ok {
 		return nil, nil
@@ -106,7 +106,7 @@ func (l *Index[T]) Get(sig goverter.Signature, m map[string]*goverter.Type) (*T,
 	return nil, satisfiedError(sig, m, hits)
 }
 
-func satisfiedError[T any](sig goverter.Signature, available map[string]*goverter.Type, hits []IndexEntry[T]) error {
+func satisfiedError[T any](sig goverter.Signature, available map[string]*goverter.Type, hits []methodIndexEntry[T]) error {
 	var hitStrings []string
 	for _, hit := range hits {
 		hitStrings = append(hitStrings, fmt.Sprintf("%s:\n    %s", hit.Def.ID, strings.Join(AvailableContextDebug(hit.Def.Context, available), "\n    ")))

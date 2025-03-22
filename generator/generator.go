@@ -19,17 +19,17 @@ type generatedMethod struct {
 	Explicit bool
 	Dirty    bool
 
-	OriginPath []method.IndexID
+	OriginPath []method.MethodIndexID
 	Jen        jen.Code
 
-	IndexID method.IndexID
+	IndexID method.MethodIndexID
 }
 
 type generator struct {
 	namer  *builder.Namer
 	conf   *config.Converter
-	lookup *method.Index[generatedMethod]
-	extend *method.Index[method.MethodDefinition]
+	lookup *method.MethodIndex[generatedMethod]
+	extend *method.MethodIndex[goverter.MethodDefinition]
 }
 
 func (g *generator) getGenMethods() []*generatedMethod {
@@ -265,7 +265,7 @@ func (g *generator) convertTo(ctx *builder.MethodContext, assignTo *builder.Assi
 
 func (g *generator) CallMethod(
 	ctx *builder.MethodContext,
-	definition *method.MethodDefinition,
+	definition *goverter.MethodDefinition,
 	sourceID *goverter.JenID,
 	source, target *goverter.Type,
 	errPath builder.ErrorPath,
@@ -327,7 +327,7 @@ func (g *generator) CallMethod(
 func (g *generator) ReturnError(ctx *builder.MethodContext, errPath builder.ErrorPath, id *jen.Statement) (jen.Code, bool) {
 	current := g.lookup.ByID(ctx.IndexID)
 	if !ctx.Conf.ReturnError {
-		for _, path := range append([]method.IndexID{ctx.IndexID}, current.OriginPath...) {
+		for _, path := range append([]method.MethodIndexID{ctx.IndexID}, current.OriginPath...) {
 			check := g.lookup.ByID(path)
 			if check.Explicit && !check.ReturnError {
 				return nil, false
@@ -353,7 +353,7 @@ func (g *generator) requireContext(ctx *builder.MethodContext, need *goverter.Ty
 	}
 
 	current := g.lookup.ByID(ctx.IndexID)
-	for _, path := range append([]method.IndexID{ctx.IndexID}, current.OriginPath...) {
+	for _, path := range append([]method.MethodIndexID{ctx.IndexID}, current.OriginPath...) {
 		check := g.lookup.ByID(path)
 
 		if _, ok := check.Context[need.String]; ok {
@@ -377,7 +377,7 @@ func (g *generator) requireContext(ctx *builder.MethodContext, need *goverter.Ty
 
 func (g *generator) delegateMethod(
 	ctx *builder.MethodContext,
-	delegateTo *method.MethodDefinition,
+	delegateTo *goverter.MethodDefinition,
 	sourceID *goverter.JenID,
 ) (*jen.Statement, *builder.Error) {
 	params := []jen.Code{}
@@ -535,14 +535,14 @@ func (g *generator) createSubMethod(ctx *builder.MethodContext, sourceID *govert
 		Use:  goverter.ArgUseSource,
 	})
 
-	path := append([]method.IndexID{ctx.IndexID}, orig.OriginPath...)
+	path := append([]method.MethodIndexID{ctx.IndexID}, orig.OriginPath...)
 	genMethod := &generatedMethod{
 		OriginPath: path,
 		Method: &config.Method{
 			Common:      g.conf.Common,
 			Fields:      map[string]*config.FieldMapping{},
 			EnumMapping: &config.EnumMapping{Map: map[string]string{}},
-			MethodDefinition: &method.MethodDefinition{
+			MethodDefinition: &goverter.MethodDefinition{
 				OriginID:  ctx.Conf.OriginID,
 				ID:        name,
 				Package:   g.conf.OutputPackagePath,
@@ -627,7 +627,7 @@ You can define a custom conversion method with extend:
 https://goverter.jmattheis.de/reference/extend`, source.T, target.T))
 }
 
-func (g *generator) qualMethod(m *method.MethodDefinition) *jen.Statement {
+func (g *generator) qualMethod(m *goverter.MethodDefinition) *jen.Statement {
 	switch {
 	case m.CustomCall != nil:
 		return m.CustomCall.Clone()

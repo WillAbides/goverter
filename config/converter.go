@@ -77,7 +77,7 @@ type ConverterConfig struct {
 	OutputPackagePath string
 	OutputPackageName string
 	OutputFormat      Format
-	Extend            []*method.MethodDefinition
+	Extend            []*goverter.MethodDefinition
 	Comments          []string
 }
 
@@ -224,14 +224,14 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 		c.Enum.Excludes = append(c.Enum.Excludes, pattern)
 	case configExtend:
 		for _, name := range strings.Fields(rest) {
-			opts := &method.ParseOpts{
+			opts := &method.ParseMethodOpts{
 				ErrorPrefix:       "error parsing type",
 				OutputPackagePath: c.OutputPackagePath,
 				Converter:         c.typeForMethod(),
-				Params:            method.ParamsRequired,
+				Params:            goverter.ParamsRequired,
 				ContextMatch:      c.ArgContextRegex,
 			}
-			var defs []*method.MethodDefinition
+			var defs []*goverter.MethodDefinition
 			defs, err = ctx.Loader.getMatching(c.Package, name, opts)
 			if err != nil {
 				break

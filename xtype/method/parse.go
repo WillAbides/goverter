@@ -4,27 +4,18 @@ import (
 	"fmt"
 	"go/types"
 	"regexp"
-	"strings"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/jmattheis/goverter"
 )
 
-type ParamType int
-
-const (
-	ParamsRequired ParamType = iota
-	ParamsOptional
-	ParamsNone
-)
-
-type ParseOpts struct {
+type ParseMethodOpts struct {
 	Location          string
 	Converter         types.Type
 	OutputPackagePath string
 
 	ErrorPrefix       string
-	Params            ParamType
+	Params            goverter.ParamType
 	ParamsMultiSource bool
 	AllowTypeParams   bool
 
@@ -35,15 +26,15 @@ type ParseOpts struct {
 	UpdateParam string
 }
 
-type LocalOpts struct {
+type LocalMethodOpts struct {
 	Context map[string]bool
 }
 
-var EmptyLocalOpts = LocalOpts{Context: map[string]bool{}}
+var EmptyLocalMethodOpts = LocalMethodOpts{Context: map[string]bool{}}
 
-// Parse parses an function into a MethodDefinition.
-func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*MethodDefinition, error) {
-	methodDef := &MethodDefinition{
+// ParseMethod parses an function into a MethodDefinition.
+func ParseMethod(obj types.Object, opts *ParseMethodOpts, localOpts LocalMethodOpts) (*goverter.MethodDefinition, error) {
+	methodDef := &goverter.MethodDefinition{
 		ID:         obj.String(),
 		OriginID:   obj.String(),
 		Generated:  opts.Generated,
@@ -138,9 +129,9 @@ func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*MethodDefin
 	}
 
 	switch {
-	case opts.Params == ParamsNone && methodDef.Source != nil:
+	case opts.Params == goverter.ParamsNone && methodDef.Source != nil:
 		return nil, formatErr("must have no source params")
-	case opts.Params == ParamsRequired && methodDef.Source == nil:
+	case opts.Params == goverter.ParamsRequired && methodDef.Source == nil:
 		return nil, formatErr("must have at least one source param")
 	case !opts.ParamsMultiSource && len(methodDef.MultiSources) > 0:
 		return nil, formatErr("must have only one source param")
@@ -154,27 +145,4 @@ func Parse(obj types.Object, opts *ParseOpts, localOpts LocalOpts) (*MethodDefin
 func isError(obj *types.Var) bool {
 	t, ok := obj.Type().(*types.Named)
 	return ok && t.Obj().Name() == "error" && t.Obj().Pkg() == nil
-}
-
-func (def *MethodDefinition) ArgDebug(indent string) string {
-	var lines []string
-	for _, arg := range def.RawArgs {
-		argUse := arg.Use
-		if arg.Use == goverter.ArgUseMultiSource {
-			argUse = goverter.ArgUseSource
-		} else if arg.Use == goverter.ArgUseInterface {
-			argUse = goverter.ArgUseContext
-		}
-		lines = append(lines, fmt.Sprintf("[%s] %s", argUse, arg.Type.String))
-	}
-
-	if def.Target != nil && !def.UpdateTarget {
-		lines = append(lines, fmt.Sprintf("[target] %s", def.Target.String))
-	}
-
-	if len(lines) == 0 {
-		return ""
-	}
-
-	return "\n" + indent + strings.Join(lines, "\n"+indent)
 }

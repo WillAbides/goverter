@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/xtype/method"
 )
 
@@ -17,10 +18,10 @@ const (
 var StructMethodContextRegex = regexp.MustCompile(".*")
 
 type Method struct {
-	*method.MethodDefinition
+	*goverter.MethodDefinition
 	Common
 
-	Constructor *method.MethodDefinition
+	Constructor *goverter.MethodDefinition
 	AutoMap     []string
 	Fields      map[string]*FieldMapping
 	EnumMapping *EnumMapping
@@ -29,12 +30,12 @@ type Method struct {
 
 	Location    string
 	updateParam string
-	localOpts   method.LocalOpts
+	localOpts   method.LocalMethodOpts
 }
 
 type FieldMapping struct {
 	Source   string
-	Function *method.MethodDefinition
+	Function *goverter.MethodDefinition
 	Ignore   bool
 }
 
@@ -80,7 +81,7 @@ func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod RawLine
 		Fields:      map[string]*FieldMapping{},
 		Location:    rawMethod.Location,
 		EnumMapping: &EnumMapping{Map: map[string]string{}},
-		localOpts:   method.LocalOpts{Context: map[string]bool{}},
+		localOpts:   method.LocalMethodOpts{Context: map[string]bool{}},
 	}
 
 	for _, value := range rawMethod.Lines {
@@ -89,12 +90,12 @@ func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod RawLine
 		}
 	}
 
-	def, err := method.Parse(obj, &method.ParseOpts{
+	def, err := method.ParseMethod(obj, &method.ParseMethodOpts{
 		ErrorPrefix:       "error parsing converter method",
 		Location:          rawMethod.Location,
 		Converter:         nil,
 		OutputPackagePath: c.OutputPackagePath,
-		Params:            method.ParamsRequired,
+		Params:            goverter.ParamsRequired,
 		ContextMatch:      m.ArgContextRegex,
 		Generated:         true,
 		UpdateParam:       m.updateParam,
@@ -120,11 +121,11 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 		f.Source = source
 
 		if custom != "" {
-			opts := &method.ParseOpts{
+			opts := &method.ParseMethodOpts{
 				ErrorPrefix:       "error parsing type",
 				OutputPackagePath: c.OutputPackagePath,
 				Converter:         c.typeForMethod(),
-				Params:            method.ParamsOptional,
+				Params:            goverter.ParamsOptional,
 				AllowTypeParams:   true,
 				ContextMatch:      m.ArgContextRegex,
 			}
@@ -170,11 +171,11 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 		s, err = parseString(rest)
 		m.AutoMap = append(m.AutoMap, strings.TrimSpace(s))
 	case configDefault:
-		opts := &method.ParseOpts{
+		opts := &method.ParseMethodOpts{
 			ErrorPrefix:       "error parsing type",
 			OutputPackagePath: c.OutputPackagePath,
 			Converter:         c.typeForMethod(),
-			Params:            method.ParamsOptional,
+			Params:            goverter.ParamsOptional,
 			AllowTypeParams:   true,
 			ContextMatch:      m.ArgContextRegex,
 		}

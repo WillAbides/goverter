@@ -261,14 +261,14 @@ func mapField(
 	returnID := goverter.VariableID(nextIDCode)
 	innerStmt := []jen.Code{}
 	if nextSource.Func {
-		def, err := method.Parse(nextSource.FuncType, &method.ParseOpts{
+		def, err := method.ParseMethod(nextSource.FuncType, &method.ParseMethodOpts{
 			Converter:         nil,
 			OutputPackagePath: ctx.OutputPackagePath,
 			ErrorPrefix:       "Error parsing struct method",
-			Params:            method.ParamsNone,
+			Params:            goverter.ParamsNone,
 			ContextMatch:      config.StructMethodContextRegex,
 			CustomCall:        nextIDCode,
-		}, method.EmptyLocalOpts)
+		}, method.EmptyLocalMethodOpts)
 		if err != nil {
 			return nil, nil, nil, nil, false, NewError(err.Error()).Lift(lift...)
 		}

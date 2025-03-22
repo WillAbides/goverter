@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/jmattheis/goverter"
 	"github.com/jmattheis/goverter/xtype/method"
 	"golang.org/x/tools/go/packages"
 )
@@ -14,7 +15,7 @@ import (
 func newPackageLoader(workDir, buildTags string, paths []string) (*packageLoader, error) {
 	loader := &packageLoader{
 		lookup: map[string]*packages.Package{},
-		locals: map[string]map[string]method.LocalOpts{},
+		locals: map[string]map[string]method.LocalMethodOpts{},
 	}
 	err := loader.load(workDir, buildTags, paths)
 	return loader, err
@@ -22,10 +23,10 @@ func newPackageLoader(workDir, buildTags string, paths []string) (*packageLoader
 
 type packageLoader struct {
 	lookup map[string]*packages.Package
-	locals map[string]map[string]method.LocalOpts
+	locals map[string]map[string]method.LocalMethodOpts
 }
 
-func (g *packageLoader) getMatching(cwd, fullMethod string, opts *method.ParseOpts) ([]*method.MethodDefinition, error) {
+func (g *packageLoader) getMatching(cwd, fullMethod string, opts *method.ParseMethodOpts) ([]*goverter.MethodDefinition, error) {
 	pkgName, name, err := parseMethodString(cwd, fullMethod)
 	if err != nil {
 		return nil, err
@@ -42,11 +43,11 @@ func (g *packageLoader) getMatching(cwd, fullMethod string, opts *method.ParseOp
 		if err != nil {
 			return nil, err
 		}
-		return []*method.MethodDefinition{m}, nil
+		return []*goverter.MethodDefinition{m}, nil
 	}
 
 	// this is regexp, scan thru the package methods to find funcs that match the pattern
-	var matches []*method.MethodDefinition
+	var matches []*goverter.MethodDefinition
 
 	pkg, err := g.getPkg(pkgName)
 	if err != nil {
@@ -65,7 +66,7 @@ func (g *packageLoader) getMatching(cwd, fullMethod string, opts *method.ParseOp
 		}
 
 		obj := scope.Lookup(name)
-		m, err := method.Parse(obj, opts, g.localConfig(pkg, name))
+		m, err := method.ParseMethod(obj, opts, g.localConfig(pkg, name))
 		if err == nil {
 			matches = append(matches, m)
 		}
@@ -100,10 +101,10 @@ func (g *packageLoader) getPkg(pkgName string) (*packages.Package, error) {
 	return pkg, nil
 }
 
-func (g *packageLoader) localConfig(pkg *packages.Package, name string) method.LocalOpts {
+func (g *packageLoader) localConfig(pkg *packages.Package, name string) method.LocalMethodOpts {
 	fns, ok := g.locals[pkg.PkgPath]
 	if !ok {
-		fns = map[string]method.LocalOpts{}
+		fns = map[string]method.LocalMethodOpts{}
 		for _, file := range pkg.Syntax {
 			commentMap := ast.NewCommentMap(pkg.Fset, file, file.Comments)
 			for _, decl := range file.Decls {
@@ -121,7 +122,7 @@ func (g *packageLoader) localConfig(pkg *packages.Package, name string) method.L
 							}
 						}
 					}
-					fns[fn.Name.Name] = method.LocalOpts{Context: contexts}
+					fns[fn.Name.Name] = method.LocalMethodOpts{Context: contexts}
 				}
 			}
 		}
@@ -129,7 +130,7 @@ func (g *packageLoader) localConfig(pkg *packages.Package, name string) method.L
 	}
 	fn, ok := fns[name]
 	if !ok {
-		return method.EmptyLocalOpts
+		return method.EmptyLocalMethodOpts
 	}
 	return fn
 }
@@ -147,7 +148,7 @@ func (g *packageLoader) getOneRaw(pkgName, name string) (*packages.Package, type
 	return pkg, obj, nil
 }
 
-func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *method.ParseOpts) (*method.MethodDefinition, error) {
+func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *method.ParseMethodOpts) (*goverter.MethodDefinition, error) {
 	pkgName, name, err := parseMethodString(sourcePackage, fullMethod)
 	if err != nil {
 		return nil, err
@@ -155,13 +156,13 @@ func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *method.Pa
 	return g.getOneParsed(pkgName, name, opts)
 }
 
-func (g *packageLoader) getOneParsed(pkgName, name string, opts *method.ParseOpts) (*method.MethodDefinition, error) {
+func (g *packageLoader) getOneParsed(pkgName, name string, opts *method.ParseMethodOpts) (*goverter.MethodDefinition, error) {
 	pkg, obj, err := g.getOneRaw(pkgName, name)
 	if err != nil {
 		return nil, err
 	}
 
-	def, err := method.Parse(obj, opts, g.localConfig(pkg, name))
+	def, err := method.ParseMethod(obj, opts, g.localConfig(pkg, name))
 	if err != nil {
 		return nil, err
 	}
