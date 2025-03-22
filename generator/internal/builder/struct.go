@@ -33,7 +33,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 		return nil, err
 	}
 
-	stmt := []jen.Code{}
+	var stmt []jen.Code
 
 	definedFields := ctx.DefinedFields(target)
 	usedSourceID := false
@@ -79,7 +79,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 				return nil, err.Lift(lift...)
 			}
 			if shouldCheckAgainstZero(ctx, nextSource, targetFieldType, assignTo.Update, false) {
-				stmt = append(stmt, jen.If(nextID.Code.Clone().Op("!=").Add(goverter.ZeroValue(nextSource.T))).Block(fieldStmt...))
+				stmt = append(stmt, jen.If(nextID.Code.Clone().Op("!=").Add(zeroValue(nextSource.T))).Block(fieldStmt...))
 			} else {
 				stmt = append(stmt, fieldStmt...)
 			}
@@ -121,7 +121,7 @@ func (s *Struct) Assign(gen Generator, ctx *MethodContext, assignTo *AssignTo, s
 			callStmt = append(callStmt, assignTo.Stmt.Clone().Dot(targetField.Name()).Op("=").Add(callReturnID.Code))
 
 			if shouldCheckAgainstZero(ctx, functionCallSourceType, targetFieldType, assignTo.Update, true) {
-				stmt = append(stmt, jen.If(functionCallSourceID.Code.Clone().Op("!=").Add(goverter.ZeroValue(functionCallSourceType.T))).Block(callStmt...))
+				stmt = append(stmt, jen.If(functionCallSourceID.Code.Clone().Op("!=").Add(zeroValue(functionCallSourceType.T))).Block(callStmt...))
 			} else {
 				stmt = append(stmt, callStmt...)
 			}
@@ -361,4 +361,30 @@ func unexportedStructError(targetField, sourceType, targetType string) string {
 	return fmt.Sprintf(`Cannot set value for unexported field "%s".
 
 See https://goverter.jmattheis.de/guide/unexported-field`, targetField)
+}
+
+func zeroValue(t types.Type) *jen.Statement {
+	switch cast := t.(type) {
+	case *types.Basic:
+		if cast.Info()&types.IsString != 0 {
+			return jen.Lit("")
+		} else if cast.Info()&types.IsNumeric != 0 {
+			return jen.Lit(0)
+		} else if cast.Info()&types.IsBoolean != 0 {
+			return jen.Lit(false)
+		}
+		panic("unknown basic type" + cast.String())
+	case *types.Named:
+		switch under := cast.Underlying().(type) {
+		case *types.Struct:
+			return jen.Parens(goverter.ToCode(t).Block())
+		default:
+			return zeroValue(under)
+		}
+	case *types.Struct, *types.Array:
+		return goverter.ToCode(t).Block()
+	case *types.Interface, *types.Signature, *types.Pointer, *types.Map, *types.Slice, *types.Chan:
+		return jen.Nil()
+	}
+	panic("unsupported type " + t.String())
 }

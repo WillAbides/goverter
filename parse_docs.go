@@ -93,11 +93,11 @@ func parseFunctions(pkg *packages.Package, decl *ast.GenDecl, lines RawLines) ([
 func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]RawConverter, error) {
 	lines := rawLines(pkg, decl)
 
-	if lines.HasSetting("variables") {
+	if lines.hasSetting("variables") {
 		return parseFunctions(pkg, decl, lines)
 	}
 
-	if lines.HasSetting("converter") {
+	if lines.hasSetting("converter") {
 		if decl.Tok != token.TYPE {
 			return nil, fmt.Errorf("%s must be defined on %q-block but was %q", converterMarker, token.TYPE, decl.Tok.String())
 		}
@@ -127,7 +127,7 @@ func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]RawConverter, err
 			continue
 		}
 		tsLines := rawLines(pkg, typeSpec)
-		if tsLines.HasSetting("converter") {
+		if tsLines.hasSetting("converter") {
 			c, err := parseInterface(pkg, typeSpec, tsLines)
 			if err != nil {
 				return nil, err
