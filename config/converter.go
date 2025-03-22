@@ -24,7 +24,7 @@ const (
 )
 
 var DefaultCommon = Common{
-	Enum: enum.Config{Enabled: true},
+	Enum: enum.EnumConfig{Enabled: true},
 }
 
 var DefaultConfigInterface = ConverterConfig{
@@ -219,7 +219,7 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 		}
 		c.Comments = append(c.Comments, rest)
 	case "enum:exclude":
-		var pattern enum.IDPattern
+		var pattern enum.EnumIDPattern
 		pattern, err = parseIDPattern(c.Package, rest)
 		c.Enum.Excludes = append(c.Enum.Excludes, pattern)
 	case configExtend:

@@ -22,7 +22,7 @@ type Common struct {
 	UseUnderlyingTypeMethods           bool
 	DefaultUpdate                      bool
 	ArgContextRegex                    *regexp.Regexp
-	Enum                               enum.Config
+	Enum                               enum.EnumConfig
 }
 
 func parseCommon(c *Common, cmd, rest string) (fieldSetting bool, err error) {

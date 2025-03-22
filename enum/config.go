@@ -2,20 +2,20 @@ package enum
 
 import "regexp"
 
-type Config struct {
+type EnumConfig struct {
 	Unknown  string
 	Enabled  bool
-	Excludes IDPatterns
+	Excludes EnumIDPatterns
 }
 
-type IDPattern struct {
+type EnumIDPattern struct {
 	Path *regexp.Regexp
 	Name *regexp.Regexp
 }
 
-type IDPatterns []IDPattern
+type EnumIDPatterns []EnumIDPattern
 
-func (ids IDPatterns) Matches(path, name string) bool {
+func (ids EnumIDPatterns) Matches(path, name string) bool {
 	for _, id := range ids {
 		if id.Path.MatchString(path) && id.Name.MatchString(name) {
 			return true

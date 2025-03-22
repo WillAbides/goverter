@@ -51,7 +51,7 @@ func validateEnumAction(s string) error {
 	}
 }
 
-func parseIDPattern(cwd, rest string) (pattern enum.IDPattern, err error) {
+func parseIDPattern(cwd, rest string) (pattern enum.EnumIDPattern, err error) {
 	path, name, err := parseMethodString(cwd, rest)
 	if err != nil {
 		return pattern, err

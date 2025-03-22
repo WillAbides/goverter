@@ -12,7 +12,7 @@ type Enum struct {
 	OK bool
 }
 
-func (t *Type) Enum(cfg *enum.Config) *Enum {
+func (t *Type) Enum(cfg *enum.EnumConfig) *Enum {
 	if !t.Named {
 		return disabled
 	}
@@ -23,7 +23,7 @@ func (t *Type) Enum(cfg *enum.Config) *Enum {
 	return t.enum
 }
 
-func loadEnum(t *types.Named, cfg *enum.Config) *Enum {
+func loadEnum(t *types.Named, cfg *enum.EnumConfig) *Enum {
 	path := t.Obj().Pkg().Path()
 	name := t.Obj().Name()
 
