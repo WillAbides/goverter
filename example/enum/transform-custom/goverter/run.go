@@ -5,19 +5,19 @@ import (
 	"strings"
 
 	"github.com/jmattheis/goverter/cli"
-	"github.com/jmattheis/goverter/enum"
+	"github.com/jmattheis/goverter/config"
 )
 
 func main() {
 	opts := cli.RunOpts{
-		EnumTransformers: map[string]enum.EnumTransformer{
+		EnumTransformers: map[string]config.EnumTransformer{
 			"trim-prefix": trimPrefix,
 		},
 	}
 	cli.Run(os.Args, opts)
 }
 
-func trimPrefix(ctx enum.TransformEnumContext) (map[string]string, error) {
+func trimPrefix(ctx config.TransformEnumContext) (map[string]string, error) {
 	m := map[string]string{}
 	for key := range ctx.Source.Members {
 		targetKey := strings.TrimPrefix(key, ctx.Config)

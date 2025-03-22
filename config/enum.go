@@ -21,7 +21,7 @@ type EnumMapping struct {
 
 type ConfiguredTransformer struct {
 	Name        string
-	Transformer enum.EnumTransformer
+	Transformer EnumTransformer
 	Config      string
 }
 
@@ -68,8 +68,8 @@ func parseIDPattern(cwd, rest string) (pattern enum.IDPattern, err error) {
 	return pattern, nil
 }
 
-var defaultEnumTransformers = map[string]enum.EnumTransformer{
-	"regex": func(ctx enum.TransformEnumContext) (map[string]string, error) {
+var defaultEnumTransformers = map[string]EnumTransformer{
+	"regex": func(ctx TransformEnumContext) (map[string]string, error) {
 		parts := strings.Split(ctx.Config, " ")
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("invalid config, expected two strings separated by space")
@@ -89,4 +89,20 @@ var defaultEnumTransformers = map[string]enum.EnumTransformer{
 		}
 		return m, nil
 	},
+}
+
+// EnumTransformer transforms a source enum members to target enum members
+//
+// The transformer must only return keys present inside the
+// context.Source.Members and context.Target.Members, if something cannot be
+// mapped by the transformer just skip the key and don't return it. An error by
+// this methods aborts the aborts the whole goverter conversion, so only use it
+// when there are config errors.
+type EnumTransformer func(context TransformEnumContext) (map[string]string, error)
+
+type TransformEnumContext struct {
+	Source enum.Enum
+	Target enum.Enum
+	// Config is user definable config
+	Config string
 }

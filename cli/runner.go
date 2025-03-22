@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/enum"
 	"github.com/jmattheis/goverter/generator"
 )
 
@@ -22,7 +21,7 @@ type GenerateConfig struct {
 	// OutputBuildConstraint will be added as go:build constraints to all files.
 	OutputBuildConstraint string
 	// EnumTransformers describes additional enum transformers usable in the enum:transform setting.
-	EnumTransformers map[string]enum.EnumTransformer
+	EnumTransformers map[string]config.EnumTransformer
 }
 
 // GenerateConverters generates converters.

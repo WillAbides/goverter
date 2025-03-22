@@ -5,8 +5,6 @@ import (
 	"slices"
 	"sort"
 	"strings"
-
-	"github.com/jmattheis/goverter/enum"
 )
 
 type RawLines struct {
@@ -45,13 +43,13 @@ type Raw struct {
 	BuildTags            string
 	OuputBuildConstraint string
 
-	EnumTransformers map[string]enum.EnumTransformer
+	EnumTransformers map[string]EnumTransformer
 }
 
 type context struct {
 	Loader           *packageLoader
 	WorkDir          string
-	EnumTransformers map[string]enum.EnumTransformer
+	EnumTransformers map[string]EnumTransformer
 }
 
 func Parse(raw *Raw) ([]*Converter, error) {

@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/jmattheis/goverter/config"
-	"github.com/jmattheis/goverter/enum"
 )
 
 type Strings []string
@@ -86,7 +85,7 @@ func parseGen(cmd string, args []string) (Command, error) {
 		BuildTags:             *buildTags,
 		OutputBuildConstraint: *outputConstraint,
 		WorkingDir:            *cwd,
-		EnumTransformers:      map[string]enum.EnumTransformer{},
+		EnumTransformers:      map[string]config.EnumTransformer{},
 		Global: config.RawLines{
 			Lines:    global,
 			Location: "command line (-g, -global)",
