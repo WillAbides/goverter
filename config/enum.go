@@ -52,7 +52,7 @@ func validateEnumAction(s string) error {
 }
 
 func parseIDPattern(cwd, rest string) (pattern enum.IDPattern, err error) {
-	path, name, err := ParseMethodString(cwd, rest)
+	path, name, err := parseMethodString(cwd, rest)
 	if err != nil {
 		return pattern, err
 	}

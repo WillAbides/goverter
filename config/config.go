@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/jmattheis/goverter/config/parse"
 	"github.com/jmattheis/goverter/enum"
 )
 
@@ -50,13 +49,13 @@ type Raw struct {
 }
 
 type context struct {
-	Loader           *PackageLoader
+	Loader           *packageLoader
 	WorkDir          string
 	EnumTransformers map[string]enum.Transformer
 }
 
 func Parse(raw *Raw) ([]*Converter, error) {
-	loader, err := NewPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
+	loader, err := newPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +79,7 @@ func Parse(raw *Raw) ([]*Converter, error) {
 }
 
 func formatLineError(lines RawLines, t, value string, err error) error {
-	cmd, _ := parse.Command(value)
+	cmd, _ := parseCommand(value)
 	msg := `error parsing 'goverter:%s' at
     %s
     %s

@@ -3,8 +3,6 @@ package config
 import (
 	"path/filepath"
 	"strings"
-
-	"github.com/jmattheis/goverter/config/parse"
 )
 
 func resolvePackage(sourceFileName, sourcePackage, targetFile string) (string, error) {
@@ -46,14 +44,14 @@ func getPackages(raw *Raw) []string {
 
 func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePackage string, lines RawLines) {
 	for _, line := range lines.Lines {
-		cmd, rest := parse.Command(line)
+		cmd, rest := parseCommand(line)
 		switch cmd {
 		case configExtend:
 			for _, fullMethod := range strings.Fields(rest) {
 				registerFullMethod(lookup, sourcePackage, fullMethod)
 			}
 		case configOutputFile:
-			file, err := parse.File(cwd, rest)
+			file, err := parseFile(cwd, rest)
 			if err != nil {
 				continue
 			}
@@ -68,7 +66,7 @@ func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePac
 
 func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines RawLines) {
 	for _, line := range lines.Lines {
-		cmd, rest := parse.Command(line)
+		cmd, rest := parseCommand(line)
 		switch cmd {
 		case configMap:
 			if _, _, custom, err := parseMethodMap(rest); err == nil && custom != "" {
@@ -81,7 +79,7 @@ func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines
 }
 
 func registerFullMethod(lookup map[string]struct{}, sourcePackage, fullMethod string) {
-	pkg, _, err := ParseMethodString(sourcePackage, fullMethod)
+	pkg, _, err := parseMethodString(sourcePackage, fullMethod)
 	if err == nil {
 		lookup[pkg] = struct{}{}
 	}

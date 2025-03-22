@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/jmattheis/goverter/config/parse"
 	"github.com/jmattheis/goverter/method"
 )
 
@@ -62,7 +61,7 @@ func parseMethods(ctx *context, rawConverter *RawConverter, c *Converter) error 
 		return nil
 	}
 	for name, lines := range rawConverter.Methods {
-		_, fn, err := ctx.Loader.GetOneRaw(c.Package, name)
+		_, fn, err := ctx.Loader.getOneRaw(c.Package, name)
 		if err != nil {
 			return err
 		}
@@ -107,7 +106,7 @@ func parseMethod(ctx *context, c *Converter, obj types.Object, rawMethod RawLine
 }
 
 func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err error) {
-	cmd, rest := parse.Command(value)
+	cmd, rest := parseCommand(value)
 	fieldSetting := false
 	switch cmd {
 	case configMap:
@@ -129,7 +128,7 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 				AllowTypeParams:   true,
 				ContextMatch:      m.ArgContextRegex,
 			}
-			f.Function, err = ctx.Loader.GetOne(c.Package, custom, opts)
+			f.Function, err = ctx.Loader.getOne(c.Package, custom, opts)
 		}
 	case "ignore":
 		fieldSetting = true
@@ -138,10 +137,10 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 			m.Field(f).Ignore = true
 		}
 	case "update":
-		m.updateParam, err = parse.String(rest)
+		m.updateParam, err = parseString(rest)
 	case "context":
 		var key string
-		key, err = parse.String(rest)
+		key, err = parseString(rest)
 		m.localOpts.Context[key] = true
 	case "enum:map":
 		fields := strings.Fields(rest)
@@ -168,7 +167,7 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 	case "autoMap":
 		fieldSetting = true
 		var s string
-		s, err = parse.String(rest)
+		s, err = parseString(rest)
 		m.AutoMap = append(m.AutoMap, strings.TrimSpace(s))
 	case configDefault:
 		opts := &method.ParseOpts{
@@ -179,7 +178,7 @@ func parseMethodLine(ctx *context, c *Converter, m *Method, value string) (err e
 			AllowTypeParams:   true,
 			ContextMatch:      m.ArgContextRegex,
 		}
-		m.Constructor, err = ctx.Loader.GetOne(c.Package, rest, opts)
+		m.Constructor, err = ctx.Loader.getOne(c.Package, rest, opts)
 	default:
 		fieldSetting, err = parseCommon(&m.Common, cmd, rest)
 	}

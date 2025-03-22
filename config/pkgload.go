@@ -12,8 +12,8 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func NewPackageLoader(workDir, buildTags string, paths []string) (*PackageLoader, error) {
-	loader := &PackageLoader{
+func newPackageLoader(workDir, buildTags string, paths []string) (*packageLoader, error) {
+	loader := &packageLoader{
 		lookup: map[string]*packages.Package{},
 		locals: map[string]map[string]method.LocalOpts{},
 	}
@@ -21,13 +21,13 @@ func NewPackageLoader(workDir, buildTags string, paths []string) (*PackageLoader
 	return loader, err
 }
 
-type PackageLoader struct {
+type packageLoader struct {
 	lookup map[string]*packages.Package
 	locals map[string]map[string]method.LocalOpts
 }
 
-func (g *PackageLoader) GetMatching(cwd, fullMethod string, opts *method.ParseOpts) ([]*method.Definition, error) {
-	pkgName, name, err := ParseMethodString(cwd, fullMethod)
+func (g *packageLoader) getMatching(cwd, fullMethod string, opts *method.ParseOpts) ([]*method.Definition, error) {
+	pkgName, name, err := parseMethodString(cwd, fullMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +80,11 @@ the golang regexp pattern %q and a convert signature`, pkgName, name)
 	return matches, nil
 }
 
-func (g *PackageLoader) GetUncheckedPkg(pkgName string) *packages.Package {
+func (g *packageLoader) getUncheckedPkg(pkgName string) *packages.Package {
 	return g.lookup[pkgName]
 }
 
-func (g *PackageLoader) getPkg(pkgName string) (*packages.Package, error) {
+func (g *packageLoader) getPkg(pkgName string) (*packages.Package, error) {
 	pkg := g.lookup[pkgName]
 	if pkg == nil {
 		return nil, fmt.Errorf("failed to load package %q:\nmake sure it's a valid golang package", pkgName)
@@ -101,7 +101,7 @@ func (g *PackageLoader) getPkg(pkgName string) (*packages.Package, error) {
 	return pkg, nil
 }
 
-func (g *PackageLoader) localConfig(pkg *packages.Package, name string) method.LocalOpts {
+func (g *packageLoader) localConfig(pkg *packages.Package, name string) method.LocalOpts {
 	fns, ok := g.locals[pkg.PkgPath]
 	if !ok {
 		fns = map[string]method.LocalOpts{}
@@ -116,8 +116,8 @@ func (g *PackageLoader) localConfig(pkg *packages.Package, name string) method.L
 
 					contexts := map[string]bool{}
 					for _, line := range lines {
-						if cmd, rest := parse.Command(line); cmd == "context" {
-							if ctx, err := parse.String(rest); err == nil {
+						if cmd, rest := parseCommand(line); cmd == "context" {
+							if ctx, err := parseString(rest); err == nil {
 								contexts[ctx] = true
 							}
 						}
@@ -135,7 +135,7 @@ func (g *PackageLoader) localConfig(pkg *packages.Package, name string) method.L
 	return fn
 }
 
-func (g *PackageLoader) GetOneRaw(pkgName, name string) (*packages.Package, types.Object, error) {
+func (g *packageLoader) getOneRaw(pkgName, name string) (*packages.Package, types.Object, error) {
 	pkg, err := g.getPkg(pkgName)
 	if err != nil {
 		return pkg, nil, err
@@ -148,16 +148,16 @@ func (g *PackageLoader) GetOneRaw(pkgName, name string) (*packages.Package, type
 	return pkg, obj, nil
 }
 
-func (g *PackageLoader) GetOne(sourcePackage, fullMethod string, opts *method.ParseOpts) (*method.Definition, error) {
-	pkgName, name, err := ParseMethodString(sourcePackage, fullMethod)
+func (g *packageLoader) getOne(sourcePackage, fullMethod string, opts *method.ParseOpts) (*method.Definition, error) {
+	pkgName, name, err := parseMethodString(sourcePackage, fullMethod)
 	if err != nil {
 		return nil, err
 	}
 	return g.getOneParsed(pkgName, name, opts)
 }
 
-func (g *PackageLoader) getOneParsed(pkgName, name string, opts *method.ParseOpts) (*method.Definition, error) {
-	pkg, obj, err := g.GetOneRaw(pkgName, name)
+func (g *packageLoader) getOneParsed(pkgName, name string, opts *method.ParseOpts) (*method.Definition, error) {
+	pkg, obj, err := g.getOneRaw(pkgName, name)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (g *PackageLoader) getOneParsed(pkgName, name string, opts *method.ParseOpt
 }
 
 // loadPackages is used to load extend packages, with caching support.
-func (g *PackageLoader) load(workDir, buildTags string, paths []string) error {
+func (g *packageLoader) load(workDir, buildTags string, paths []string) error {
 	packagesCfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedSyntax,
 		Dir:  workDir,

@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jmattheis/goverter/config/parse"
 	"github.com/jmattheis/goverter/enum"
 	"github.com/jmattheis/goverter/method"
 )
@@ -124,7 +123,7 @@ func resolveOutputPackage(ctx *context, c *Converter) {
 		c.OutputPackagePath = targetPackage
 	}
 
-	pkg := ctx.Loader.GetUncheckedPkg(targetPackage)
+	pkg := ctx.Loader.getUncheckedPkg(targetPackage)
 
 	if pkg == nil {
 		return
@@ -135,7 +134,7 @@ func resolveOutputPackage(ctx *context, c *Converter) {
 	}
 }
 
-func initConverter(loader *PackageLoader, rawConverter *RawConverter) (*Converter, error) {
+func initConverter(loader *packageLoader, rawConverter *RawConverter) (*Converter, error) {
 	c := &Converter{
 		FileName: rawConverter.FileName,
 		Package:  rawConverter.PackagePath,
@@ -144,7 +143,7 @@ func initConverter(loader *PackageLoader, rawConverter *RawConverter) (*Converte
 
 	if rawConverter.InterfaceName != "" {
 		c.ConverterConfig = DefaultConfigInterface
-		_, interfaceObj, err := loader.GetOneRaw(c.Package, rawConverter.InterfaceName)
+		_, interfaceObj, err := loader.getOneRaw(c.Package, rawConverter.InterfaceName)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +171,7 @@ func parseConverterLines(ctx *context, c *Converter, source string, raw RawLines
 }
 
 func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
-	cmd, rest := parse.Command(value)
+	cmd, rest := parseCommand(value)
 	switch cmd {
 	case "converter", "variables":
 		// only a marker interface
@@ -180,17 +179,17 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 		if err = c.requireStruct(); err != nil {
 			return err
 		}
-		c.Name, err = parse.String(rest)
+		c.Name, err = parseString(rest)
 	case "output:raw":
 		c.OutputRaw = append(c.OutputRaw, rest)
 	case configOutputFile:
-		c.OutputFile, err = parse.File(ctx.WorkDir, rest)
+		c.OutputFile, err = parseFile(ctx.WorkDir, rest)
 	case "output:format":
 		if len(c.Extend) != 0 {
 			return fmt.Errorf("Cannot change output:format after extend functions have been added.\nMove the extend below the output:format setting.")
 		}
 
-		c.OutputFormat, err = parse.Enum(false, rest, FormatFunction, FormatStruct, FormatVariable)
+		c.OutputFormat, err = parseEnum(false, rest, FormatFunction, FormatStruct, FormatVariable)
 		if err != nil {
 			return err
 		}
@@ -204,7 +203,7 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 	case "output:package":
 		c.OutputPackageName = ""
 		var pkg string
-		pkg, err = parse.String(rest)
+		pkg, err = parseString(rest)
 
 		parts := strings.SplitN(pkg, ":", 2)
 		switch len(parts) {
@@ -233,7 +232,7 @@ func parseConverterLine(ctx *context, c *Converter, value string) (err error) {
 				ContextMatch:      c.ArgContextRegex,
 			}
 			var defs []*method.Definition
-			defs, err = ctx.Loader.GetMatching(c.Package, name, opts)
+			defs, err = ctx.Loader.getMatching(c.Package, name, opts)
 			if err != nil {
 				break
 			}
