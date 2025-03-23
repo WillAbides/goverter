@@ -24,7 +24,7 @@ type method struct {
 	Constructor *methodDefinition
 	AutoMap     []string
 	Fields      map[string]*fieldMapping
-	EnumMapping *EnumMapping
+	EnumMapping *enumMapping
 
 	RawFieldSettings []string
 
@@ -98,7 +98,7 @@ func parseMethodCfg(ctx *cfgContext, c *converter, obj types.Object, rawMethod r
 		commonCfg:   c.commonCfg,
 		Fields:      map[string]*fieldMapping{},
 		Location:    rawMethod.Location,
-		EnumMapping: &EnumMapping{Map: map[string]string{}},
+		EnumMapping: &enumMapping{Map: map[string]string{}},
 		LocalOpts:   localMethodOpts{Context: map[string]bool{}},
 	}
 
@@ -180,7 +180,7 @@ func parseMethodLine(ctx *cfgContext, c *converter, m *method, value string) (er
 			config = fields[1]
 		}
 
-		var t ConfiguredTransformer
+		var t configuredTransformer
 		t, err = parseTransformer(ctx, fields[0], config)
 		m.EnumMapping.Transformers = append(m.EnumMapping.Transformers, t)
 	case "autoMap":

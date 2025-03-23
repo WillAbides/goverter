@@ -10,19 +10,19 @@ import (
 type outputFormat string
 
 const (
-	OutputFormatStruct   outputFormat = "struct"
-	OutputFormatVariable outputFormat = "assign-variable"
-	OutputFormatFunction outputFormat = "function"
+	outputFormatStruct   outputFormat = "struct"
+	outputFormatVariable outputFormat = "assign-variable"
+	outputFormatFunction outputFormat = "function"
 )
 
 var defaultConfigInterface = converterConfig{
 	OutputFile:   "./generated/generated.go",
 	commonCfg:    defaultCommon,
-	OutputFormat: OutputFormatStruct,
+	OutputFormat: outputFormatStruct,
 }
 
 var defaultConfigVariables = converterConfig{
-	OutputFormat: OutputFormatVariable,
+	OutputFormat: outputFormatVariable,
 	commonCfg:    defaultCommon,
 }
 
@@ -65,14 +65,14 @@ type converter struct {
 }
 
 func (c *converter) typeForMethod() types.Type {
-	if c.OutputFormat == OutputFormatFunction {
+	if c.OutputFormat == outputFormatFunction {
 		return nil
 	}
 	return c.Type
 }
 
 func (c *converter) requireStruct() error {
-	if c.OutputFormat == OutputFormatStruct {
+	if c.OutputFormat == outputFormatStruct {
 		return nil
 	}
 	return fmt.Errorf("not allowed when using goverter:variables")
@@ -186,15 +186,15 @@ func parseConverterLine(ctx *cfgContext, c *converter, value string) (err error)
 			return fmt.Errorf("Cannot change output:format after extend functions have been added.\nMove the extend below the output:format setting.")
 		}
 
-		c.OutputFormat, err = parseEnum(false, rest, OutputFormatFunction, OutputFormatStruct, OutputFormatVariable)
+		c.OutputFormat, err = parseEnum(false, rest, outputFormatFunction, outputFormatStruct, outputFormatVariable)
 		if err != nil {
 			return err
 		}
 
-		if c.Type == nil && c.OutputFormat != OutputFormatVariable {
+		if c.Type == nil && c.OutputFormat != outputFormatVariable {
 			return fmt.Errorf("unsupported format for goverter:variables")
 		}
-		if c.Type != nil && c.OutputFormat == OutputFormatVariable {
+		if c.Type != nil && c.OutputFormat == outputFormatVariable {
 			return fmt.Errorf("unsupported format for goverter:converter")
 		}
 	case "output:package":

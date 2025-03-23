@@ -81,7 +81,7 @@ func (g *generator) appendGenerated(f *jen.File) {
 		f.Id(raw)
 	}
 
-	if g.conf.OutputFormat == OutputFormatStruct {
+	if g.conf.OutputFormat == outputFormatStruct {
 		if len(g.conf.Comments) > 0 {
 			f.Comment(strings.Join(g.conf.Comments, "\n"))
 		}
@@ -93,15 +93,15 @@ func (g *generator) appendGenerated(f *jen.File) {
 
 	for _, def := range genMethods {
 		switch g.conf.OutputFormat {
-		case OutputFormatStruct:
+		case outputFormatStruct:
 			funcs = append(funcs, jen.Func().Params(jen.Id(thisVar).Op("*").Id(g.conf.Name)).Id(def.Name).Add(def.Jen))
-		case OutputFormatVariable:
+		case outputFormatVariable:
 			if def.Explicit {
 				init = append(init, jen.Qual(def.Package, def.Name).Op("=").Func().Add(def.Jen))
 			} else {
 				funcs = append(funcs, jen.Func().Id(def.Name).Add(def.Jen))
 			}
-		case OutputFormatFunction:
+		case outputFormatFunction:
 			funcs = append(funcs, jen.Func().Id(def.Name).Add(def.Jen))
 		}
 	}
@@ -559,7 +559,7 @@ func (g *generator) createSubMethod(
 		method: &method{
 			commonCfg:   g.conf.commonCfg,
 			Fields:      map[string]*fieldMapping{},
-			EnumMapping: &EnumMapping{Map: map[string]string{}},
+			EnumMapping: &enumMapping{Map: map[string]string{}},
 			methodDefinition: &methodDefinition{
 				OriginID:  ctx.Conf.OriginID,
 				ID:        name,
@@ -649,9 +649,9 @@ func (g *generator) qualMethod(m *methodDefinition) *jen.Statement {
 	switch {
 	case m.CustomCall != nil:
 		return m.CustomCall.Clone()
-	case g.conf.OutputFormat == OutputFormatStruct && m.Generated:
+	case g.conf.OutputFormat == outputFormatStruct && m.Generated:
 		return jen.Id(thisVar).Dot(m.Name)
-	case g.conf.OutputFormat == OutputFormatFunction && m.Generated:
+	case g.conf.OutputFormat == outputFormatFunction && m.Generated:
 		return jen.Id(m.Name)
 	default:
 		return jen.Qual(m.Package, m.Name)

@@ -12,18 +12,18 @@ const (
 	enumActionIgnore = "@ignore"
 )
 
-type ConfiguredTransformer struct {
+type configuredTransformer struct {
 	Name        string
 	Transformer EnumTransformer
 	Config      string
 }
 
-type EnumMapping struct {
-	Transformers []ConfiguredTransformer
+type enumMapping struct {
+	Transformers []configuredTransformer
 	Map          map[string]string
 }
 
-var defaultEnumTransformers = map[string]EnumTransformer{
+var DefaultEnumTransformers = map[string]EnumTransformer{
 	"regex": func(ctx TransformEnumContext) (map[string]string, error) {
 		parts := strings.Split(ctx.Config, " ")
 		if len(parts) != 2 {
@@ -59,17 +59,17 @@ func validateEnumAction(s string) error {
 	}
 }
 
-func parseTransformer(ctx *cfgContext, name, config string) (ConfiguredTransformer, error) {
+func parseTransformer(ctx *cfgContext, name, config string) (configuredTransformer, error) {
 	t, ok := ctx.EnumTransformers[name]
 	if !ok {
-		t, ok = defaultEnumTransformers[name]
+		t, ok = DefaultEnumTransformers[name]
 	}
 
 	if !ok {
-		return ConfiguredTransformer{}, fmt.Errorf("transformer %q does not exist", name)
+		return configuredTransformer{}, fmt.Errorf("transformer %q does not exist", name)
 	}
 
-	return ConfiguredTransformer{Name: name, Transformer: t, Config: config}, nil
+	return configuredTransformer{Name: name, Transformer: t, Config: config}, nil
 }
 
 func parseIDPattern(cwd, rest string) (pattern enumIDPattern, err error) {

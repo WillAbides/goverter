@@ -44,7 +44,7 @@ func (*buildEnum) build(
 		return nil, nil, err
 	}
 
-	sourceTargetMapping := map[interface{}]enumMapping{}
+	sourceTargetMapping := map[interface{}]buildEnumMapping{}
 	for _, sourceName := range sourceEnum.SortedMembers() {
 		delete(definedKeys, sourceName)
 
@@ -85,7 +85,7 @@ func (*buildEnum) build(
 					fmtEnumValue(sourceEnum, previous.Source), fmtEnumValue(targetEnum, previous.Target))))
 			}
 		} else {
-			sourceTargetMapping[sourceValue] = enumMapping{Source: sourceName, Target: targetName}
+			sourceTargetMapping[sourceValue] = buildEnumMapping{Source: sourceName, Target: targetName}
 			cases = append(cases, jen.Case(sourceQual).Add(body))
 		}
 	}
@@ -167,7 +167,7 @@ func caseAction(
 }
 
 func executeTransformers(
-	transformers []ConfiguredTransformer,
+	transformers []configuredTransformer,
 	source, target *xType,
 	sourceEnum, targetEnum *Enum,
 ) (map[string]string, *buildError) {
@@ -191,7 +191,7 @@ func executeTransformers(
 	return transformerMapping, nil
 }
 
-func enumTargetMismatches(previous enumMapping, targetEnum *Enum, targetName string) bool {
+func enumTargetMismatches(previous buildEnumMapping, targetEnum *Enum, targetName string) bool {
 	if !isEnumAction(targetName) && !isEnumAction(previous.Target) {
 		return targetEnum.Members[previous.Target] != targetEnum.Members[targetName]
 	}
@@ -201,7 +201,7 @@ func enumTargetMismatches(previous enumMapping, targetEnum *Enum, targetName str
 func enumTargetMismatchError(
 	targetEnum *Enum,
 	sourceName, targetName string,
-	previous enumMapping,
+	previous buildEnumMapping,
 	sourceValue interface{},
 ) *buildError {
 	return bewBuildError(fmt.Sprintf(`Detected multiple enum source members with the same value but different target values/actions.
@@ -226,7 +226,7 @@ func fmtEnumValue(targetEnum *Enum, targetName string) string {
 	return fmt.Sprintf("%s(%v)", targetName, targetEnum.Members[targetName])
 }
 
-type enumMapping struct {
+type buildEnumMapping struct {
 	Target string
 	Source string
 }
