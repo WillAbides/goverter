@@ -26,8 +26,8 @@ func buildSteps() []builder {
 	}
 }
 
-// Generate generates a jen.File containing converters.
-func Generate(converters []*Converter, c GenerateConfig) (map[string][]byte, error) {
+// generateFiles generates files and returns them as a map of file paths to file contents.
+func generateFiles(converters []*Converter, c GenerateConfig) (map[string][]byte, error) {
 	manager := &fileManager{Files: map[string]*managedFile{}}
 
 	for _, converter := range converters {

@@ -12,7 +12,7 @@ const (
 	converterMarker = directivePrefix + "converter"
 )
 
-// ParseDocsConfig provides input to the ParseDocs method below.
+// ParseDocsConfig provides input to the parseDocs method below.
 type ParseDocsConfig struct {
 	// PackagePatterns are golang package patterns to scan, required.
 	PackagePattern []string
@@ -21,8 +21,8 @@ type ParseDocsConfig struct {
 	BuildTags  string
 }
 
-// ParseDocs parses the docs for the given pattern.
-func ParseDocs(c ParseDocsConfig) ([]RawConverter, error) {
+// parseDocs parses the docs for the given pattern.
+func parseDocs(c ParseDocsConfig) ([]RawConverter, error) {
 	loadCfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedSyntax,
 		Dir:  c.WorkingDir,

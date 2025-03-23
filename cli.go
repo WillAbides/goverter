@@ -30,8 +30,8 @@ type GenerateCmdConfig struct {
 	EnumTransformers map[string]EnumTransformer
 }
 
-// GenerateConverters generates converters.
-func GenerateConverters(c *GenerateCmdConfig) error {
+// generateConverters generates converters.
+func generateConverters(c *GenerateCmdConfig) error {
 	files, err := generateConvertersRaw(c)
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func GenerateConverters(c *GenerateCmdConfig) error {
 }
 
 func generateConvertersRaw(c *GenerateCmdConfig) (map[string][]byte, error) {
-	rawConverters, err := ParseDocs(ParseDocsConfig{
+	rawConverters, err := parseDocs(ParseDocsConfig{
 		BuildTags:      c.BuildTags,
 		PackagePattern: c.PackagePatterns,
 		WorkingDir:     c.WorkingDir,
@@ -50,7 +50,7 @@ func generateConvertersRaw(c *GenerateCmdConfig) (map[string][]byte, error) {
 		return nil, err
 	}
 
-	converters, err := ParseRaw(&Raw{
+	converters, err := parseRaw(&Raw{
 		BuildTags:  c.BuildTags,
 		WorkDir:    c.WorkingDir,
 		Converters: rawConverters,
@@ -64,7 +64,7 @@ func generateConvertersRaw(c *GenerateCmdConfig) (map[string][]byte, error) {
 		return nil, err
 	}
 
-	return Generate(converters, GenerateConfig{
+	return generateFiles(converters, GenerateConfig{
 		BuildConstraint: c.OutputBuildConstraint,
 	})
 }
@@ -245,7 +245,7 @@ func Run(args []string, opts RunOpts) {
 			}
 		}
 
-		if err = GenerateConverters(cmd.Config); err != nil {
+		if err = generateConverters(cmd.Config); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}

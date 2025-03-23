@@ -78,7 +78,7 @@ type cfgContext struct {
 	EnumTransformers map[string]EnumTransformer
 }
 
-func ParseRaw(raw *Raw) ([]*Converter, error) {
+func parseRaw(raw *Raw) ([]*Converter, error) {
 	loader, err := newPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
 	if err != nil {
 		return nil, err
