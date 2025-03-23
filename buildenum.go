@@ -140,7 +140,7 @@ func caseAction(
 	sourceID *jenID,
 	errPath errorPath,
 ) (jen.Code, *buildError) {
-	if IsEnumAction(targetName) {
+	if isEnumAction(targetName) {
 		switch targetName {
 		case enumActionIgnore:
 			return jen.Comment("ignored"), nil
@@ -192,7 +192,7 @@ func executeTransformers(
 }
 
 func enumTargetMismatches(previous enumMapping, targetEnum *enum, targetName string) bool {
-	if !IsEnumAction(targetName) && !IsEnumAction(previous.Target) {
+	if !isEnumAction(targetName) && !isEnumAction(previous.Target) {
 		return targetEnum.Members[previous.Target] != targetEnum.Members[targetName]
 	}
 	return targetName != previous.Target
@@ -220,7 +220,7 @@ See https://goverter.jmattheis.de/guide/enum#mapping-enum-keys`,
 }
 
 func fmtEnumValue(targetEnum *enum, targetName string) string {
-	if IsEnumAction(targetName) {
+	if isEnumAction(targetName) {
 		return fmt.Sprintf("%s(action)", targetName)
 	}
 	return fmt.Sprintf("%s(%v)", targetName, targetEnum.Members[targetName])

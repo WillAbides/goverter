@@ -15,11 +15,11 @@ func (*basic) matches(_ *methodContext, source, target *xType) bool {
 
 // Build creates conversion source code for the given source and target type.
 func (*basic) build(
-	gen *generator,
-	ctx *methodContext,
+	_ *generator,
+	_ *methodContext,
 	sourceID *jenID,
 	source, target *xType,
-	path errorPath,
+	_ errorPath,
 ) ([]jen.Code, *jenID, *buildError) {
 	if target.Named || (!target.Named && source.Named) {
 		return nil, otherID(target.TypeAsJen().Call(sourceID.Code)), nil

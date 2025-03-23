@@ -73,13 +73,13 @@ func formatLineError(lines RawLines, t, value string, err error) error {
 }
 
 type cfgContext struct {
-	Loader           *PackageLoader
+	Loader           *packageLoader
 	WorkDir          string
 	EnumTransformers map[string]EnumTransformer
 }
 
 func ParseRaw(raw *Raw) ([]*Converter, error) {
-	loader, err := NewPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
+	loader, err := newPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
 	if err != nil {
 		return nil, err
 	}

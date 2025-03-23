@@ -68,8 +68,8 @@ func parseCommon(c *commonCfg, cmd, rest string) (fieldSetting bool, err error) 
 		c.ArgContextRegex, err = parseRegex(rest)
 	case "enum:unknown":
 		c.Enum.unknown, err = parseString(rest)
-		if err == nil && IsEnumAction(c.Enum.unknown) {
-			err = ValidateEnumAction(c.Enum.unknown)
+		if err == nil && isEnumAction(c.Enum.unknown) {
+			err = validateEnumAction(c.Enum.unknown)
 		}
 	case "":
 		err = fmt.Errorf("missing setting key")

@@ -131,7 +131,7 @@ func resolveOutputPackage(ctx *cfgContext, c *Converter) {
 	}
 }
 
-func initConverter(loader *PackageLoader, rawConverter *RawConverter) (*Converter, error) {
+func initConverter(loader *packageLoader, rawConverter *RawConverter) (*Converter, error) {
 	c := &Converter{
 		FileName: rawConverter.FileName,
 		Package:  rawConverter.PackagePath,
@@ -217,7 +217,7 @@ func parseConverterLine(ctx *cfgContext, c *Converter, value string) (err error)
 		c.Comments = append(c.Comments, rest)
 	case "enum:exclude":
 		var pattern EnumIDPattern
-		pattern, err = ParseIDPattern(c.Package, rest)
+		pattern, err = parseIDPattern(c.Package, rest)
 		c.Enum.excludes = append(c.Enum.excludes, pattern)
 	case configExtend:
 		for _, name := range strings.Fields(rest) {

@@ -167,8 +167,8 @@ func parseMethodLine(ctx *cfgContext, c *Converter, m *method, value string) (er
 			return fmt.Errorf("invalid fields")
 		}
 
-		if IsEnumAction(fields[1]) {
-			err = ValidateEnumAction(fields[1])
+		if isEnumAction(fields[1]) {
+			err = validateEnumAction(fields[1])
 		}
 
 		m.EnumMapping.Map[fields[0]] = fields[1]
@@ -181,7 +181,7 @@ func parseMethodLine(ctx *cfgContext, c *Converter, m *method, value string) (er
 		}
 
 		var t ConfiguredTransformer
-		t, err = ParseTransformer(ctx, fields[0], config)
+		t, err = parseTransformer(ctx, fields[0], config)
 		m.EnumMapping.Transformers = append(m.EnumMapping.Transformers, t)
 	case "autoMap":
 		fieldSetting = true

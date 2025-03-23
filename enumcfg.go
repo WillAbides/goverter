@@ -46,11 +46,11 @@ var DefaultEnumTransformers = map[string]EnumTransformer{
 	},
 }
 
-func IsEnumAction(s string) bool {
+func isEnumAction(s string) bool {
 	return strings.HasPrefix(s, "@")
 }
 
-func ValidateEnumAction(s string) error {
+func validateEnumAction(s string) error {
 	switch s {
 	case enumActionPanic, enumActionError, enumActionIgnore:
 		return nil
@@ -59,7 +59,7 @@ func ValidateEnumAction(s string) error {
 	}
 }
 
-func ParseTransformer(ctx *cfgContext, name, config string) (ConfiguredTransformer, error) {
+func parseTransformer(ctx *cfgContext, name, config string) (ConfiguredTransformer, error) {
 	t, ok := ctx.EnumTransformers[name]
 	if !ok {
 		t, ok = DefaultEnumTransformers[name]
@@ -72,7 +72,7 @@ func ParseTransformer(ctx *cfgContext, name, config string) (ConfiguredTransform
 	return ConfiguredTransformer{Name: name, Transformer: t, Config: config}, nil
 }
 
-func ParseIDPattern(cwd, rest string) (pattern EnumIDPattern, err error) {
+func parseIDPattern(cwd, rest string) (pattern EnumIDPattern, err error) {
 	path, name, err := parseMethodString(cwd, rest)
 	if err != nil {
 		return pattern, err
