@@ -32,15 +32,15 @@ type GenerateCmdConfig struct {
 
 // GenerateConverters generates converters.
 func GenerateConverters(c *GenerateCmdConfig) error {
-	files, err := GenerateConvertersRaw(c)
+	files, err := generateConvertersRaw(c)
 	if err != nil {
 		return err
 	}
 
-	return WriteFiles(files)
+	return writeFiles(files)
 }
 
-func GenerateConvertersRaw(c *GenerateCmdConfig) (map[string][]byte, error) {
+func generateConvertersRaw(c *GenerateCmdConfig) (map[string][]byte, error) {
 	rawConverters, err := ParseDocs(ParseDocsConfig{
 		BuildTags:      c.BuildTags,
 		PackagePattern: c.PackagePatterns,
@@ -69,7 +69,7 @@ func GenerateConvertersRaw(c *GenerateCmdConfig) (map[string][]byte, error) {
 	})
 }
 
-func WriteFiles(files map[string][]byte) error {
+func writeFiles(files map[string][]byte) error {
 	for path, content := range files {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return err

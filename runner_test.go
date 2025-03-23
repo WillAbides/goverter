@@ -1,4 +1,4 @@
-package cli
+package goverter
 
 import (
 	"fmt"
@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmattheis/goverter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -23,7 +22,7 @@ var (
 )
 
 func TestScenario(t *testing.T) {
-	rootDir := filepath.Join(getCurrentPath(), "..")
+	rootDir := getCurrentPath()
 	scenarioDir := filepath.Join(rootDir, "scenario")
 	workDir := filepath.Join(rootDir, "execution")
 	scenarioFiles, err := os.ReadDir(scenarioDir)
@@ -72,13 +71,13 @@ func TestScenario(t *testing.T) {
 				patterns = append(patterns, "github.com/jmattheis/goverter/execution")
 			}
 
-			files, err := goverter.GenerateConvertersRaw(
-				&goverter.GenerateCmdConfig{
+			files, err := generateConvertersRaw(
+				&GenerateCmdConfig{
 					WorkingDir:            testWorkDir,
 					PackagePatterns:       patterns,
 					OutputBuildConstraint: scenario.BuildConstraint,
 					BuildTags:             "goverter",
-					Global: goverter.RawLines{
+					Global: RawLines{
 						Lines:    scenario.Global,
 						Location: "scenario global",
 					},
@@ -110,7 +109,7 @@ func TestScenario(t *testing.T) {
 			require.NotEmpty(t, scenario.Success, "scenario.Success may not be empty")
 			require.Equal(t, scenario.Success, actualOutputFiles)
 
-			err = goverter.WriteFiles(files)
+			err = writeFiles(files)
 			require.NoError(t, err)
 			require.NoError(t, compile(testWorkDir), "generated converter doesn't build")
 		})
