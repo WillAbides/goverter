@@ -11,7 +11,7 @@ const thisVar = "c"
 
 // methodContext exposes information for the current method.
 type methodContext struct {
-	*Namer
+	*namer
 	Conf              *method
 	FieldsTarget      string
 	OutputPackagePath string
@@ -22,7 +22,7 @@ type methodContext struct {
 	SeenNamed         map[string]struct{}
 
 	IndexID methodIndexID
-	Context map[string]*JenID
+	Context map[string]*jenID
 
 	AvailableContext map[string]*xType
 
@@ -102,29 +102,29 @@ type builder interface {
 	build(
 		gen *generator,
 		ctx *methodContext,
-		sourceID *JenID,
+		sourceID *jenID,
 		source, target *xType,
-		path ErrorPath,
-	) ([]jen.Code, *JenID, *BuildError)
+		path errorPath,
+	) ([]jen.Code, *jenID, *buildError)
 
 	// assign creates conversion source code for the given source and target type and assigns it.
 	assign(
 		gen *generator,
 		ctx *methodContext,
 		assignTo *assignTo,
-		sourceID *JenID,
+		sourceID *jenID,
 		source, target *xType,
-		path ErrorPath,
-	) ([]jen.Code, *BuildError)
+		path errorPath,
+	) ([]jen.Code, *buildError)
 }
 
 func buildTargetVar(
 	gen *generator,
 	ctx *methodContext,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	errPath ErrorPath,
-) ([]jen.Code, *jen.Statement, *BuildError) {
+	errPath errorPath,
+) ([]jen.Code, *jen.Statement, *buildError) {
 	if !ctx.UseConstructor ||
 		!types.Identical(ctx.Conf.Source.T, source.T) ||
 		!types.Identical(ctx.Conf.Target.T, target.T) {
@@ -188,8 +188,8 @@ func (a *assignTo) IsUpdate() *assignTo {
 	return a
 }
 
-func toAssignable(assignTo *assignTo) func(stmt []jen.Code, nextID *JenID, err *BuildError) ([]jen.Code, *BuildError) {
-	return func(stmt []jen.Code, nextID *JenID, err *BuildError) ([]jen.Code, *BuildError) {
+func toAssignable(assignTo *assignTo) func(stmt []jen.Code, nextID *jenID, err *buildError) ([]jen.Code, *buildError) {
+	return func(stmt []jen.Code, nextID *jenID, err *buildError) ([]jen.Code, *buildError) {
 		if err != nil {
 			return nil, err
 		}
@@ -203,10 +203,10 @@ func assignByBuild(
 	gen *generator,
 	ctx *methodContext,
 	assignTo *assignTo,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	errPath ErrorPath,
-) ([]jen.Code, *BuildError) {
+	errPath errorPath,
+) ([]jen.Code, *buildError) {
 	return toAssignable(assignTo)(b.build(gen, ctx, sourceID, source, target, errPath))
 }
 
@@ -214,10 +214,10 @@ func buildByAssign(
 	b builder,
 	gen *generator,
 	ctx *methodContext,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	path ErrorPath,
-) ([]jen.Code, *JenID, *BuildError) {
+	path errorPath,
+) ([]jen.Code, *jenID, *buildError) {
 	buildStmt, valueVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err

@@ -4,13 +4,13 @@ import (
 	"fmt"
 )
 
-// NewNamer returns a new namer.
-func NewNamer() *Namer {
-	return &Namer{lookup: map[string]struct{}{thisVar: {}}}
+// newNamer returns a new namer.
+func newNamer() *namer {
+	return &namer{lookup: map[string]struct{}{thisVar: {}}}
 }
 
 // Namer keeps track of used variable names.
-type Namer struct {
+type namer struct {
 	lookup map[string]struct{}
 	First  string
 }
@@ -18,7 +18,7 @@ type Namer struct {
 var indexVars = []string{"i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
 
 // Index returns an usused index variable name.
-func (m *Namer) Index() string {
+func (m *namer) Index() string {
 	for i := 1; ; i++ {
 		for _, v := range indexVars {
 			name := v
@@ -33,7 +33,7 @@ func (m *Namer) Index() string {
 }
 
 // Map returns an usused key and value variable name.
-func (m *Namer) Map() (string, string) {
+func (m *namer) Map() (string, string) {
 	for i := 0; ; i++ {
 		key := "key"
 		value := "value"
@@ -52,7 +52,7 @@ func (m *Namer) Map() (string, string) {
 }
 
 // Register registers a variable as used.
-func (m *Namer) Register(name string) bool {
+func (m *namer) Register(name string) bool {
 	if _, ok := m.lookup[name]; !ok {
 		if m.First == "" {
 			m.First = name
@@ -64,7 +64,7 @@ func (m *Namer) Register(name string) bool {
 }
 
 // Name returns an unused variable name that contains the passed name.
-func (m *Namer) Name(name string) string {
+func (m *namer) Name(name string) string {
 	for i := 1; ; i++ {
 		numberedName := name
 		if i > 1 {

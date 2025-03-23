@@ -21,10 +21,10 @@ func (*buildStruct) matches(_ *methodContext, source, target *xType) bool {
 func (s *buildStruct) build(
 	gen *generator,
 	ctx *methodContext,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	errPath ErrorPath,
-) ([]jen.Code, *JenID, *BuildError) {
+	errPath errorPath,
+) ([]jen.Code, *jenID, *buildError) {
 	// Optimization for golang sets
 	if !source.Named && !target.Named && source.StructType.NumFields() == 0 && target.StructType.NumFields() == 0 {
 		return nil, sourceID, nil
@@ -36,10 +36,10 @@ func (s *buildStruct) assign(
 	gen *generator,
 	ctx *methodContext,
 	assignTo *assignTo,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	errPath ErrorPath,
-) ([]jen.Code, *BuildError) {
+	errPath errorPath,
+) ([]jen.Code, *buildError) {
 	additionalFieldSources, err := parseAutoMap(ctx, source)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (s *buildStruct) assign(
 
 		if !accessible(targetField, ctx.OutputPackagePath) {
 			cause := unexportedStructError(targetField.Name(), source.String, target.String)
-			return nil, NewBuildError(cause).Lift(&ErrorMessagePath{
+			return nil, bewBuildError(cause).Lift(&errorMessagePath{
 				Prefix:     ".",
 				SourceID:   "???",
 				TargetID:   targetField.Name(),
@@ -98,8 +98,8 @@ func (s *buildStruct) assign(
 		} else {
 			def := fieldMapping.Function
 
-			sourceLift := []*ErrorMessagePath{}
-			var functionCallSourceID *JenID
+			sourceLift := []*errorMessagePath{}
+			var functionCallSourceID *jenID
 			var functionCallSourceType *xType
 			if def.Source != nil {
 				usedSourceID = true
@@ -119,7 +119,7 @@ func (s *buildStruct) assign(
 					functionCallSourceType = nextSource
 				}
 			} else {
-				sourceLift = append(sourceLift, &ErrorMessagePath{
+				sourceLift = append(sourceLift, &errorMessagePath{
 					Prefix:     ".",
 					TargetID:   targetField.Name(),
 					TargetType: targetFieldType.String,
@@ -144,7 +144,7 @@ func (s *buildStruct) assign(
 	}
 
 	for name := range definedFields {
-		return nil, NewBuildError(fmt.Sprintf("Field %q does not exist.\nRemove or adjust field settings referencing this field.", name)).Lift(&ErrorMessagePath{
+		return nil, bewBuildError(fmt.Sprintf("Field %q does not exist.\nRemove or adjust field settings referencing this field.", name)).Lift(&errorMessagePath{
 			Prefix:     ".",
 			TargetID:   name,
 			TargetType: "???",
@@ -181,16 +181,16 @@ func mapField(
 	gen *generator,
 	ctx *methodContext,
 	targetField *types.Var,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
 	additionalFieldSources []fieldSources,
-	errPath ErrorPath,
-) (*JenID, *xType, []jen.Code, []*ErrorMessagePath, bool, *BuildError) {
-	lift := []*ErrorMessagePath{}
+	errPath errorPath,
+) (*jenID, *xType, []jen.Code, []*errorMessagePath, bool, *buildError) {
+	lift := []*errorMessagePath{}
 	def := ctx.Field(target, targetField.Name())
 	pathString := def.Source
 	if pathString == "." {
-		lift = append(lift, &ErrorMessagePath{
+		lift = append(lift, &errorMessagePath{
 			Prefix:     ".",
 			SourceID:   " ",
 			SourceType: "goverter:map . " + targetField.Name(),
@@ -209,7 +209,7 @@ func mapField(
 			if ctx.Conf.IgnoreMissing {
 				_, skip = err.(*noMatchError)
 			}
-			return nil, nil, nil, nil, skip, NewBuildError(cause).Lift(&ErrorMessagePath{
+			return nil, nil, nil, nil, skip, bewBuildError(cause).Lift(&errorMessagePath{
 				Prefix:     ".",
 				SourceID:   "???",
 				TargetID:   targetField.Name(),
@@ -239,7 +239,7 @@ func mapField(
 		}
 		if !nextSource.Struct {
 			cause := fmt.Sprintf("Cannot access '%s' on %s.", path[i], nextSource.T)
-			return nil, nil, nil, nil, false, NewBuildError(cause).Lift(&ErrorMessagePath{
+			return nil, nil, nil, nil, false, bewBuildError(cause).Lift(&errorMessagePath{
 				Prefix:     ".",
 				SourceID:   path[i],
 				SourceType: "???",
@@ -249,7 +249,7 @@ func mapField(
 		if err == nil {
 			nextSource = sourceMatch.Type
 			nextIDCode = nextIDCode.Clone().Dot(sourceMatch.Name)
-			liftPath := &ErrorMessagePath{
+			liftPath := &errorMessagePath{
 				Prefix:     ".",
 				SourceID:   sourceMatch.Name,
 				SourceType: nextSource.String,
@@ -264,7 +264,7 @@ func mapField(
 		}
 
 		cause := fmt.Sprintf("Cannot find the mapped field on the source entry: %s.", err.Error())
-		return nil, nil, []jen.Code{}, nil, false, NewBuildError(cause).Lift(&ErrorMessagePath{
+		return nil, nil, []jen.Code{}, nil, false, bewBuildError(cause).Lift(&errorMessagePath{
 			Prefix:     ".",
 			SourceID:   path[i],
 			SourceType: "???",
@@ -283,7 +283,7 @@ func mapField(
 			CustomCall:        nextIDCode,
 		}, emptyLocalMethodOpts)
 		if err != nil {
-			return nil, nil, nil, nil, false, NewBuildError(err.Error()).Lift(lift...)
+			return nil, nil, nil, nil, false, bewBuildError(err.Error()).Lift(lift...)
 		}
 
 		methodCallInner, callID, callErr := gen.CallMethod(ctx, def, nil, nil, def.Target, errPath)
@@ -293,7 +293,7 @@ func mapField(
 		innerStmt = methodCallInner
 		nextSource = def.Target
 		returnID = callID
-		lift = append(lift, &ErrorMessagePath{
+		lift = append(lift, &errorMessagePath{
 			Prefix:     "(",
 			SourceID:   ")",
 			SourceType: def.Target.String,
@@ -332,22 +332,22 @@ func mapField(
 	return returnID, nextSource, stmt, lift, false, nil
 }
 
-func parseAutoMap(ctx *methodContext, source *xType) ([]fieldSources, *BuildError) {
+func parseAutoMap(ctx *methodContext, source *xType) ([]fieldSources, *buildError) {
 	var sources []fieldSources
 	for _, field := range ctx.Conf.AutoMap {
 		innerSource := source
-		var lift []*ErrorMessagePath
+		var lift []*errorMessagePath
 		path := strings.Split(field, ".")
 		for _, part := range path {
 			field, err := findExactField(innerSource, part)
 			if err != nil {
-				return nil, NewBuildError(err.Error()).Lift(&ErrorMessagePath{
+				return nil, bewBuildError(err.Error()).Lift(&errorMessagePath{
 					Prefix:     ".",
 					SourceID:   part,
 					SourceType: "goverter:autoMap",
 				}).Lift(lift...)
 			}
-			lift = append(lift, &ErrorMessagePath{
+			lift = append(lift, &errorMessagePath{
 				Prefix:     ".",
 				SourceID:   field.Name,
 				SourceType: field.Type.String,
@@ -360,7 +360,7 @@ func parseAutoMap(ctx *methodContext, source *xType) ([]fieldSources, *BuildErro
 			case innerSource.Struct:
 				// ok
 			default:
-				return nil, NewBuildError(fmt.Sprintf("%s is not a struct or struct pointer", part)).Lift(lift...)
+				return nil, bewBuildError(fmt.Sprintf("%s is not a struct or struct pointer", part)).Lift(lift...)
 			}
 		}
 

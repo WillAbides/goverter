@@ -16,10 +16,10 @@ func (*buildList) matches(_ *methodContext, source, target *xType) bool {
 func (l *buildList) build(
 	gen *generator,
 	ctx *methodContext,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	path ErrorPath,
-) ([]jen.Code, *JenID, *BuildError) {
+	path errorPath,
+) ([]jen.Code, *jenID, *buildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	targetSlice := ctx.Name(target.ID())
 
@@ -43,10 +43,10 @@ func (*buildList) assign(
 	gen *generator,
 	ctx *methodContext,
 	assignTo *assignTo,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	path ErrorPath,
-) ([]jen.Code, *BuildError) {
+	path errorPath,
+) ([]jen.Code, *buildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	index := ctx.Index()
 
@@ -54,7 +54,7 @@ func (*buildList) assign(
 
 	forBlock, err := gen.Assign(ctx, assignTo.WithIndex(jen.Id(index)), indexedSource, source.ListInner, target.ListInner, path.Index(jen.Id(index)))
 	if err != nil {
-		return nil, err.Lift(&ErrorMessagePath{
+		return nil, err.Lift(&errorMessagePath{
 			SourceID:   "[]",
 			SourceType: source.ListInner.String,
 			TargetID:   "[]",

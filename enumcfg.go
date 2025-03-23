@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	EnumActionPanic  = "@panic"
-	EnumActionError  = "@error"
-	EnumActionIgnore = "@ignore"
+	enumActionPanic  = "@panic"
+	enumActionError  = "@error"
+	enumActionIgnore = "@ignore"
 )
 
 type ConfiguredTransformer struct {
@@ -52,10 +52,10 @@ func IsEnumAction(s string) bool {
 
 func ValidateEnumAction(s string) error {
 	switch s {
-	case EnumActionPanic, EnumActionError, EnumActionIgnore:
+	case enumActionPanic, enumActionError, enumActionIgnore:
 		return nil
 	default:
-		return fmt.Errorf("invalid enum action %q, must be one of %q, %q, or %q", s, EnumActionPanic, EnumActionIgnore, EnumActionError)
+		return fmt.Errorf("invalid enum action %q, must be one of %q, %q, or %q", s, enumActionPanic, enumActionIgnore, enumActionError)
 	}
 }
 

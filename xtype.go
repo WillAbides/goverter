@@ -54,7 +54,7 @@ type xType struct {
 	Chan          bool
 	ChanType      *types.Chan
 
-	enum *Enum
+	enum *enum
 }
 
 func (t *xType) AssignableTo(other *xType) bool {
@@ -186,13 +186,13 @@ func findField(
 }
 
 // JenID a jennifer code wrapper with extra infos.
-type JenID struct {
-	ParentPointer *JenID
+type jenID struct {
+	ParentPointer *jenID
 	Code          *jen.Statement
 	Variable      bool
 }
 
-func (j *JenID) Pointer(t *xType, namer func(string) string) ([]jen.Code, *JenID) {
+func (j *jenID) Pointer(t *xType, namer func(string) string) ([]jen.Code, *jenID) {
 	if j.Variable {
 		return nil, otherID(jen.Op("&").Add(j.Code.Clone()))
 	}
@@ -202,7 +202,7 @@ func (j *JenID) Pointer(t *xType, namer func(string) string) ([]jen.Code, *JenID
 	return stmt, otherID(jen.Op("&").Id(name))
 }
 
-func (j *JenID) Deref(source *xType) *JenID {
+func (j *jenID) Deref(source *xType) *jenID {
 	valueSourceID := jen.Op("*").Add(j.Code.Clone())
 	if !source.PointerInner.Basic {
 		valueSourceID = jen.Parens(valueSourceID)
@@ -213,13 +213,13 @@ func (j *JenID) Deref(source *xType) *JenID {
 }
 
 // variableID is used, when the ID can be referenced. F.ex it is not a function call.
-func variableID(code *jen.Statement) *JenID {
-	return &JenID{Code: code, Variable: true}
+func variableID(code *jen.Statement) *jenID {
+	return &jenID{Code: code, Variable: true}
 }
 
 // otherID is used, when the ID isn't a variable id.
-func otherID(code *jen.Statement) *JenID {
-	return &JenID{Code: code, Variable: false}
+func otherID(code *jen.Statement) *jenID {
+	return &jenID{Code: code, Variable: false}
 }
 
 // typeOf creates a Type.
@@ -341,9 +341,9 @@ Explicitly define the mapping via goverter:map. Example:
 See https://goverter.jmattheis.de/reference/map`, name, strings.Join(ambNames, ", "), ambNames[0], name)
 }
 
-func (t *xType) Enum(cfg *enumConfig) *Enum {
+func (t *xType) Enum(cfg *enumConfig) *enum {
 	if !t.Named {
-		return &Enum{}
+		return &enum{}
 	}
 
 	if t.enum == nil {
@@ -352,26 +352,26 @@ func (t *xType) Enum(cfg *enumConfig) *Enum {
 	return t.enum
 }
 
-func loadEnum(t *types.Named, cfg *enumConfig) *Enum {
+func loadEnum(t *types.Named, cfg *enumConfig) *enum {
 	path := t.Obj().Pkg().Path()
 	name := t.Obj().Name()
 
 	if !cfg.enabled || cfg.excludes.Matches(path, name) {
-		return &Enum{}
+		return &enum{}
 	}
 
 	e := detectEnum(t)
 	return &e
 }
 
-func detectEnum(named *types.Named) Enum {
+func detectEnum(named *types.Named) enum {
 	basic, ok := named.Underlying().(*types.Basic)
 	if !ok {
-		return Enum{}
+		return enum{}
 	}
 
 	if basic.Info()&(types.IsFloat|types.IsString|types.IsInteger) == 0 {
-		return Enum{}
+		return enum{}
 	}
 
 	scope := named.Obj().Pkg().Scope()
@@ -389,10 +389,10 @@ func detectEnum(named *types.Named) Enum {
 	}
 
 	if len(members) == 0 {
-		return Enum{}
+		return enum{}
 	}
 
-	return Enum{
+	return enum{
 		Type:    named,
 		Members: members,
 		OK:      true,

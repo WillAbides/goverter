@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func ResolvePackage(sourceFileName, sourcePackage, targetFile string) (string, error) {
+func resolvePackage(sourceFileName, sourcePackage, targetFile string) (string, error) {
 	relativeFile := targetFile
 	if filepath.IsAbs(targetFile) {
 		var err error
@@ -18,7 +18,7 @@ func ResolvePackage(sourceFileName, sourcePackage, targetFile string) (string, e
 	return filepath.Dir(filepath.Join(sourcePackage, relativeFile)), nil
 }
 
-func GetPackages(raw *Raw) []string {
+func getPackages(raw *Raw) []string {
 	lookup := map[string]struct{}{}
 	for _, c := range raw.Converters {
 		lookup[c.PackagePath] = struct{}{}
@@ -55,7 +55,7 @@ func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePac
 			if err != nil {
 				continue
 			}
-			targetPackage, err := ResolvePackage(filename, sourcePackage, file)
+			targetPackage, err := resolvePackage(filename, sourcePackage, file)
 			if err != nil {
 				continue
 			}

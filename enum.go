@@ -12,13 +12,13 @@ type enumConfig struct {
 	excludes enumIDPatterns
 }
 
-type Enum struct {
+type enum struct {
 	Type    *types.Named
 	Members map[string]any
 	OK      bool
 }
 
-func (e Enum) SortedMembers() []string {
+func (e enum) SortedMembers() []string {
 	var m []string
 	for member := range e.Members {
 		m = append(m, member)

@@ -17,10 +17,10 @@ func (*basic) matches(_ *methodContext, source, target *xType) bool {
 func (*basic) build(
 	gen *generator,
 	ctx *methodContext,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	path ErrorPath,
-) ([]jen.Code, *JenID, *BuildError) {
+	path errorPath,
+) ([]jen.Code, *jenID, *buildError) {
 	if target.Named || (!target.Named && source.Named) {
 		return nil, otherID(target.TypeAsJen().Call(sourceID.Code)), nil
 	}
@@ -31,10 +31,10 @@ func (b *basic) assign(
 	gen *generator,
 	ctx *methodContext,
 	assignTo *assignTo,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	errPath ErrorPath,
-) ([]jen.Code, *BuildError) {
+	errPath errorPath,
+) ([]jen.Code, *buildError) {
 	return assignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
@@ -50,16 +50,16 @@ func (*basicTargetPointerRule) matches(_ *methodContext, source, target *xType) 
 func (*basicTargetPointerRule) build(
 	gen *generator,
 	ctx *methodContext,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	errPath ErrorPath,
-) ([]jen.Code, *JenID, *BuildError) {
+	errPath errorPath,
+) ([]jen.Code, *jenID, *buildError) {
 	name := ctx.Name(target.ID())
 	ctx.SetErrorTargetVar(jen.Nil())
 
 	stmt, id, err := gen.Build(ctx, sourceID, source, target.PointerInner, errPath)
 	if err != nil {
-		return nil, nil, err.Lift(&ErrorMessagePath{
+		return nil, nil, err.Lift(&errorMessagePath{
 			SourceID:   "*",
 			SourceType: source.String,
 			TargetID:   "*",
@@ -76,9 +76,9 @@ func (b *basicTargetPointerRule) assign(
 	gen *generator,
 	ctx *methodContext,
 	assignTo *assignTo,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	errPath ErrorPath,
-) ([]jen.Code, *BuildError) {
+	errPath errorPath,
+) ([]jen.Code, *buildError) {
 	return assignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)
 }

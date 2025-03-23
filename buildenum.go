@@ -10,10 +10,10 @@ type buildEnum struct{}
 
 // Matches returns true, if the builder can create handle the given types.
 func (*buildEnum) matches(ctx *methodContext, source, target *xType) bool {
-	return IsBuildEnum(ctx, source, target)
+	return isBuildEnum(ctx, source, target)
 }
 
-func IsBuildEnum(ctx *methodContext, source, target *xType) bool {
+func isBuildEnum(ctx *methodContext, source, target *xType) bool {
 	return ctx.Conf.Enum.enabled &&
 		source.Enum(&ctx.Conf.Enum).OK &&
 		target.Enum(&ctx.Conf.Enum).OK
@@ -23,10 +23,10 @@ func IsBuildEnum(ctx *methodContext, source, target *xType) bool {
 func (*buildEnum) build(
 	gen *generator,
 	ctx *methodContext,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	path ErrorPath,
-) ([]jen.Code, *JenID, *BuildError) {
+	path errorPath,
+) ([]jen.Code, *jenID, *buildError) {
 	stmt, nameVar, err := buildTargetVar(gen, ctx, sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err
@@ -60,7 +60,7 @@ func (*buildEnum) build(
 		sourceQual := jen.Qual(source.NamedType.Obj().Pkg().Path(), sourceName)
 		body, err := caseAction(gen, ctx, nameVar, target, targetEnum, targetName, sourceID, path)
 		if err != nil {
-			return nil, nil, err.Lift(&ErrorMessagePath{
+			return nil, nil, err.Lift(&errorMessagePath{
 				SourceType: fmtEnumValue(sourceEnum, sourceName),
 				SourceID:   sourceName,
 				Prefix:     ".",
@@ -72,7 +72,7 @@ func (*buildEnum) build(
 		sourceValue := sourceEnum.Members[sourceName]
 		if previous, ok := sourceTargetMapping[sourceValue]; ok {
 			if enumTargetMismatches(previous, targetEnum, targetName) {
-				return nil, nil, enumTargetMismatchError(targetEnum, sourceName, targetName, previous, sourceValue).Lift(&ErrorMessagePath{
+				return nil, nil, enumTargetMismatchError(targetEnum, sourceName, targetName, previous, sourceValue).Lift(&errorMessagePath{
 					SourceType: fmtEnumValue(sourceEnum, sourceName),
 					SourceID:   sourceName,
 					Prefix:     ".",
@@ -92,12 +92,12 @@ func (*buildEnum) build(
 
 	enumUnknown := ctx.Conf.commonCfg.Enum.unknown
 	if enumUnknown == "" {
-		return nil, nil, NewBuildError("Enum detected but enum:unknown is not configured.\nSee https://goverter.jmattheis.de/guide/enum")
+		return nil, nil, bewBuildError("Enum detected but enum:unknown is not configured.\nSee https://goverter.jmattheis.de/guide/enum")
 	}
 
 	body, err := caseAction(gen, ctx, nameVar, target, targetEnum, enumUnknown, sourceID, path)
 	if err != nil {
-		return nil, nil, err.Lift(&ErrorMessagePath{
+		return nil, nil, err.Lift(&errorMessagePath{
 			SourceID:   "@enum:unknown",
 			Prefix:     ".",
 			TargetID:   enumUnknown,
@@ -107,8 +107,8 @@ func (*buildEnum) build(
 	cases = append(cases, jen.Default().Add(body))
 
 	for name := range definedKeys {
-		return nil, nil, NewBuildError(fmt.Sprintf("Configured enum value %s does not exist on\n    %s", name, source.String)).
-			Lift(&ErrorMessagePath{
+		return nil, nil, bewBuildError(fmt.Sprintf("Configured enum value %s does not exist on\n    %s", name, source.String)).
+			Lift(&errorMessagePath{
 				Prefix:     ".",
 				SourceID:   name,
 				SourceType: "???",
@@ -123,10 +123,10 @@ func (s *buildEnum) assign(
 	gen *generator,
 	ctx *methodContext,
 	assignTo *assignTo,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	path ErrorPath,
-) ([]jen.Code, *BuildError) {
+	path errorPath,
+) ([]jen.Code, *buildError) {
 	return assignByBuild(s, gen, ctx, assignTo, sourceID, source, target, path)
 }
 
@@ -135,31 +135,31 @@ func caseAction(
 	ctx *methodContext,
 	nameVar *jen.Statement,
 	target *xType,
-	targetEnum *Enum,
+	targetEnum *enum,
 	targetName string,
-	sourceID *JenID,
-	errPath ErrorPath,
-) (jen.Code, *BuildError) {
+	sourceID *jenID,
+	errPath errorPath,
+) (jen.Code, *buildError) {
 	if IsEnumAction(targetName) {
 		switch targetName {
-		case EnumActionIgnore:
+		case enumActionIgnore:
 			return jen.Comment("ignored"), nil
-		case EnumActionPanic:
+		case enumActionPanic:
 			return jen.Panic(jen.Qual("fmt", "Sprintf").Call(jen.Lit("unexpected enum element: %v"), sourceID.Code.Clone())), nil
-		case EnumActionError:
+		case enumActionError:
 			errStmt := jen.Qual("fmt", "Errorf").Call(jen.Lit("unexpected enum element: %v"), sourceID.Code.Clone())
 			code, ok := gen.ReturnError(ctx, errPath, errStmt)
 			if !ok {
-				return nil, NewBuildError(fmt.Sprintf("Cannot return %s because the explicitly defined conversion method doesn't return an error.", EnumActionError))
+				return nil, bewBuildError(fmt.Sprintf("Cannot return %s because the explicitly defined conversion method doesn't return an error.", enumActionError))
 			}
 			return code, nil
 		default:
-			return nil, NewBuildError(fmt.Sprintf("invalid target %q", targetName))
+			return nil, bewBuildError(fmt.Sprintf("invalid target %q", targetName))
 		}
 	}
 	_, ok := targetEnum.Members[targetName]
 	if !ok {
-		return nil, NewBuildError(fmt.Sprintf("Enum %s does not exist on\n    %s\n\nSee https://goverter.jmattheis.de/guide/enum", targetName, target.String))
+		return nil, bewBuildError(fmt.Sprintf("Enum %s does not exist on\n    %s\n\nSee https://goverter.jmattheis.de/guide/enum", targetName, target.String))
 	}
 
 	targetQual := jen.Qual(target.NamedType.Obj().Pkg().Path(), targetName)
@@ -169,20 +169,20 @@ func caseAction(
 func executeTransformers(
 	transformers []ConfiguredTransformer,
 	source, target *xType,
-	sourceEnum, targetEnum *Enum,
-) (map[string]string, *BuildError) {
+	sourceEnum, targetEnum *enum,
+) (map[string]string, *buildError) {
 	transformerMapping := map[string]string{}
 	for _, t := range transformers {
 		m, err := t.Transformer(TransformEnumContext{
-			Source: Enum{OK: true, Type: source.NamedType, Members: sourceEnum.Members},
-			Target: Enum{OK: true, Type: target.NamedType, Members: targetEnum.Members},
+			Source: enum{OK: true, Type: source.NamedType, Members: sourceEnum.Members},
+			Target: enum{OK: true, Type: target.NamedType, Members: targetEnum.Members},
 			Config: t.Config,
 		})
 		if err != nil {
-			return nil, NewBuildError(fmt.Sprintf("error executing transformer %q with config %q: %s", t.Name, t.Config, err))
+			return nil, bewBuildError(fmt.Sprintf("error executing transformer %q with config %q: %s", t.Name, t.Config, err))
 		}
 		if len(m) == 0 {
-			return nil, NewBuildError(fmt.Sprintf("transformer %q with config %q did not return any mapped values. Is there an configuration error?", t.Name, t.Config))
+			return nil, bewBuildError(fmt.Sprintf("transformer %q with config %q did not return any mapped values. Is there an configuration error?", t.Name, t.Config))
 		}
 		for key, value := range m {
 			transformerMapping[key] = value
@@ -191,7 +191,7 @@ func executeTransformers(
 	return transformerMapping, nil
 }
 
-func enumTargetMismatches(previous enumMapping, targetEnum *Enum, targetName string) bool {
+func enumTargetMismatches(previous enumMapping, targetEnum *enum, targetName string) bool {
 	if !IsEnumAction(targetName) && !IsEnumAction(previous.Target) {
 		return targetEnum.Members[previous.Target] != targetEnum.Members[targetName]
 	}
@@ -199,12 +199,12 @@ func enumTargetMismatches(previous enumMapping, targetEnum *Enum, targetName str
 }
 
 func enumTargetMismatchError(
-	targetEnum *Enum,
+	targetEnum *enum,
 	sourceName, targetName string,
 	previous enumMapping,
 	sourceValue interface{},
-) *BuildError {
-	return NewBuildError(fmt.Sprintf(`Detected multiple enum source members with the same value but different target values/actions.
+) *buildError {
+	return bewBuildError(fmt.Sprintf(`Detected multiple enum source members with the same value but different target values/actions.
     %s(%v) -> %s
     %s(%v) -> %s
 
@@ -219,7 +219,7 @@ See https://goverter.jmattheis.de/guide/enum#mapping-enum-keys`,
 		sourceName, previous.Target))
 }
 
-func fmtEnumValue(targetEnum *Enum, targetName string) string {
+func fmtEnumValue(targetEnum *enum, targetName string) string {
 	if IsEnumAction(targetName) {
 		return fmt.Sprintf("%s(action)", targetName)
 	}

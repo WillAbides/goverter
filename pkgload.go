@@ -107,7 +107,7 @@ func (g *PackageLoader) LocalConfig(pkg *packages.Package, name string) localMet
 			commentMap := ast.NewCommentMap(pkg.Fset, file, file.Comments)
 			for _, decl := range file.Decls {
 				if fn, ok := decl.(*ast.FuncDecl); ok {
-					lines := CommentGroupSettingLines(commentMap[fn])
+					lines := commentGroupSettingLines(commentMap[fn])
 					if len(lines) == 0 {
 						continue
 					}

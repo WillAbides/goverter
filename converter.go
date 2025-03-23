@@ -104,14 +104,14 @@ func parseConverter(ctx *cfgContext, rawConverter *RawConverter, global RawLines
 		return nil, err
 	}
 
-	ResolveOutputPackage(ctx, c)
+	resolveOutputPackage(ctx, c)
 
 	err = parseMethodsCfg(ctx, rawConverter, c)
 	return c, err
 }
 
-func ResolveOutputPackage(ctx *cfgContext, c *Converter) {
-	targetPackage, err := ResolvePackage(c.FileName, c.Package, c.OutputFile)
+func resolveOutputPackage(ctx *cfgContext, c *Converter) {
+	targetPackage, err := resolvePackage(c.FileName, c.Package, c.OutputFile)
 	if err != nil {
 		return
 	}

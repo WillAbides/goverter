@@ -16,10 +16,10 @@ type managedFile struct {
 	PackageID string
 	Initial   *Converter
 	Content   *jen.File
-	Namer     *Namer
+	Namer     *namer
 }
 
-func (m *fileManager) Get(conv *Converter, cfg GenerateConfig) (*jen.File, *Namer, error) {
+func (m *fileManager) Get(conv *Converter, cfg GenerateConfig) (*jen.File, *namer, error) {
 	output := getOutputDir(conv)
 
 	f, ok := m.Files[output]
@@ -27,7 +27,7 @@ func (m *fileManager) Get(conv *Converter, cfg GenerateConfig) (*jen.File, *Name
 		f = &managedFile{
 			PackageID: conv.PackageID(),
 			Initial:   conv,
-			Namer:     NewNamer(),
+			Namer:     newNamer(),
 		}
 
 		if conv.OutputPackageName == "" {

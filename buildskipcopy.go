@@ -16,10 +16,10 @@ func (*skipCopy) matches(ctx *methodContext, source, target *xType) bool {
 func (*skipCopy) build(
 	gen *generator,
 	ctx *methodContext,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	path ErrorPath,
-) ([]jen.Code, *JenID, *BuildError) {
+	path errorPath,
+) ([]jen.Code, *jenID, *buildError) {
 	return nil, sourceID, nil
 }
 
@@ -27,9 +27,9 @@ func (*skipCopy) assign(
 	gen *generator,
 	ctx *methodContext,
 	assignTo *assignTo,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	path ErrorPath,
-) ([]jen.Code, *BuildError) {
+	path errorPath,
+) ([]jen.Code, *buildError) {
 	return []jen.Code{assignTo.Stmt.Clone().Op("=").Add(sourceID.Code)}, nil
 }

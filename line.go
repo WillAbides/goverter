@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-const DirectivePrefix = "goverter:"
+const directivePrefix = "goverter:"
 
-func CommentGroupSettingLines(groups []*ast.CommentGroup) []string {
+func commentGroupSettingLines(groups []*ast.CommentGroup) []string {
 	var settings []string
 	for _, group := range groups {
 		if group == nil {
@@ -19,10 +19,10 @@ func CommentGroupSettingLines(groups []*ast.CommentGroup) []string {
 				line = strings.TrimPrefix(line, "//")
 				line = strings.TrimPrefix(line, "/*")
 				line = strings.TrimSpace(line)
-				if !strings.HasPrefix(line, DirectivePrefix) {
+				if !strings.HasPrefix(line, directivePrefix) {
 					continue
 				}
-				settings = append(settings, strings.TrimPrefix(line, DirectivePrefix))
+				settings = append(settings, strings.TrimPrefix(line, directivePrefix))
 			}
 		}
 	}

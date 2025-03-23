@@ -45,8 +45,8 @@ type RawConverter struct {
 type EnumTransformer func(context TransformEnumContext) (map[string]string, error)
 
 type TransformEnumContext struct {
-	Source Enum
-	Target Enum
+	Source enum
+	Target enum
 	// Config is user definable config
 	Config string
 }
@@ -79,7 +79,7 @@ type cfgContext struct {
 }
 
 func ParseRaw(raw *Raw) ([]*Converter, error) {
-	loader, err := NewPackageLoader(raw.WorkDir, raw.BuildTags, GetPackages(raw))
+	loader, err := NewPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
 	if err != nil {
 		return nil, err
 	}

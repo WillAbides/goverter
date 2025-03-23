@@ -9,8 +9,8 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-// ErrorMessagePath defines the path inside an error message.
-type ErrorMessagePath struct {
+// errorMessagePath defines the path inside an error message.
+type errorMessagePath struct {
 	Prefix     string
 	SourceID   string
 	TargetID   string
@@ -18,25 +18,25 @@ type ErrorMessagePath struct {
 	TargetType string
 }
 
-// BuildError defines a conversion error.
-type BuildError struct {
-	Path  []*ErrorMessagePath
+// buildError defines a conversion error.
+type buildError struct {
+	Path  []*errorMessagePath
 	Cause string
 }
 
-// NewBuildError creates an error.
-func NewBuildError(cause string) *BuildError {
-	return &BuildError{Cause: cause, Path: []*ErrorMessagePath{}}
+// bewBuildError creates an error.
+func bewBuildError(cause string) *buildError {
+	return &buildError{Cause: cause, Path: []*errorMessagePath{}}
 }
 
 // Lift appends the path to the error.
-func (e *BuildError) Lift(paths ...*ErrorMessagePath) *BuildError {
+func (e *buildError) Lift(paths ...*errorMessagePath) *buildError {
 	e.Path = append(paths, e.Path...)
 	return e
 }
 
-// BuildErrorToString converts the error into a string.
-func BuildErrorToString(err *BuildError) string {
+// buildErrorToString converts the error into a string.
+func buildErrorToString(err *buildError) string {
 	if len(err.Path) == 0 {
 		panic("oops that shouldn't happen")
 	}
@@ -103,9 +103,9 @@ func BuildErrorToString(err *BuildError) string {
 	return buf.String()
 }
 
-type ErrorPath []ErrorElement
+type errorPath []errorElement
 
-func (e ErrorPath) WrapErrors(errStmt *jen.Statement) *jen.Statement {
+func (e errorPath) WrapErrors(errStmt *jen.Statement) *jen.Statement {
 	if len(e) != 0 {
 		switch elm := e[len(e)-1].(type) {
 		case errElmField:
@@ -117,7 +117,7 @@ func (e ErrorPath) WrapErrors(errStmt *jen.Statement) *jen.Statement {
 	return errStmt
 }
 
-func (e ErrorPath) WrapErrorsUsing(pkg string, errStmt *jen.Statement) *jen.Statement {
+func (e errorPath) WrapErrorsUsing(pkg string, errStmt *jen.Statement) *jen.Statement {
 	var args []jen.Code
 	for _, elm := range e {
 		switch elm := elm.(type) {
@@ -134,11 +134,11 @@ func (e ErrorPath) WrapErrorsUsing(pkg string, errStmt *jen.Statement) *jen.Stat
 	return jen.Qual(pkg, "Wrap").Call(args...)
 }
 
-func (e ErrorPath) Index(code *jen.Statement) ErrorPath { return append(e, errElmIndex{code}) }
-func (e ErrorPath) Key(code *jen.Statement) ErrorPath   { return append(e, errElmKey{code}) }
-func (e ErrorPath) Field(name string) ErrorPath         { return append(e, errElmField(name)) }
+func (e errorPath) Index(code *jen.Statement) errorPath { return append(e, errElmIndex{code}) }
+func (e errorPath) Key(code *jen.Statement) errorPath   { return append(e, errElmKey{code}) }
+func (e errorPath) Field(name string) errorPath         { return append(e, errElmField(name)) }
 
-type ErrorElement interface{ _elm() }
+type errorElement interface{ _elm() }
 
 type (
 	errElmIndex struct{ stmt *jen.Statement }

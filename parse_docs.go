@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	converterMarker = DirectivePrefix + "converter"
+	converterMarker = directivePrefix + "converter"
 )
 
 // ParseDocsConfig provides input to the ParseDocs method below.
@@ -184,7 +184,7 @@ func rawLines(pkg *packages.Package, node ast.Node) RawLines {
 	}
 	return RawLines{
 		Location: nodeLocation(pkg.Fset, node),
-		Lines:    CommentGroupSettingLines(comments),
+		Lines:    commentGroupSettingLines(comments),
 	}
 }
 

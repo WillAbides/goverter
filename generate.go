@@ -44,7 +44,7 @@ func Generate(converters []*Converter, c GenerateConfig) (map[string][]byte, err
 	return manager.renderFiles()
 }
 
-func generateConverter(converter *Converter, f *jen.File, n *Namer) error {
+func generateConverter(converter *Converter, f *jen.File, n *namer) error {
 	gen, err := setupGenerator(converter, n)
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func generateConverter(converter *Converter, f *jen.File, n *Namer) error {
 	return nil
 }
 
-func setupGenerator(converter *Converter, n *Namer) (*generator, error) {
+func setupGenerator(converter *Converter, n *namer) (*generator, error) {
 	extend := newMethodIndex[methodDefinition]()
 	for _, def := range converter.Extend {
 		extend.RegisterOverrideOverlapping(def, def)

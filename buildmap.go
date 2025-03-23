@@ -16,10 +16,10 @@ func (*buildMap) matches(_ *methodContext, source, target *xType) bool {
 func (m *buildMap) build(
 	gen *generator,
 	ctx *methodContext,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	errPath ErrorPath,
-) ([]jen.Code, *JenID, *BuildError) {
+	errPath errorPath,
+) ([]jen.Code, *jenID, *buildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	return buildByAssign(m, gen, ctx, sourceID, source, target, errPath)
 }
@@ -28,10 +28,10 @@ func (*buildMap) assign(
 	gen *generator,
 	ctx *methodContext,
 	assignTo *assignTo,
-	sourceID *JenID,
+	sourceID *jenID,
 	source, target *xType,
-	errPath ErrorPath,
-) ([]jen.Code, *BuildError) {
+	errPath errorPath,
+) ([]jen.Code, *buildError) {
 	ctx.SetErrorTargetVar(jen.Nil())
 	key, value := ctx.Map()
 
@@ -39,7 +39,7 @@ func (*buildMap) assign(
 
 	block, keyID, err := gen.Build(ctx, variableID(jen.Id(key)), source.MapKey, target.MapKey, errPath)
 	if err != nil {
-		return nil, err.Lift(&ErrorMessagePath{
+		return nil, err.Lift(&errorMessagePath{
 			SourceID:   "[]",
 			SourceType: "<mapkey> " + source.MapKey.String,
 			TargetID:   "[]",
@@ -49,7 +49,7 @@ func (*buildMap) assign(
 	valueStmt, err := gen.Assign(
 		ctx, assignTo.WithIndex(keyID.Code).MustAssign(), variableID(jen.Id(value)), source.MapValue, target.MapValue, errPath)
 	if err != nil {
-		return nil, err.Lift(&ErrorMessagePath{
+		return nil, err.Lift(&errorMessagePath{
 			SourceID:   "[]",
 			SourceType: "<mapvalue> " + source.MapValue.String,
 			TargetID:   "[]",
