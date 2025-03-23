@@ -135,7 +135,7 @@ func caseAction(
 	ctx *methodContext,
 	nameVar *jen.Statement,
 	target *xType,
-	targetEnum *enum,
+	targetEnum *Enum,
 	targetName string,
 	sourceID *jenID,
 	errPath errorPath,
@@ -169,13 +169,13 @@ func caseAction(
 func executeTransformers(
 	transformers []ConfiguredTransformer,
 	source, target *xType,
-	sourceEnum, targetEnum *enum,
+	sourceEnum, targetEnum *Enum,
 ) (map[string]string, *buildError) {
 	transformerMapping := map[string]string{}
 	for _, t := range transformers {
 		m, err := t.Transformer(TransformEnumContext{
-			Source: enum{OK: true, Type: source.NamedType, Members: sourceEnum.Members},
-			Target: enum{OK: true, Type: target.NamedType, Members: targetEnum.Members},
+			Source: Enum{OK: true, Type: source.NamedType, Members: sourceEnum.Members},
+			Target: Enum{OK: true, Type: target.NamedType, Members: targetEnum.Members},
 			Config: t.Config,
 		})
 		if err != nil {
@@ -191,7 +191,7 @@ func executeTransformers(
 	return transformerMapping, nil
 }
 
-func enumTargetMismatches(previous enumMapping, targetEnum *enum, targetName string) bool {
+func enumTargetMismatches(previous enumMapping, targetEnum *Enum, targetName string) bool {
 	if !isEnumAction(targetName) && !isEnumAction(previous.Target) {
 		return targetEnum.Members[previous.Target] != targetEnum.Members[targetName]
 	}
@@ -199,7 +199,7 @@ func enumTargetMismatches(previous enumMapping, targetEnum *enum, targetName str
 }
 
 func enumTargetMismatchError(
-	targetEnum *enum,
+	targetEnum *Enum,
 	sourceName, targetName string,
 	previous enumMapping,
 	sourceValue interface{},
@@ -219,7 +219,7 @@ See https://goverter.jmattheis.de/guide/enum#mapping-enum-keys`,
 		sourceName, previous.Target))
 }
 
-func fmtEnumValue(targetEnum *enum, targetName string) string {
+func fmtEnumValue(targetEnum *Enum, targetName string) string {
 	if isEnumAction(targetName) {
 		return fmt.Sprintf("%s(action)", targetName)
 	}

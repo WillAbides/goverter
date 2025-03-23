@@ -54,7 +54,7 @@ type xType struct {
 	Chan          bool
 	ChanType      *types.Chan
 
-	enum *enum
+	enum *Enum
 }
 
 func (t *xType) AssignableTo(other *xType) bool {
@@ -341,9 +341,9 @@ Explicitly define the mapping via goverter:map. Example:
 See https://goverter.jmattheis.de/reference/map`, name, strings.Join(ambNames, ", "), ambNames[0], name)
 }
 
-func (t *xType) Enum(cfg *enumConfig) *enum {
+func (t *xType) Enum(cfg *enumConfig) *Enum {
 	if !t.Named {
-		return &enum{}
+		return &Enum{}
 	}
 
 	if t.enum == nil {
@@ -352,26 +352,26 @@ func (t *xType) Enum(cfg *enumConfig) *enum {
 	return t.enum
 }
 
-func loadEnum(t *types.Named, cfg *enumConfig) *enum {
+func loadEnum(t *types.Named, cfg *enumConfig) *Enum {
 	path := t.Obj().Pkg().Path()
 	name := t.Obj().Name()
 
 	if !cfg.enabled || cfg.excludes.Matches(path, name) {
-		return &enum{}
+		return &Enum{}
 	}
 
 	e := detectEnum(t)
 	return &e
 }
 
-func detectEnum(named *types.Named) enum {
+func detectEnum(named *types.Named) Enum {
 	basic, ok := named.Underlying().(*types.Basic)
 	if !ok {
-		return enum{}
+		return Enum{}
 	}
 
 	if basic.Info()&(types.IsFloat|types.IsString|types.IsInteger) == 0 {
-		return enum{}
+		return Enum{}
 	}
 
 	scope := named.Obj().Pkg().Scope()
@@ -389,10 +389,10 @@ func detectEnum(named *types.Named) enum {
 	}
 
 	if len(members) == 0 {
-		return enum{}
+		return Enum{}
 	}
 
-	return enum{
+	return Enum{
 		Type:    named,
 		Members: members,
 		OK:      true,

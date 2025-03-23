@@ -45,8 +45,8 @@ type RawConverter struct {
 type EnumTransformer func(context TransformEnumContext) (map[string]string, error)
 
 type TransformEnumContext struct {
-	Source enum
-	Target enum
+	Source Enum
+	Target Enum
 	// Config is user definable config
 	Config string
 }

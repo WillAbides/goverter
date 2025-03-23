@@ -89,13 +89,13 @@ type GenerateCmd struct {
 	Config *GenerateCmdConfig
 }
 
-type HelpCmd struct {
+type helpCmd struct {
 	Usage string
 }
 
 type VersionCmd struct{}
 
-func (*HelpCmd) _c()     {}
+func (*helpCmd) _c()     {}
 func (*GenerateCmd) _c() {}
 func (*VersionCmd) _c()  {}
 
@@ -122,7 +122,7 @@ func parseArgs(args []string) (Command, error) {
 
 	if err := fs.Parse(args[1:]); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
-			return &HelpCmd{Usage: usage(cmd)}, nil
+			return &helpCmd{Usage: usage(cmd)}, nil
 		}
 		return nil, usageErr(err.Error(), cmd)
 	}
@@ -138,7 +138,7 @@ func parseArgs(args []string) (Command, error) {
 	case "version":
 		return &VersionCmd{}, nil
 	case "help":
-		return &HelpCmd{Usage: usage(cmd)}, nil
+		return &helpCmd{Usage: usage(cmd)}, nil
 	default:
 		return nil, usageErr("unknown command "+subArgs[0], cmd)
 	}
@@ -159,7 +159,7 @@ func parseGen(cmd string, args []string) (Command, error) {
 
 	if err := fs.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
-			return &HelpCmd{Usage: usage(cmd)}, nil
+			return &helpCmd{Usage: usage(cmd)}, nil
 		}
 		return nil, usageErr(err.Error(), cmd)
 	}
@@ -235,7 +235,7 @@ func Run(args []string, opts RunOpts) {
 	}
 
 	switch cmd := cmd.(type) {
-	case *HelpCmd:
+	case *helpCmd:
 		_, _ = fmt.Fprintln(os.Stdout, cmd.Usage)
 		os.Exit(0)
 	case *GenerateCmd:
