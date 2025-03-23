@@ -326,9 +326,9 @@ func (t *xType) asID(seeNamed, escapeReserved bool) string {
 // TypeAsJen returns a jen representation of the type.
 func (t *xType) TypeAsJen() *jen.Statement {
 	if t.Named {
-		return ToCode(t.NamedType)
+		return toCode(t.NamedType)
 	}
-	return ToCode(t.T)
+	return toCode(t.T)
 }
 
 func ambiguousMatchError(name string, ambNames []string) error {

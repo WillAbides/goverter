@@ -12,17 +12,17 @@ type GenerateConfig struct {
 // buildSteps that'll be used for generation.
 func buildSteps() []builder {
 	return []builder{
-		&UseUnderlyingTypeMethods{},
-		&SkipCopy{},
-		&BuildEnum{},
-		&BasicTargetPointerRule{},
-		&Pointer{},
-		&SourcePointer{},
-		&TargetPointer{},
+		&useUnderlyingTypeMethods{},
+		&skipCopy{},
+		&buildEnum{},
+		&basicTargetPointerRule{},
+		&pointer{},
+		&sourcePointer{},
+		&targetPointer{},
 		&basic{},
-		&BuildStruct{},
-		&BuildList{},
-		&BuildMap{},
+		&buildStruct{},
+		&buildList{},
+		&buildMap{},
 	}
 }
 

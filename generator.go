@@ -125,7 +125,7 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 		fieldsTarget = genMethod.Target.PointerInner.String
 	}
 
-	ctx := &MethodContext{
+	ctx := &methodContext{
 		Namer:             NewNamer(),
 		Conf:              genMethod.method,
 		FieldsTarget:      fieldsTarget,
@@ -175,7 +175,7 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 	var funcBlock []jen.Code
 	if targetAssign != nil {
 		var err *BuildError
-		funcBlock, err = g.convertTo(ctx, AssignOf(targetAssign), sourceID, source, target, nil)
+		funcBlock, err = g.convertTo(ctx, assignOf(targetAssign), sourceID, source, target, nil)
 		if err != nil {
 			return err
 		}
@@ -210,7 +210,7 @@ func (g *generator) buildMethod(genMethod *generatedMethod, context map[string]*
 }
 
 func (g *generator) buildNoLookup(
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -229,8 +229,8 @@ func (g *generator) buildNoLookup(
 }
 
 func (g *generator) assignNoLookup(
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -249,8 +249,8 @@ func (g *generator) assignNoLookup(
 }
 
 func (g *generator) convertTo(
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -268,7 +268,7 @@ func (g *generator) convertTo(
 		}
 	}
 
-	var s BuildStruct
+	var s buildStruct
 	stmt, err := s.assign(g, ctx, assignTo, sourceID, source, target.PointerInner, errPath)
 	if sourcePointer {
 		stmt = []jen.Code{jen.If(sourceID.Code.Clone().Op("!=").Nil()).Block(stmt...)}
@@ -277,7 +277,7 @@ func (g *generator) convertTo(
 }
 
 func (g *generator) CallMethod(
-	ctx *MethodContext,
+	ctx *methodContext,
 	definition *methodDefinition,
 	sourceID *JenID,
 	source, target *xType,
@@ -337,7 +337,7 @@ func (g *generator) CallMethod(
 	return nil, id, nil
 }
 
-func (g *generator) ReturnError(ctx *MethodContext, errPath ErrorPath, id *jen.Statement) (jen.Code, bool) {
+func (g *generator) ReturnError(ctx *methodContext, errPath ErrorPath, id *jen.Statement) (jen.Code, bool) {
 	current := g.lookup.ByID(ctx.IndexID)
 	if !ctx.Conf.ReturnError {
 		for _, path := range append([]methodIndexID{ctx.IndexID}, current.OriginPath...) {
@@ -360,7 +360,7 @@ func (g *generator) ReturnError(ctx *MethodContext, errPath ErrorPath, id *jen.S
 	return jen.Return(returns...), true
 }
 
-func (g *generator) requireContext(ctx *MethodContext, need *xType) bool {
+func (g *generator) requireContext(ctx *methodContext, need *xType) bool {
 	if _, ok := ctx.Context[need.String]; ok {
 		return true
 	}
@@ -389,7 +389,7 @@ func (g *generator) requireContext(ctx *MethodContext, need *xType) bool {
 }
 
 func (g *generator) delegateMethod(
-	ctx *MethodContext,
+	ctx *methodContext,
 	delegateTo *methodDefinition,
 	sourceID *JenID,
 ) (*jen.Statement, *BuildError) {
@@ -427,7 +427,7 @@ func (g *generator) delegateMethod(
 }
 
 // wrap invokes the error wrapper if feature is enabled.
-func (g *generator) wrap(ctx *MethodContext, errPath ErrorPath, errStmt *jen.Statement) *jen.Statement {
+func (g *generator) wrap(ctx *methodContext, errPath ErrorPath, errStmt *jen.Statement) *jen.Statement {
 	switch {
 	case ctx.Conf.WrapErrorsUsing != "":
 		return errPath.WrapErrorsUsing(ctx.Conf.WrapErrorsUsing, errStmt)
@@ -440,7 +440,7 @@ func (g *generator) wrap(ctx *MethodContext, errPath ErrorPath, errStmt *jen.Sta
 
 // Build builds an implementation for the given source and target type, or uses an existing method for it.
 func (g *generator) Build(
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -459,30 +459,30 @@ func (g *generator) Build(
 
 // Assign builds an implementation for the given source and target type, or uses an existing method for it.
 func (g *generator) Assign(
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
 	if assignTo.Must {
-		return ToAssignable(assignTo)(g.Build(ctx, sourceID, source, target, errPath))
+		return toAssignable(assignTo)(g.Build(ctx, sourceID, source, target, errPath))
 	}
 
 	stmt, nextID, err := g.callExisting(ctx, sourceID, source, target, errPath)
 	if nextID != nil || err != nil {
-		return ToAssignable(assignTo)(stmt, nextID, err)
+		return toAssignable(assignTo)(stmt, nextID, err)
 	}
 
 	if g.shouldCreateSubMethod(ctx, source, target) {
-		return ToAssignable(assignTo)(g.createSubMethod(ctx, sourceID, source, target, errPath))
+		return toAssignable(assignTo)(g.createSubMethod(ctx, sourceID, source, target, errPath))
 	}
 
 	return g.assignNoLookup(ctx, assignTo, sourceID, source, target, errPath)
 }
 
 func (g *generator) callExisting(
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -501,7 +501,7 @@ func (g *generator) callExisting(
 	return nil, nil, nil
 }
 
-func (g *generator) shouldCreateSubMethod(ctx *MethodContext, source, target *xType) bool {
+func (g *generator) shouldCreateSubMethod(ctx *methodContext, source, target *xType) bool {
 	isCurrentPointerStructMethod := false
 	if source.Struct && target.Struct {
 		// This checks if we are currently inside the generation of one of the following combinations.
@@ -538,7 +538,7 @@ func (g *generator) shouldCreateSubMethod(ctx *MethodContext, source, target *xT
 }
 
 func (g *generator) createSubMethod(
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	errPAth ErrorPath,
@@ -585,12 +585,12 @@ func (g *generator) createSubMethod(
 	return g.CallMethod(ctx, genMethod.methodDefinition, sourceID, source, target, errPAth)
 }
 
-func (g *generator) hasMethod(ctx *MethodContext, source, target types.Type) bool {
+func (g *generator) hasMethod(ctx *methodContext, source, target types.Type) bool {
 	signature := signature{Source: source.String(), Target: target.String()}
 	return g.extend.Has(signature) || g.lookup.Has(signature)
 }
 
-func (g *generator) getOverlappingStructDefinition(ctx *MethodContext, source, target *xType) *BuildError {
+func (g *generator) getOverlappingStructDefinition(ctx *methodContext, source, target *xType) *BuildError {
 	if !source.Struct || !target.Struct {
 		return nil
 	}

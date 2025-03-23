@@ -9,8 +9,8 @@ import (
 // thisVar is used as name for the reference to the converter interface.
 const thisVar = "c"
 
-// MethodContext exposes information for the current method.
-type MethodContext struct {
+// methodContext exposes information for the current method.
+type methodContext struct {
 	*Namer
 	Conf              *method
 	FieldsTarget      string
@@ -18,7 +18,7 @@ type MethodContext struct {
 	UseConstructor    bool
 	Signature         signature
 	TargetType        *xType
-	HasMethod         func(*MethodContext, types.Type, types.Type) bool
+	HasMethod         func(*methodContext, types.Type, types.Type) bool
 	SeenNamed         map[string]struct{}
 
 	IndexID methodIndexID
@@ -29,7 +29,7 @@ type MethodContext struct {
 	TargetVar *jen.Statement
 }
 
-func (ctx *MethodContext) HasSeen(source *xType) bool {
+func (ctx *methodContext) HasSeen(source *xType) bool {
 	if !source.Named {
 		return false
 	}
@@ -38,7 +38,7 @@ func (ctx *MethodContext) HasSeen(source *xType) bool {
 	return ok
 }
 
-func (ctx *MethodContext) MarkSeen(source *xType) {
+func (ctx *methodContext) MarkSeen(source *xType) {
 	if !source.Named {
 		return
 	}
@@ -46,13 +46,13 @@ func (ctx *MethodContext) MarkSeen(source *xType) {
 	ctx.SeenNamed[typeString] = struct{}{}
 }
 
-func (ctx *MethodContext) SetErrorTargetVar(m *jen.Statement) {
+func (ctx *methodContext) SetErrorTargetVar(m *jen.Statement) {
 	if ctx.TargetVar == nil {
 		ctx.TargetVar = m
 	}
 }
 
-func (ctx *MethodContext) Field(target *xType, name string) *fieldMapping {
+func (ctx *methodContext) Field(target *xType, name string) *fieldMapping {
 	if ctx.FieldsTarget != target.String {
 		return emptyMapping
 	}
@@ -64,7 +64,7 @@ func (ctx *MethodContext) Field(target *xType, name string) *fieldMapping {
 	return prop
 }
 
-func (ctx *MethodContext) DefinedFields(target *xType) map[string]struct{} {
+func (ctx *methodContext) DefinedFields(target *xType) map[string]struct{} {
 	if ctx.FieldsTarget != target.String {
 		return emptyFields
 	}
@@ -76,7 +76,7 @@ func (ctx *MethodContext) DefinedFields(target *xType) map[string]struct{} {
 	return f
 }
 
-func (ctx *MethodContext) DefinedEnumFields(target *xType) map[string]struct{} {
+func (ctx *methodContext) DefinedEnumFields(target *xType) map[string]struct{} {
 	if ctx.FieldsTarget != target.String {
 		return emptyFields
 	}
@@ -96,12 +96,12 @@ var (
 // builder builds converter implementations, and can decide if it can handle the given type.
 type builder interface {
 	// matches returns true, if the builder can create handle the given types.
-	matches(ctx *MethodContext, source, target *xType) bool
+	matches(ctx *methodContext, source, target *xType) bool
 
 	// build creates conversion source code for the given source and target type.
 	build(
 		gen *generator,
-		ctx *MethodContext,
+		ctx *methodContext,
 		sourceID *JenID,
 		source, target *xType,
 		path ErrorPath,
@@ -110,8 +110,8 @@ type builder interface {
 	// assign creates conversion source code for the given source and target type and assigns it.
 	assign(
 		gen *generator,
-		ctx *MethodContext,
-		assignTo *AssignTo,
+		ctx *methodContext,
+		assignTo *assignTo,
 		sourceID *JenID,
 		source, target *xType,
 		path ErrorPath,
@@ -120,7 +120,7 @@ type builder interface {
 
 func buildTargetVar(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -162,37 +162,33 @@ func buildTargetVar(
 	return stmt, jen.Id(name), nil
 }
 
-type AssignTo struct {
+type assignTo struct {
 	Stmt   *jen.Statement
 	Must   bool
 	Update bool
 }
 
-func AssignOf(s *jen.Statement) *AssignTo {
-	return &AssignTo{Stmt: s}
+func assignOf(s *jen.Statement) *assignTo {
+	return &assignTo{Stmt: s}
 }
 
-func (a *AssignTo) WithIndex(s *jen.Statement) *AssignTo {
-	return &AssignTo{
+func (a *assignTo) WithIndex(s *jen.Statement) *assignTo {
+	return &assignTo{
 		Stmt: a.Stmt.Clone().Index(s),
 	}
 }
 
-func (a *AssignTo) MustAssign() *AssignTo {
+func (a *assignTo) MustAssign() *assignTo {
 	a.Must = true
 	return a
 }
 
-func (a *AssignTo) IsUpdate() *AssignTo {
+func (a *assignTo) IsUpdate() *assignTo {
 	a.Update = true
 	return a
 }
 
-func ToAssignable(assignTo *AssignTo) func(
-	stmt []jen.Code,
-	nextID *JenID,
-	err *BuildError,
-) ([]jen.Code, *BuildError) {
+func toAssignable(assignTo *assignTo) func(stmt []jen.Code, nextID *JenID, err *BuildError) ([]jen.Code, *BuildError) {
 	return func(stmt []jen.Code, nextID *JenID, err *BuildError) ([]jen.Code, *BuildError) {
 		if err != nil {
 			return nil, err
@@ -205,19 +201,19 @@ func ToAssignable(assignTo *AssignTo) func(
 func assignByBuild(
 	b builder,
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
 ) ([]jen.Code, *BuildError) {
-	return ToAssignable(assignTo)(b.build(gen, ctx, sourceID, source, target, errPath))
+	return toAssignable(assignTo)(b.build(gen, ctx, sourceID, source, target, errPath))
 }
 
 func buildByAssign(
 	b builder,
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	path ErrorPath,
@@ -227,7 +223,7 @@ func buildByAssign(
 		return nil, nil, err
 	}
 
-	stmt, err := b.assign(gen, ctx, AssignOf(valueVar), sourceID, source, target, path)
+	stmt, err := b.assign(gen, ctx, assignOf(valueVar), sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err
 	}

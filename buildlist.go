@@ -4,18 +4,18 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-// BuildList handles array / slice types.
-type BuildList struct{}
+// buildList handles array / slice types.
+type buildList struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildList) matches(_ *MethodContext, source, target *xType) bool {
+func (*buildList) matches(_ *methodContext, source, target *xType) bool {
 	return source.List && target.List && !target.ListFixed
 }
 
 // Build creates conversion source code for the given source and target type.
-func (l *BuildList) build(
+func (l *buildList) build(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	path ErrorPath,
@@ -23,7 +23,7 @@ func (l *BuildList) build(
 	ctx.SetErrorTargetVar(jen.Nil())
 	targetSlice := ctx.Name(target.ID())
 
-	stmt, err := l.assign(gen, ctx, AssignOf(jen.Id(targetSlice)), sourceID, source, target, path)
+	stmt, err := l.assign(gen, ctx, assignOf(jen.Id(targetSlice)), sourceID, source, target, path)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -39,10 +39,10 @@ func (l *BuildList) build(
 	return stmt, variableID(jen.Id(targetSlice)), nil
 }
 
-func (*BuildList) assign(
+func (*buildList) assign(
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	path ErrorPath,

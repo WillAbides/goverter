@@ -8,7 +8,7 @@ import (
 type basic struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*basic) matches(_ *MethodContext, source, target *xType) bool {
+func (*basic) matches(_ *methodContext, source, target *xType) bool {
 	return source.Basic && target.Basic &&
 		source.BasicType.Kind() == target.BasicType.Kind()
 }
@@ -16,7 +16,7 @@ func (*basic) matches(_ *MethodContext, source, target *xType) bool {
 // Build creates conversion source code for the given source and target type.
 func (*basic) build(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	path ErrorPath,
@@ -29,8 +29,8 @@ func (*basic) build(
 
 func (b *basic) assign(
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -38,18 +38,18 @@ func (b *basic) assign(
 	return assignByBuild(b, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
-// BasicTargetPointerRule handles edge conditions if the target type is a pointer.
-type BasicTargetPointerRule struct{}
+// basicTargetPointerRule handles edge conditions if the target type is a pointer.
+type basicTargetPointerRule struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BasicTargetPointerRule) matches(_ *MethodContext, source, target *xType) bool {
+func (*basicTargetPointerRule) matches(_ *methodContext, source, target *xType) bool {
 	return source.Basic && target.Pointer && target.PointerInner.Basic
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*BasicTargetPointerRule) build(
+func (*basicTargetPointerRule) build(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -72,10 +72,10 @@ func (*BasicTargetPointerRule) build(
 	return stmt, otherID(newID), err
 }
 
-func (b *BasicTargetPointerRule) assign(
+func (b *basicTargetPointerRule) assign(
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,

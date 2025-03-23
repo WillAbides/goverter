@@ -4,18 +4,18 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-// BuildMap handles map types.
-type BuildMap struct{}
+// buildMap handles map types.
+type buildMap struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildMap) matches(_ *MethodContext, source, target *xType) bool {
+func (*buildMap) matches(_ *methodContext, source, target *xType) bool {
 	return source.Map && target.Map
 }
 
 // Build creates conversion source code for the given source and target type.
-func (m *BuildMap) build(
+func (m *buildMap) build(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -24,10 +24,10 @@ func (m *BuildMap) build(
 	return buildByAssign(m, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (*BuildMap) assign(
+func (*buildMap) assign(
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,

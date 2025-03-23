@@ -91,7 +91,7 @@ func defaultOutputFile(name string) string {
 	return strings.TrimSuffix(f, ext) + ".gen" + ext
 }
 
-func parseConverter(ctx *CfgContext, rawConverter *RawConverter, global RawLines) (*Converter, error) {
+func parseConverter(ctx *cfgContext, rawConverter *RawConverter, global RawLines) (*Converter, error) {
 	c, err := initConverter(ctx.Loader, rawConverter)
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func parseConverter(ctx *CfgContext, rawConverter *RawConverter, global RawLines
 	return c, err
 }
 
-func ResolveOutputPackage(ctx *CfgContext, c *Converter) {
+func ResolveOutputPackage(ctx *cfgContext, c *Converter) {
 	targetPackage, err := ResolvePackage(c.FileName, c.Package, c.OutputFile)
 	if err != nil {
 		return
@@ -157,17 +157,17 @@ func initConverter(loader *PackageLoader, rawConverter *RawConverter) (*Converte
 	return c, nil
 }
 
-func parseConverterLines(ctx *CfgContext, c *Converter, source string, raw RawLines) error {
+func parseConverterLines(ctx *cfgContext, c *Converter, source string, raw RawLines) error {
 	for _, value := range raw.Lines {
 		if err := parseConverterLine(ctx, c, value); err != nil {
-			return FormatLineError(raw, source, value, err)
+			return formatLineError(raw, source, value, err)
 		}
 	}
 
 	return nil
 }
 
-func parseConverterLine(ctx *CfgContext, c *Converter, value string) (err error) {
+func parseConverterLine(ctx *cfgContext, c *Converter, value string) (err error) {
 	cmd, rest := parseCommand(value)
 	switch cmd {
 	case "converter", "variables":

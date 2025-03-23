@@ -62,7 +62,7 @@ type Raw struct {
 	EnumTransformers map[string]EnumTransformer
 }
 
-func FormatLineError(lines RawLines, t, value string, err error) error {
+func formatLineError(lines RawLines, t, value string, err error) error {
 	cmd, _ := parseCommand(value)
 	msg := `error parsing 'goverter:%s' at
     %s
@@ -72,7 +72,7 @@ func FormatLineError(lines RawLines, t, value string, err error) error {
 	return fmt.Errorf(msg, cmd, lines.Location, t, err)
 }
 
-type CfgContext struct {
+type cfgContext struct {
 	Loader           *PackageLoader
 	WorkDir          string
 	EnumTransformers map[string]EnumTransformer
@@ -84,7 +84,7 @@ func ParseRaw(raw *Raw) ([]*Converter, error) {
 		return nil, err
 	}
 
-	ctx := &CfgContext{Loader: loader, EnumTransformers: raw.EnumTransformers, WorkDir: raw.WorkDir}
+	ctx := &cfgContext{Loader: loader, EnumTransformers: raw.EnumTransformers, WorkDir: raw.WorkDir}
 
 	var converters []*Converter
 	for _, rawConverter := range raw.Converters {

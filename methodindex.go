@@ -148,7 +148,7 @@ func satisfiesContext(required, m map[string]*xType) bool {
 	return true
 }
 
-func usageFromMap[V any](value map[string]V) UsageChecker {
+func usageFromMap[V any](value map[string]V) usageChecker {
 	m := map[string]struct{}{}
 
 	for key := range value {

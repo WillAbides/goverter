@@ -6,23 +6,23 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-type BuildEnum struct{}
+type buildEnum struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildEnum) matches(ctx *MethodContext, source, target *xType) bool {
+func (*buildEnum) matches(ctx *methodContext, source, target *xType) bool {
 	return IsBuildEnum(ctx, source, target)
 }
 
-func IsBuildEnum(ctx *MethodContext, source, target *xType) bool {
+func IsBuildEnum(ctx *methodContext, source, target *xType) bool {
 	return ctx.Conf.Enum.enabled &&
 		source.Enum(&ctx.Conf.Enum).OK &&
 		target.Enum(&ctx.Conf.Enum).OK
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*BuildEnum) build(
+func (*buildEnum) build(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	path ErrorPath,
@@ -119,10 +119,10 @@ func (*BuildEnum) build(
 	return stmt, variableID(nameVar), nil
 }
 
-func (s *BuildEnum) assign(
+func (s *buildEnum) assign(
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	path ErrorPath,
@@ -132,7 +132,7 @@ func (s *BuildEnum) assign(
 
 func caseAction(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	nameVar *jen.Statement,
 	target *xType,
 	targetEnum *Enum,

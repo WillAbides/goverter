@@ -4,13 +4,13 @@ import (
 	"sort"
 )
 
-type UsageChecker map[string]struct{}
+type usageChecker map[string]struct{}
 
-func (u UsageChecker) Used(key string) {
+func (u usageChecker) Used(key string) {
 	delete(u, key)
 }
 
-func (u UsageChecker) Unused() []string {
+func (u usageChecker) Unused() []string {
 	var keys []string
 	for key := range u {
 		keys = append(keys, key)

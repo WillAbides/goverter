@@ -9,18 +9,18 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-// BuildStruct handles struct types.
-type BuildStruct struct{}
+// buildStruct handles struct types.
+type buildStruct struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*BuildStruct) matches(_ *MethodContext, source, target *xType) bool {
+func (*buildStruct) matches(_ *methodContext, source, target *xType) bool {
 	return source.Struct && target.Struct
 }
 
 // Build creates conversion source code for the given source and target type.
-func (s *BuildStruct) build(
+func (s *buildStruct) build(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -32,10 +32,10 @@ func (s *BuildStruct) build(
 	return buildByAssign(s, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (s *BuildStruct) assign(
+func (s *buildStruct) assign(
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -86,7 +86,7 @@ func (s *BuildStruct) assign(
 			}
 			stmt = append(stmt, mapStmt...)
 
-			fieldStmt, err := gen.Assign(ctx, AssignOf(assignTo.Stmt.Clone().Dot(targetField.Name())), nextID, nextSource, targetFieldType, targetFieldPath)
+			fieldStmt, err := gen.Assign(ctx, assignOf(assignTo.Stmt.Clone().Dot(targetField.Name())), nextID, nextSource, targetFieldType, targetFieldPath)
 			if err != nil {
 				return nil, err.Lift(lift...)
 			}
@@ -154,7 +154,7 @@ func (s *BuildStruct) assign(
 	return stmt, nil
 }
 
-func shouldCheckAgainstZero(ctx *MethodContext, s, t *xType, isUpdate, call bool) bool {
+func shouldCheckAgainstZero(ctx *methodContext, s, t *xType, isUpdate, call bool) bool {
 	switch {
 	case !ctx.Conf.UpdateTarget && !isUpdate:
 		return false
@@ -179,7 +179,7 @@ var structMethodContextRegex = regexp.MustCompile(".*")
 
 func mapField(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	targetField *types.Var,
 	sourceID *JenID,
 	source, target *xType,
@@ -332,7 +332,7 @@ func mapField(
 	return returnID, nextSource, stmt, lift, false, nil
 }
 
-func parseAutoMap(ctx *MethodContext, source *xType) ([]fieldSources, *BuildError) {
+func parseAutoMap(ctx *methodContext, source *xType) ([]fieldSources, *BuildError) {
 	var sources []fieldSources
 	for _, field := range ctx.Conf.AutoMap {
 		innerSource := source
@@ -389,12 +389,12 @@ func zeroValue(t types.Type) *jen.Statement {
 	case *types.Named:
 		switch under := cast.Underlying().(type) {
 		case *types.Struct:
-			return jen.Parens(ToCode(t).Block())
+			return jen.Parens(toCode(t).Block())
 		default:
 			return zeroValue(under)
 		}
 	case *types.Struct, *types.Array:
-		return ToCode(t).Block()
+		return toCode(t).Block()
 	case *types.Interface, *types.Signature, *types.Pointer, *types.Map, *types.Slice, *types.Chan:
 		return jen.Nil()
 	}

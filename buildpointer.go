@@ -4,18 +4,18 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-// Pointer handles pointer types.
-type Pointer struct{}
+// pointer handles pointer types.
+type pointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*Pointer) matches(_ *MethodContext, source, target *xType) bool {
+func (*pointer) matches(_ *methodContext, source, target *xType) bool {
 	return source.Pointer && target.Pointer
 }
 
 // Build creates conversion source code for the given source and target type.
-func (p *Pointer) build(
+func (p *pointer) build(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -27,7 +27,7 @@ func (p *Pointer) build(
 			return nil, nil, err
 		}
 
-		stmt, err := gen.Assign(ctx, AssignOf(jen.Parens(jen.Op("*").Add(valueVar))).IsUpdate(), sourceID.Deref(source), source.PointerInner, target.PointerInner, errPath)
+		stmt, err := gen.Assign(ctx, assignOf(jen.Parens(jen.Op("*").Add(valueVar))).IsUpdate(), sourceID.Deref(source), source.PointerInner, target.PointerInner, errPath)
 		if err != nil {
 			return nil, nil, err.Lift(&ErrorMessagePath{
 				SourceID:   "*",
@@ -45,10 +45,10 @@ func (p *Pointer) build(
 	return buildByAssign(p, gen, ctx, sourceID, source, target, errPath)
 }
 
-func (*Pointer) assign(
+func (*pointer) assign(
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -77,18 +77,18 @@ func (*Pointer) assign(
 	return stmt, err
 }
 
-// SourcePointer handles type were only the source is a pointer.
-type SourcePointer struct{}
+// sourcePointer handles type were only the source is a pointer.
+type sourcePointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*SourcePointer) matches(ctx *MethodContext, source, target *xType) bool {
+func (*sourcePointer) matches(ctx *methodContext, source, target *xType) bool {
 	return ctx.Conf.UseZeroValueOnPointerInconsistency && source.Pointer && !target.Pointer
 }
 
 // Build creates conversion source code for the given source and target type.
-func (s *SourcePointer) build(
+func (s *sourcePointer) build(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	path ErrorPath,
@@ -99,7 +99,7 @@ func (s *SourcePointer) build(
 			return nil, nil, err
 		}
 
-		stmt, err := gen.Assign(ctx, AssignOf(valueVar).IsUpdate(), sourceID.Deref(source), source.PointerInner, target, path)
+		stmt, err := gen.Assign(ctx, assignOf(valueVar).IsUpdate(), sourceID.Deref(source), source.PointerInner, target, path)
 		if err != nil {
 			return nil, nil, err.Lift(&ErrorMessagePath{
 				SourceID:   "*",
@@ -115,10 +115,10 @@ func (s *SourcePointer) build(
 	return buildByAssign(s, gen, ctx, sourceID, source, target, path)
 }
 
-func (*SourcePointer) assign(
+func (*sourcePointer) assign(
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	path ErrorPath,
@@ -140,18 +140,18 @@ func (*SourcePointer) assign(
 	return stmt, nil
 }
 
-// TargetPointer handles type were only the target is a pointer.
-type TargetPointer struct{}
+// targetPointer handles type were only the target is a pointer.
+type targetPointer struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*TargetPointer) matches(_ *MethodContext, source, target *xType) bool {
+func (*targetPointer) matches(_ *methodContext, source, target *xType) bool {
 	return !source.Pointer && target.Pointer
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*TargetPointer) build(
+func (*targetPointer) build(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	path ErrorPath,
@@ -164,7 +164,7 @@ func (*TargetPointer) build(
 			return nil, nil, err
 		}
 
-		stmt, err := gen.Assign(ctx, AssignOf(jen.Parens(jen.Op("*").Add(valueVar))).IsUpdate(), sourceID, source, target.PointerInner, path)
+		stmt, err := gen.Assign(ctx, assignOf(jen.Parens(jen.Op("*").Add(valueVar))).IsUpdate(), sourceID, source, target.PointerInner, path)
 		if err != nil {
 			return nil, nil, err.Lift(&ErrorMessagePath{
 				TargetID:   "*",
@@ -191,10 +191,10 @@ func (*TargetPointer) build(
 	return stmt, nextID, nil
 }
 
-func (tp *TargetPointer) assign(
+func (tp *targetPointer) assign(
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	path ErrorPath,

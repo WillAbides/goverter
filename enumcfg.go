@@ -59,7 +59,7 @@ func ValidateEnumAction(s string) error {
 	}
 }
 
-func ParseTransformer(ctx *CfgContext, name, config string) (ConfiguredTransformer, error) {
+func ParseTransformer(ctx *cfgContext, name, config string) (ConfiguredTransformer, error) {
 	t, ok := ctx.EnumTransformers[name]
 	if !ok {
 		t, ok = DefaultEnumTransformers[name]

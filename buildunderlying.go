@@ -6,11 +6,11 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-// UseUnderlyingTypeMethods handles UseUnderlyingTypeMethods.
-type UseUnderlyingTypeMethods struct{}
+// useUnderlyingTypeMethods handles useUnderlyingTypeMethods.
+type useUnderlyingTypeMethods struct{}
 
 // Matches returns true, if the builder can create handle the given types.
-func (*UseUnderlyingTypeMethods) matches(ctx *MethodContext, source, target *xType) bool {
+func (*useUnderlyingTypeMethods) matches(ctx *methodContext, source, target *xType) bool {
 	if !ctx.Conf.UseUnderlyingTypeMethods {
 		return false
 	}
@@ -20,9 +20,9 @@ func (*UseUnderlyingTypeMethods) matches(ctx *MethodContext, source, target *xTy
 }
 
 // Build creates conversion source code for the given source and target type.
-func (*UseUnderlyingTypeMethods) build(
+func (*useUnderlyingTypeMethods) build(
 	gen *generator,
-	ctx *MethodContext,
+	ctx *methodContext,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -67,10 +67,10 @@ You have to disable enum or useUnderlyingTypeMethods to resolve the setting conf
 	return stmt, id, err
 }
 
-func (u *UseUnderlyingTypeMethods) assign(
+func (u *useUnderlyingTypeMethods) assign(
 	gen *generator,
-	ctx *MethodContext,
-	assignTo *AssignTo,
+	ctx *methodContext,
+	assignTo *assignTo,
 	sourceID *JenID,
 	source, target *xType,
 	errPath ErrorPath,
@@ -78,7 +78,7 @@ func (u *UseUnderlyingTypeMethods) assign(
 	return assignByBuild(u, gen, ctx, assignTo, sourceID, source, target, errPath)
 }
 
-func findUnderlyingExtendMapping(ctx *MethodContext, source, target *xType) (underlyingSource, underlyingTarget bool) {
+func findUnderlyingExtendMapping(ctx *methodContext, source, target *xType) (underlyingSource, underlyingTarget bool) {
 	if source.Named {
 		if ctx.HasMethod(ctx, source.NamedType.Underlying(), target.NamedType) {
 			return true, false
