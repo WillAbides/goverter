@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/jmattheis/goverter/cli"
+	"github.com/jmattheis/goverter"
 )
 
 func main() {
-	cli.Run(os.Args, cli.RunOpts{})
+	goverter.Run(os.Args, goverter.RunOpts{})
 }

@@ -305,7 +305,7 @@ func mapField(
 			lift[len(lift)-1].SourceType)
 	}
 
-	stmt := []jen.Code{}
+	var stmt []jen.Code
 	if condition != nil {
 		pointerNext := nextSource
 		if !nextSource.Pointer {

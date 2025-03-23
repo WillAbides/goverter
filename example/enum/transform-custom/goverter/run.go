@@ -5,16 +5,15 @@ import (
 	"strings"
 
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/cli"
 )
 
 func main() {
-	opts := cli.RunOpts{
+	opts := goverter.RunOpts{
 		EnumTransformers: map[string]goverter.EnumTransformer{
 			"trim-prefix": trimPrefix,
 		},
 	}
-	cli.Run(os.Args, opts)
+	goverter.Run(os.Args, opts)
 }
 
 func trimPrefix(ctx goverter.TransformEnumContext) (map[string]string, error) {

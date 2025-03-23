@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/jmattheis/goverter"
-	"github.com/jmattheis/goverter/cli"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,20 +13,20 @@ func TestError(t *testing.T) {
 		args     []string
 		contains string
 	}{
-		{[]string{}, "Error: invalid args"},
-		{[]string{"goverter"}, "goverter gen [OPTIONS]"},
-		{[]string{"goverter"}, "Error: missing command"},
-		{[]string{"goverter", "-u"}, "Error: flag provided but not defined: -u"},
-		{[]string{"goverter", "test"}, "Error: unknown command test"},
-		{[]string{"goverter", "gen"}, "Error: missing PATTERN"},
-		{[]string{"goverter", "gen", "-u"}, "Error: flag provided but not defined: -u"},
-		{[]string{"goverter", "gen", "-g"}, "Error: flag needs an argument: -g"},
+		{args: []string{}, contains: "Error: invalid args"},
+		{args: []string{"goverter"}, contains: "goverter gen [OPTIONS]"},
+		{args: []string{"goverter"}, contains: "Error: missing command"},
+		{args: []string{"goverter", "-u"}, contains: "Error: flag provided but not defined: -u"},
+		{args: []string{"goverter", "test"}, contains: "Error: unknown command test"},
+		{args: []string{"goverter", "gen"}, contains: "Error: missing PATTERN"},
+		{args: []string{"goverter", "gen", "-u"}, contains: "Error: flag provided but not defined: -u"},
+		{args: []string{"goverter", "gen", "-g"}, contains: "Error: flag needs an argument: -g"},
 	}
 
 	for _, test := range tests {
 		test := test
 		t.Run(strings.Join(test.args, " "), func(t *testing.T) {
-			_, err := cli.Parse(test.args)
+			_, err := goverter.Parse(test.args)
 			require.ErrorContains(t, err, test.contains)
 		})
 	}
@@ -45,21 +44,21 @@ func TestHelp(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(strings.Join(test, " "), func(t *testing.T) {
-			cmd, err := cli.Parse(test)
+			cmd, err := goverter.Parse(test)
 			require.NoError(t, err)
-			require.IsType(t, &cli.Help{}, cmd)
+			require.IsType(t, &goverter.HelpCmd{}, cmd)
 		})
 	}
 }
 
 func TestVersion(t *testing.T) {
-	cmd, err := cli.Parse([]string{"goverter", "version"})
+	cmd, err := goverter.Parse([]string{"goverter", "version"})
 	require.NoError(t, err)
-	require.IsType(t, &cli.Version{}, cmd)
+	require.IsType(t, &goverter.VersionCmd{}, cmd)
 }
 
 func TestSuccess(t *testing.T) {
-	actual, err := cli.Parse([]string{
+	actual, err := goverter.Parse([]string{
 		"goverter",
 		"gen",
 		"-cwd", "file/path",
@@ -72,34 +71,38 @@ func TestSuccess(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	expected := &cli.Generate{&cli.GenerateConfig{
-		PackagePatterns:       []string{"pattern1", "pattern2"},
-		WorkingDir:            "file/path",
-		OutputBuildConstraint: "",
-		BuildTags:             "",
-		EnumTransformers:      map[string]goverter.EnumTransformer{},
-		Global: goverter.RawLines{
-			Location: "command line (-g, -global)",
-			Lines:    []string{"g1", "g2", "g3 oops"},
+	expected := &goverter.GenerateCmd{
+		Config: &goverter.GenerateCmdConfig{
+			PackagePatterns:       []string{"pattern1", "pattern2"},
+			WorkingDir:            "file/path",
+			OutputBuildConstraint: "",
+			BuildTags:             "",
+			EnumTransformers:      map[string]goverter.EnumTransformer{},
+			Global: goverter.RawLines{
+				Location: "command line (-g, -global)",
+				Lines:    []string{"g1", "g2", "g3 oops"},
+			},
 		},
-	}}
+	}
 	require.Equal(t, expected, actual)
 }
 
 func TestDefault(t *testing.T) {
-	actual, err := cli.Parse([]string{"goverter", "gen", "pattern"})
+	actual, err := goverter.Parse([]string{"goverter", "gen", "pattern"})
 	require.NoError(t, err)
 
-	expected := &cli.Generate{&cli.GenerateConfig{
-		PackagePatterns:       []string{"pattern"},
-		WorkingDir:            "",
-		OutputBuildConstraint: "!goverter",
-		BuildTags:             "goverter",
-		EnumTransformers:      map[string]goverter.EnumTransformer{},
-		Global: goverter.RawLines{
-			Location: "command line (-g, -global)",
-			Lines:    nil,
+	expected := &goverter.GenerateCmd{
+		Config: &goverter.GenerateCmdConfig{
+			PackagePatterns:       []string{"pattern"},
+			WorkingDir:            "",
+			OutputBuildConstraint: "!goverter",
+			BuildTags:             "goverter",
+			EnumTransformers:      map[string]goverter.EnumTransformer{},
+			Global: goverter.RawLines{
+				Location: "command line (-g, -global)",
+				Lines:    nil,
+			},
 		},
-	}}
+	}
 	require.Equal(t, expected, actual)
 }

@@ -72,8 +72,8 @@ func TestScenario(t *testing.T) {
 				patterns = append(patterns, "github.com/jmattheis/goverter/execution")
 			}
 
-			files, err := generateConvertersRaw(
-				&GenerateConfig{
+			files, err := goverter.GenerateConvertersRaw(
+				&goverter.GenerateCmdConfig{
 					WorkingDir:            testWorkDir,
 					PackagePatterns:       patterns,
 					OutputBuildConstraint: scenario.BuildConstraint,
@@ -110,7 +110,7 @@ func TestScenario(t *testing.T) {
 			require.NotEmpty(t, scenario.Success, "scenario.Success may not be empty")
 			require.Equal(t, scenario.Success, actualOutputFiles)
 
-			err = writeFiles(files)
+			err = goverter.WriteFiles(files)
 			require.NoError(t, err)
 			require.NoError(t, compile(testWorkDir), "generated converter doesn't build")
 		})
