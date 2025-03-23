@@ -1,10 +1,9 @@
-package goverter_test
+package goverter
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/jmattheis/goverter"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,9 +23,8 @@ func TestError(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(strings.Join(test.args, " "), func(t *testing.T) {
-			_, err := goverter.Parse(test.args)
+			_, err := parseArgs(test.args)
 			require.ErrorContains(t, err, test.contains)
 		})
 	}
@@ -42,23 +40,22 @@ func TestHelp(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(strings.Join(test, " "), func(t *testing.T) {
-			cmd, err := goverter.Parse(test)
+			cmd, err := parseArgs(test)
 			require.NoError(t, err)
-			require.IsType(t, &goverter.HelpCmd{}, cmd)
+			require.IsType(t, &HelpCmd{}, cmd)
 		})
 	}
 }
 
 func TestVersion(t *testing.T) {
-	cmd, err := goverter.Parse([]string{"goverter", "version"})
+	cmd, err := parseArgs([]string{"goverter", "version"})
 	require.NoError(t, err)
-	require.IsType(t, &goverter.VersionCmd{}, cmd)
+	require.IsType(t, &VersionCmd{}, cmd)
 }
 
 func TestSuccess(t *testing.T) {
-	actual, err := goverter.Parse([]string{
+	actual, err := parseArgs([]string{
 		"goverter",
 		"gen",
 		"-cwd", "file/path",
@@ -71,14 +68,14 @@ func TestSuccess(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	expected := &goverter.GenerateCmd{
-		Config: &goverter.GenerateCmdConfig{
+	expected := &GenerateCmd{
+		Config: &GenerateCmdConfig{
 			PackagePatterns:       []string{"pattern1", "pattern2"},
 			WorkingDir:            "file/path",
 			OutputBuildConstraint: "",
 			BuildTags:             "",
-			EnumTransformers:      map[string]goverter.EnumTransformer{},
-			Global: goverter.RawLines{
+			EnumTransformers:      map[string]EnumTransformer{},
+			Global: RawLines{
 				Location: "command line (-g, -global)",
 				Lines:    []string{"g1", "g2", "g3 oops"},
 			},
@@ -88,17 +85,17 @@ func TestSuccess(t *testing.T) {
 }
 
 func TestDefault(t *testing.T) {
-	actual, err := goverter.Parse([]string{"goverter", "gen", "pattern"})
+	actual, err := parseArgs([]string{"goverter", "gen", "pattern"})
 	require.NoError(t, err)
 
-	expected := &goverter.GenerateCmd{
-		Config: &goverter.GenerateCmdConfig{
+	expected := &GenerateCmd{
+		Config: &GenerateCmdConfig{
 			PackagePatterns:       []string{"pattern"},
 			WorkingDir:            "",
 			OutputBuildConstraint: "!goverter",
 			BuildTags:             "goverter",
-			EnumTransformers:      map[string]goverter.EnumTransformer{},
-			Global: goverter.RawLines{
+			EnumTransformers:      map[string]EnumTransformer{},
+			Global: RawLines{
 				Location: "command line (-g, -global)",
 				Lines:    nil,
 			},

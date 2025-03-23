@@ -110,7 +110,7 @@ func (s *stringVals) Set(value string) error {
 	return nil
 }
 
-func Parse(args []string) (Command, error) {
+func parseArgs(args []string) (Command, error) {
 	if len(args) == 0 {
 		return nil, usageErr("invalid args", "unknown")
 	}
@@ -228,7 +228,7 @@ Documentation:
 
 // Run runs the goverter cli with the given args and customizations.
 func Run(args []string, opts RunOpts) {
-	cmd, err := Parse(args)
+	cmd, err := parseArgs(args)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

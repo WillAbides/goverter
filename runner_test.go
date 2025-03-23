@@ -31,8 +31,6 @@ func TestScenario(t *testing.T) {
 
 	for _, file := range scenarioFiles {
 		require.False(t, file.IsDir(), "should not be a directory")
-		file := file
-
 		testName := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name()))
 
 		t.Run(testName, func(t *testing.T) {
