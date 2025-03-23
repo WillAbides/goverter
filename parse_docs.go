@@ -22,7 +22,7 @@ type parseDocsConfig struct {
 }
 
 // parseDocs parses the docs for the given pattern.
-func parseDocs(c parseDocsConfig) ([]RawConverter, error) {
+func parseDocs(c parseDocsConfig) ([]rawConverter, error) {
 	loadCfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedSyntax,
 		Dir:  c.WorkingDir,
@@ -34,7 +34,7 @@ func parseDocs(c parseDocsConfig) ([]RawConverter, error) {
 	if err != nil {
 		return nil, err
 	}
-	rawConverters := []RawConverter{}
+	rawConverters := []rawConverter{}
 	for _, pkg := range pkgs {
 		if len(pkg.Errors) > 0 {
 			return nil, fmt.Errorf(`could not load package %s
@@ -60,7 +60,7 @@ requires the type information from the compiled sources.`, pkg.PkgPath, pkg.Erro
 	return rawConverters, nil
 }
 
-func parseFunctions(pkg *packages.Package, decl *ast.GenDecl, lines rawLines) ([]RawConverter, error) {
+func parseFunctions(pkg *packages.Package, decl *ast.GenDecl, lines rawLines) ([]rawConverter, error) {
 	if decl.Tok != token.VAR {
 		return nil, fmt.Errorf("%s must be defined on %q-block but was %q", converterMarker, token.VAR, decl.Tok.String())
 	}
@@ -80,17 +80,17 @@ func parseFunctions(pkg *packages.Package, decl *ast.GenDecl, lines rawLines) ([
 		result[name] = rawLinesForNode(pkg, value)
 	}
 
-	converter := RawConverter{
+	converter := rawConverter{
 		FileName:    location.Filename,
 		Converter:   lines,
 		Methods:     result,
 		PackageName: pkg.Name,
 		PackagePath: pkg.PkgPath,
 	}
-	return []RawConverter{converter}, nil
+	return []rawConverter{converter}, nil
 }
 
-func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]RawConverter, error) {
+func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]rawConverter, error) {
 	lines := rawLinesForNode(pkg, decl)
 
 	if lines.hasSetting("variables") {
@@ -116,10 +116,10 @@ func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]RawConverter, err
 		if err != nil {
 			return nil, err
 		}
-		return []RawConverter{c}, nil
+		return []rawConverter{c}, nil
 	}
 
-	var converters []RawConverter
+	var converters []rawConverter
 
 	for _, spec := range decl.Specs {
 		typeSpec, ok := spec.(*ast.TypeSpec)
@@ -139,19 +139,19 @@ func parseGenDecl(pkg *packages.Package, decl *ast.GenDecl) ([]RawConverter, err
 	return converters, nil
 }
 
-func parseInterface(pkg *packages.Package, typeSpec *ast.TypeSpec, lines rawLines) (RawConverter, error) {
+func parseInterface(pkg *packages.Package, typeSpec *ast.TypeSpec, lines rawLines) (rawConverter, error) {
 	astInterface, ok := typeSpec.Type.(*ast.InterfaceType)
 	if !ok {
-		return RawConverter{}, fmt.Errorf("%s may only be applied to type interface declarations ", converterMarker)
+		return rawConverter{}, fmt.Errorf("%s may only be applied to type interface declarations ", converterMarker)
 	}
 	typeName := typeSpec.Name.String()
 
 	location := pkg.Fset.Position(typeSpec.Pos())
 	methods, err := parseInterfaceMethods(pkg, astInterface)
 	if err != nil {
-		return RawConverter{}, fmt.Errorf("type %s: %s", typeName, err)
+		return rawConverter{}, fmt.Errorf("type %s: %s", typeName, err)
 	}
-	converter := RawConverter{
+	converter := rawConverter{
 		InterfaceName: typeName,
 		FileName:      location.Filename,
 		Converter:     lines,

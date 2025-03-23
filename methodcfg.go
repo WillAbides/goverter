@@ -66,7 +66,7 @@ func parseMethodMap(remaining string) (source, target, custom string, err error)
 	return source, target, custom, err
 }
 
-func parseMethodsCfg(ctx *cfgContext, rawConverter *RawConverter, c *converter) error {
+func parseMethodsCfg(ctx *cfgContext, rawConverter *rawConverter, c *converter) error {
 	if c.Type != nil {
 		interf := c.Type.Underlying().(*types.Interface)
 		for i := 0; i < interf.NumMethods(); i++ {

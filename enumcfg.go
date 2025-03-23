@@ -23,7 +23,7 @@ type EnumMapping struct {
 	Map          map[string]string
 }
 
-var DefaultEnumTransformers = map[string]EnumTransformer{
+var defaultEnumTransformers = map[string]EnumTransformer{
 	"regex": func(ctx TransformEnumContext) (map[string]string, error) {
 		parts := strings.Split(ctx.Config, " ")
 		if len(parts) != 2 {
@@ -62,7 +62,7 @@ func validateEnumAction(s string) error {
 func parseTransformer(ctx *cfgContext, name, config string) (ConfiguredTransformer, error) {
 	t, ok := ctx.EnumTransformers[name]
 	if !ok {
-		t, ok = DefaultEnumTransformers[name]
+		t, ok = defaultEnumTransformers[name]
 	}
 
 	if !ok {

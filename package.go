@@ -18,12 +18,12 @@ func resolvePackage(sourceFileName, sourcePackage, targetFile string) (string, e
 	return filepath.Dir(filepath.Join(sourcePackage, relativeFile)), nil
 }
 
-func getPackages(raw *Raw) []string {
+func getPackages(raw *rawRaw) []string {
 	lookup := map[string]struct{}{}
 	for _, c := range raw.Converters {
 		lookup[c.PackagePath] = struct{}{}
 
-		// the default output:file is in ./generated and is not configured in Raw.
+		// the default output:file is in ./generated and is not configured in rawRaw.
 		// This preemptively loads this package, in case it already exists.
 		lookup[filepath.Join(c.PackagePath, "generated")] = struct{}{}
 

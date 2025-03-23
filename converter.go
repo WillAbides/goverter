@@ -91,7 +91,7 @@ func defaultOutputFile(name string) string {
 	return strings.TrimSuffix(f, ext) + ".gen" + ext
 }
 
-func parseConverter(ctx *cfgContext, rawConverter *RawConverter, global rawLines) (*converter, error) {
+func parseConverter(ctx *cfgContext, rawConverter *rawConverter, global rawLines) (*converter, error) {
 	c, err := initConverter(ctx.Loader, rawConverter)
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func resolveOutputPackage(ctx *cfgContext, c *converter) {
 	}
 }
 
-func initConverter(loader *packageLoader, rawConverter *RawConverter) (*converter, error) {
+func initConverter(loader *packageLoader, rawConverter *rawConverter) (*converter, error) {
 	c := &converter{
 		FileName: rawConverter.FileName,
 		Package:  rawConverter.PackagePath,

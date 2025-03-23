@@ -26,7 +26,7 @@ func (r rawLines) hasSetting(setting string) bool {
 	})
 }
 
-type RawConverter struct {
+type rawConverter struct {
 	PackagePath   string
 	PackageName   string
 	InterfaceName string
@@ -51,8 +51,8 @@ type TransformEnumContext struct {
 	Config string
 }
 
-type Raw struct {
-	Converters []RawConverter
+type rawRaw struct {
+	Converters []rawConverter
 	Global     rawLines
 
 	WorkDir              string
@@ -78,7 +78,7 @@ type cfgContext struct {
 	EnumTransformers map[string]EnumTransformer
 }
 
-func parseRaw(raw *Raw) ([]*converter, error) {
+func parseRaw(raw *rawRaw) ([]*converter, error) {
 	loader, err := newPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
 	if err != nil {
 		return nil, err

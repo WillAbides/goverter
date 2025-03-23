@@ -41,7 +41,7 @@ func generateConverters(c *generateCmdConfig) error {
 }
 
 func generateConvertersRaw(c *generateCmdConfig) (map[string][]byte, error) {
-	rawConverters, err := parseDocs(parseDocsConfig{
+	rc, err := parseDocs(parseDocsConfig{
 		BuildTags:      c.BuildTags,
 		PackagePattern: c.PackagePatterns,
 		WorkingDir:     c.WorkingDir,
@@ -50,10 +50,10 @@ func generateConvertersRaw(c *generateCmdConfig) (map[string][]byte, error) {
 		return nil, err
 	}
 
-	converters, err := parseRaw(&Raw{
+	converters, err := parseRaw(&rawRaw{
 		BuildTags:  c.BuildTags,
 		WorkDir:    c.WorkingDir,
-		Converters: rawConverters,
+		Converters: rc,
 		Global:     c.Global,
 
 		OuputBuildConstraint: c.OutputBuildConstraint,
