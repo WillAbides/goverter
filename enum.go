@@ -27,12 +27,12 @@ func (e Enum) SortedMembers() []string {
 	return m
 }
 
-type EnumIDPattern struct {
+type enumIDPattern struct {
 	Path *regexp.Regexp
 	Name *regexp.Regexp
 }
 
-type enumIDPatterns []EnumIDPattern
+type enumIDPatterns []enumIDPattern
 
 func (ids enumIDPatterns) Matches(path, name string) bool {
 	for _, id := range ids {

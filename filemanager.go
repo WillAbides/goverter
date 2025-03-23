@@ -14,12 +14,12 @@ type fileManager struct {
 
 type managedFile struct {
 	PackageID string
-	Initial   *Converter
+	Initial   *converter
 	Content   *jen.File
 	Namer     *namer
 }
 
-func (m *fileManager) Get(conv *Converter, cfg GenerateConfig) (*jen.File, *namer, error) {
+func (m *fileManager) Get(conv *converter, cfg generateConfig) (*jen.File, *namer, error) {
 	output := getOutputDir(conv)
 
 	f, ok := m.Files[output]
@@ -63,7 +63,7 @@ func (m *fileManager) renderFiles() (map[string][]byte, error) {
 	return result, nil
 }
 
-func getOutputDir(c *Converter) string {
+func getOutputDir(c *converter) string {
 	if filepath.IsAbs(c.OutputFile) {
 		return c.OutputFile
 	}

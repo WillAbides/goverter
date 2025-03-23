@@ -66,7 +66,7 @@ func parseMethodMap(remaining string) (source, target, custom string, err error)
 	return source, target, custom, err
 }
 
-func parseMethodsCfg(ctx *cfgContext, rawConverter *RawConverter, c *Converter) error {
+func parseMethodsCfg(ctx *cfgContext, rawConverter *RawConverter, c *converter) error {
 	if c.Type != nil {
 		interf := c.Type.Underlying().(*types.Interface)
 		for i := 0; i < interf.NumMethods(); i++ {
@@ -93,7 +93,7 @@ func parseMethodsCfg(ctx *cfgContext, rawConverter *RawConverter, c *Converter) 
 	return nil
 }
 
-func parseMethodCfg(ctx *cfgContext, c *Converter, obj types.Object, rawMethod RawLines) (*method, error) {
+func parseMethodCfg(ctx *cfgContext, c *converter, obj types.Object, rawMethod rawLines) (*method, error) {
 	m := &method{
 		commonCfg:   c.commonCfg,
 		Fields:      map[string]*fieldMapping{},
@@ -124,7 +124,7 @@ func parseMethodCfg(ctx *cfgContext, c *Converter, obj types.Object, rawMethod R
 	return m, err
 }
 
-func parseMethodLine(ctx *cfgContext, c *Converter, m *method, value string) (err error) {
+func parseMethodLine(ctx *cfgContext, c *converter, m *method, value string) (err error) {
 	cmd, rest := parseCommand(value)
 	fieldSetting := false
 	switch cmd {

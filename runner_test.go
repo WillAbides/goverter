@@ -70,12 +70,12 @@ func TestScenario(t *testing.T) {
 			}
 
 			files, err := generateConvertersRaw(
-				&GenerateCmdConfig{
+				&generateCmdConfig{
 					WorkingDir:            testWorkDir,
 					PackagePatterns:       patterns,
 					OutputBuildConstraint: scenario.BuildConstraint,
 					BuildTags:             "goverter",
-					Global: RawLines{
+					Global: rawLines{
 						Lines:    scenario.Global,
 						Location: "scenario global",
 					},

@@ -54,7 +54,7 @@ const (
 	configOutputFile = "output:file"
 )
 
-type Converter struct {
+type converter struct {
 	converterConfig
 	Package  string
 	FileName string
@@ -64,21 +64,21 @@ type Converter struct {
 	Location string
 }
 
-func (c *Converter) typeForMethod() types.Type {
+func (c *converter) typeForMethod() types.Type {
 	if c.OutputFormat == OutputFormatFunction {
 		return nil
 	}
 	return c.Type
 }
 
-func (c *Converter) requireStruct() error {
+func (c *converter) requireStruct() error {
 	if c.OutputFormat == OutputFormatStruct {
 		return nil
 	}
 	return fmt.Errorf("not allowed when using goverter:variables")
 }
 
-func (c *Converter) IDString() string {
+func (c *converter) IDString() string {
 	if c.Type == nil {
 		return "var definition"
 	}
@@ -91,7 +91,7 @@ func defaultOutputFile(name string) string {
 	return strings.TrimSuffix(f, ext) + ".gen" + ext
 }
 
-func parseConverter(ctx *cfgContext, rawConverter *RawConverter, global RawLines) (*Converter, error) {
+func parseConverter(ctx *cfgContext, rawConverter *RawConverter, global rawLines) (*converter, error) {
 	c, err := initConverter(ctx.Loader, rawConverter)
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func parseConverter(ctx *cfgContext, rawConverter *RawConverter, global RawLines
 	return c, err
 }
 
-func resolveOutputPackage(ctx *cfgContext, c *Converter) {
+func resolveOutputPackage(ctx *cfgContext, c *converter) {
 	targetPackage, err := resolvePackage(c.FileName, c.Package, c.OutputFile)
 	if err != nil {
 		return
@@ -131,8 +131,8 @@ func resolveOutputPackage(ctx *cfgContext, c *Converter) {
 	}
 }
 
-func initConverter(loader *packageLoader, rawConverter *RawConverter) (*Converter, error) {
-	c := &Converter{
+func initConverter(loader *packageLoader, rawConverter *RawConverter) (*converter, error) {
+	c := &converter{
 		FileName: rawConverter.FileName,
 		Package:  rawConverter.PackagePath,
 		Location: rawConverter.Converter.Location,
@@ -157,7 +157,7 @@ func initConverter(loader *packageLoader, rawConverter *RawConverter) (*Converte
 	return c, nil
 }
 
-func parseConverterLines(ctx *cfgContext, c *Converter, source string, raw RawLines) error {
+func parseConverterLines(ctx *cfgContext, c *converter, source string, raw rawLines) error {
 	for _, value := range raw.Lines {
 		if err := parseConverterLine(ctx, c, value); err != nil {
 			return formatLineError(raw, source, value, err)
@@ -167,7 +167,7 @@ func parseConverterLines(ctx *cfgContext, c *Converter, source string, raw RawLi
 	return nil
 }
 
-func parseConverterLine(ctx *cfgContext, c *Converter, value string) (err error) {
+func parseConverterLine(ctx *cfgContext, c *converter, value string) (err error) {
 	cmd, rest := parseCommand(value)
 	switch cmd {
 	case "converter", "variables":
@@ -216,7 +216,7 @@ func parseConverterLine(ctx *cfgContext, c *Converter, value string) (err error)
 		}
 		c.Comments = append(c.Comments, rest)
 	case "enum:exclude":
-		var pattern EnumIDPattern
+		var pattern enumIDPattern
 		pattern, err = parseIDPattern(c.Package, rest)
 		c.Enum.excludes = append(c.Enum.excludes, pattern)
 	case configExtend:

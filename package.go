@@ -42,7 +42,7 @@ func getPackages(raw *Raw) []string {
 	return pkgs
 }
 
-func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePackage string, lines RawLines) {
+func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePackage string, lines rawLines) {
 	for _, line := range lines.Lines {
 		cmd, rest := parseCommand(line)
 		switch cmd {
@@ -64,7 +64,7 @@ func registerConverterLines(lookup map[string]struct{}, cwd, filename, sourcePac
 	}
 }
 
-func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines RawLines) {
+func registerMethodLines(lookup map[string]struct{}, sourcePackage string, lines rawLines) {
 	for _, line := range lines.Lines {
 		cmd, rest := parseCommand(line)
 		switch cmd {

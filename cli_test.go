@@ -52,7 +52,7 @@ func Test_parseArgs(t *testing.T) {
 	t.Run("version", func(t *testing.T) {
 		cmd, err := parseArgs([]string{"goverter", "version"})
 		require.NoError(t, err)
-		require.IsType(t, &VersionCmd{}, cmd)
+		require.IsType(t, &versionCmd{}, cmd)
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -69,14 +69,14 @@ func Test_parseArgs(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		expected := &GenerateCmd{
-			Config: &GenerateCmdConfig{
+		expected := &generateCmd{
+			Config: &generateCmdConfig{
 				PackagePatterns:       []string{"pattern1", "pattern2"},
 				WorkingDir:            "file/path",
 				OutputBuildConstraint: "",
 				BuildTags:             "",
 				EnumTransformers:      map[string]EnumTransformer{},
-				Global: RawLines{
+				Global: rawLines{
 					Location: "command line (-g, -global)",
 					Lines:    []string{"g1", "g2", "g3 oops"},
 				},
@@ -89,14 +89,14 @@ func Test_parseArgs(t *testing.T) {
 		actual, err := parseArgs([]string{"goverter", "gen", "pattern"})
 		require.NoError(t, err)
 
-		expected := &GenerateCmd{
-			Config: &GenerateCmdConfig{
+		expected := &generateCmd{
+			Config: &generateCmdConfig{
 				PackagePatterns:       []string{"pattern"},
 				WorkingDir:            "",
 				OutputBuildConstraint: "!goverter",
 				BuildTags:             "goverter",
 				EnumTransformers:      map[string]EnumTransformer{},
-				Global: RawLines{
+				Global: rawLines{
 					Location: "command line (-g, -global)",
 					Lines:    nil,
 				},

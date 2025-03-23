@@ -23,7 +23,7 @@ type generatedMethod struct {
 
 type generator struct {
 	namer  *namer
-	conf   *Converter
+	conf   *converter
 	lookup *methodIndex[generatedMethod]
 	extend *methodIndex[methodDefinition]
 }

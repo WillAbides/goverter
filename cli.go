@@ -14,14 +14,14 @@ type RunOpts struct {
 	EnumTransformers map[string]EnumTransformer
 }
 
-// GenerateCmdConfig the config for generating a converter.
-type GenerateCmdConfig struct {
+// generateCmdConfig the config for generating a converter.
+type generateCmdConfig struct {
 	// PackagePatterns are golang package patterns to scan, required.
 	PackagePatterns []string
 	// WorkingDir is the working directory (usually the location of go.mod file), can be empty.
 	WorkingDir string
 	// Global are the global config commands that will be applied to all converters
-	Global RawLines
+	Global rawLines
 	// BuildTags is a comma separated list passed to -tags when scanning for conversion interfaces.
 	BuildTags string
 	// OutputBuildConstraint will be added as go:build constraints to all files.
@@ -31,7 +31,7 @@ type GenerateCmdConfig struct {
 }
 
 // generateConverters generates converters.
-func generateConverters(c *GenerateCmdConfig) error {
+func generateConverters(c *generateCmdConfig) error {
 	files, err := generateConvertersRaw(c)
 	if err != nil {
 		return err
@@ -40,8 +40,8 @@ func generateConverters(c *GenerateCmdConfig) error {
 	return writeFiles(files)
 }
 
-func generateConvertersRaw(c *GenerateCmdConfig) (map[string][]byte, error) {
-	rawConverters, err := parseDocs(ParseDocsConfig{
+func generateConvertersRaw(c *generateCmdConfig) (map[string][]byte, error) {
+	rawConverters, err := parseDocs(parseDocsConfig{
 		BuildTags:      c.BuildTags,
 		PackagePattern: c.PackagePatterns,
 		WorkingDir:     c.WorkingDir,
@@ -64,7 +64,7 @@ func generateConvertersRaw(c *GenerateCmdConfig) (map[string][]byte, error) {
 		return nil, err
 	}
 
-	return generateFiles(converters, GenerateConfig{
+	return generateFiles(converters, generateConfig{
 		BuildConstraint: c.OutputBuildConstraint,
 	})
 }
@@ -81,23 +81,23 @@ func writeFiles(files map[string][]byte) error {
 	return nil
 }
 
-type Command interface {
+type iCommand interface {
 	_c()
 }
 
-type GenerateCmd struct {
-	Config *GenerateCmdConfig
+type generateCmd struct {
+	Config *generateCmdConfig
 }
 
 type helpCmd struct {
 	Usage string
 }
 
-type VersionCmd struct{}
+type versionCmd struct{}
 
 func (*helpCmd) _c()     {}
-func (*GenerateCmd) _c() {}
-func (*VersionCmd) _c()  {}
+func (*generateCmd) _c() {}
+func (*versionCmd) _c()  {}
 
 type stringVals []string
 
@@ -110,7 +110,7 @@ func (s *stringVals) Set(value string) error {
 	return nil
 }
 
-func parseArgs(args []string) (Command, error) {
+func parseArgs(args []string) (iCommand, error) {
 	if len(args) == 0 {
 		return nil, usageErr("invalid args", "unknown")
 	}
@@ -136,7 +136,7 @@ func parseArgs(args []string) (Command, error) {
 	case "gen":
 		return parseGen(cmd, subArgs[1:])
 	case "version":
-		return &VersionCmd{}, nil
+		return &versionCmd{}, nil
 	case "help":
 		return &helpCmd{Usage: usage(cmd)}, nil
 	default:
@@ -144,7 +144,7 @@ func parseArgs(args []string) (Command, error) {
 	}
 }
 
-func parseGen(cmd string, args []string) (Command, error) {
+func parseGen(cmd string, args []string) (iCommand, error) {
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {}
@@ -170,18 +170,18 @@ func parseGen(cmd string, args []string) (Command, error) {
 		return nil, usageErr("missing PATTERN", cmd)
 	}
 
-	c := GenerateCmdConfig{
+	c := generateCmdConfig{
 		PackagePatterns:       patterns,
 		BuildTags:             *buildTags,
 		OutputBuildConstraint: *outputConstraint,
 		WorkingDir:            *cwd,
 		EnumTransformers:      map[string]EnumTransformer{},
-		Global: RawLines{
+		Global: rawLines{
 			Lines:    global,
 			Location: "command line (-g, -global)",
 		},
 	}
-	return &GenerateCmd{Config: &c}, nil
+	return &generateCmd{Config: &c}, nil
 }
 
 func usageErr(err, cmd string) error {
@@ -238,7 +238,7 @@ func Run(args []string, opts RunOpts) {
 	case *helpCmd:
 		_, _ = fmt.Fprintln(os.Stdout, cmd.Usage)
 		os.Exit(0)
-	case *GenerateCmd:
+	case *generateCmd:
 		if opts.EnumTransformers != nil {
 			for key, value := range opts.EnumTransformers {
 				cmd.Config.EnumTransformers[key] = value
@@ -249,7 +249,7 @@ func Run(args []string, opts RunOpts) {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-	case *VersionCmd:
+	case *versionCmd:
 		b, ok := debug.ReadBuildInfo()
 		if ok {
 			fmt.Println(b)

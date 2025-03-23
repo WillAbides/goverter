@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-type RawLines struct {
+type rawLines struct {
 	Location string
 	Lines    []string
 }
 
 // hasSetting returns true if r.Lines contains a line for the given setting.
-func (r RawLines) hasSetting(setting string) bool {
+func (r rawLines) hasSetting(setting string) bool {
 	return slices.ContainsFunc(r.Lines, func(line string) bool {
 		if !strings.HasPrefix(line, setting) {
 			return false
@@ -30,8 +30,8 @@ type RawConverter struct {
 	PackagePath   string
 	PackageName   string
 	InterfaceName string
-	Converter     RawLines
-	Methods       map[string]RawLines
+	Converter     rawLines
+	Methods       map[string]rawLines
 	FileName      string
 }
 
@@ -53,7 +53,7 @@ type TransformEnumContext struct {
 
 type Raw struct {
 	Converters []RawConverter
-	Global     RawLines
+	Global     rawLines
 
 	WorkDir              string
 	BuildTags            string
@@ -62,7 +62,7 @@ type Raw struct {
 	EnumTransformers map[string]EnumTransformer
 }
 
-func formatLineError(lines RawLines, t, value string, err error) error {
+func formatLineError(lines rawLines, t, value string, err error) error {
 	cmd, _ := parseCommand(value)
 	msg := `error parsing 'goverter:%s' at
     %s
@@ -78,7 +78,7 @@ type cfgContext struct {
 	EnumTransformers map[string]EnumTransformer
 }
 
-func parseRaw(raw *Raw) ([]*Converter, error) {
+func parseRaw(raw *Raw) ([]*converter, error) {
 	loader, err := newPackageLoader(raw.WorkDir, raw.BuildTags, getPackages(raw))
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func parseRaw(raw *Raw) ([]*Converter, error) {
 
 	ctx := &cfgContext{Loader: loader, EnumTransformers: raw.EnumTransformers, WorkDir: raw.WorkDir}
 
-	var converters []*Converter
+	var converters []*converter
 	for _, rawConverter := range raw.Converters {
 		converter, err := parseConverter(ctx, &rawConverter, raw.Global)
 		if err != nil {
